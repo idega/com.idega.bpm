@@ -10,16 +10,16 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Element;
 
+import com.idega.block.process.variables.VariableDataType;
 import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
-import com.idega.jbpm.variables.VariableDataType;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  *
- * Last modified: $Date: 2008/09/16 17:48:15 $ by $Author: civilis $
+ * Last modified: $Date: 2008/09/17 13:09:39 $ by $Author: civilis $
  */
 @Scope("singleton")
 @Service
