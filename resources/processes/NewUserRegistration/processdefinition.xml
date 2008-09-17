@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<process-definition
+  xmlns=""  name="NewUserRegistration">
+   <start-state name="submitNewCase">
+
+	   <task name="New User Registration">
+	         <controller>
+	            <variable name="string_ownerKennitala" access="read,write"></variable>
+	         </controller>
+	      </task>      
+		<transition to="createAccount" name="toCreateAccount"></transition>
+	</start-state>
+
+	<node name="createAccount">
+		<transition to="sendMessage" name="toSendMessage"></transition>
+	</node>
+
+	<node name="sendMessage">
+		<transition to="end-state1" name="toEnd"></transition>
+	</node>
+
+	<end-state name="end-state1"></end-state>
+</process-definition>

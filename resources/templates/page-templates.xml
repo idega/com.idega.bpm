@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<page-templates>
+	<page name="New User Registration" type="new_user_registration" iconfile="idegaweb/bundles/org.jboss.jbpm.bundle/resources/images/pageIcons/orbz-machine-16x16.png" templatefile="idegaweb/bundles/com.idega.bpm.bundle/resources/pages/idega_theme_new_user_registration.xml"></page>
+</page-templates>

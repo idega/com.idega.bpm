@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root-container name="NewUserRegistration" width="1128" height="607">
+  <node name="submitNewCase" x="310" y="26" width="104" height="32">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="end-state1" x="353" y="270" width="25" height="25"/>
+  <node name="createAccount" x="300" y="99" width="132" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="sendMessage" x="301" y="176" width="132" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+</root-container>
