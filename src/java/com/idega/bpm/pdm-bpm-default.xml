@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <processes>
-<!--  
+  
     <processBundle bundle="com.idega.bpm" propsUriWithinBundle="resources/processes/NewUserRegistration/bundle.properties" autoload="true" version="1" />
-    -->
+    
 </processes>
