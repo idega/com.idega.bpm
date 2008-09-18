@@ -1,4 +1,4 @@
-package com.idega.bpm.bundle.exe;
+package com.idega.bpm.exe;
 
 import javax.annotation.Resource;
 
@@ -10,9 +10,9 @@ import com.idega.jbpm.exe.ProcessManager;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.1 $
  *
- * Last modified: $Date: 2008/09/17 18:19:45 $ by $Author: civilis $
+ * Last modified: $Date: 2008/09/18 17:11:10 $ by $Author: civilis $
  */
 @Scope("singleton")
 @Service(DefaultBPMManagersCreator.BEAN_IDENTIFIER)

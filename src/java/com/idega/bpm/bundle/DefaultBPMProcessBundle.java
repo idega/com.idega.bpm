@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.idega.bpm.bundle.exe.DefaultBPMManagersCreator;
+import com.idega.bpm.exe.DefaultBPMManagersCreator;
 import com.idega.documentmanager.business.DocumentManagerFactory;
 import com.idega.idegaweb.IWBundle;
 import com.idega.jbpm.bundle.ProcessBundle;
@@ -25,9 +25,9 @@ import com.idega.jbpm.view.ViewToTaskType;
 /**
  * 
  * @author <a href="civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  * 
- * Last modified: $Date: 2008/09/17 13:09:02 $ by $Author: civilis $
+ * Last modified: $Date: 2008/09/18 17:11:11 $ by $Author: civilis $
  * 
  */
 @Scope("prototype")

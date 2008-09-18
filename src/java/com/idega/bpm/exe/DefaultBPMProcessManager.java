@@ -1,4 +1,4 @@
-package com.idega.bpm.bundle.exe;
+package com.idega.bpm.exe;
 
 
 import org.jbpm.JbpmContext;
@@ -13,9 +13,9 @@ import com.idega.jbpm.exe.TaskInstanceW;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.1 $
  *
- * Last modified: $Date: 2008/09/17 18:20:09 $ by $Author: civilis $
+ * Last modified: $Date: 2008/09/18 17:11:10 $ by $Author: civilis $
  */
 public abstract class DefaultBPMProcessManager implements ProcessManager {
 	
