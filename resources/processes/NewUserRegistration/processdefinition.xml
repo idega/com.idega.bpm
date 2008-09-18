@@ -1,24 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<process-definition
-  xmlns=""  name="NewUserRegistration">
-   <start-state name="submitNewCase">
-
-	   <task name="New User Registration">
-	         <controller>
-	            <variable name="string_ownerKennitala" access="read,write"></variable>
-	         </controller>
-	      </task>      
-		<transition to="createAccount" name="toCreateAccount"></transition>
+<process-definition xmlns="" name="NewUserRegistration">
+	<start-state name="registerNewUser">
+		<task name="New User Registration">
+			<controller>
+				<variable access="read,write,required" name="string_ownerEmailAddress"></variable>
+				<variable access="read,write" name="string_ownerAddress"></variable>
+				<variable access="read,write" name="string_ownerPostalCode"></variable>
+				<variable access="read,write" name="string_ownerMunicipality"></variable>
+				<variable access="read,write,required" name="string_ownerFullName"></variable>
+				<variable access="read,write,required" name="string_ownerPersonalId"></variable>
+			</controller>
+		</task>
+		<event type="node-leave">
+			<script>
+				<expression> 
+				    s_upd = new com.idega.jbpm.identity.UserPersonalData();
+					s_upd.setUserEmail(userEmailAddress);
+					s_upd.setFullName(userFullName);
+					s_upd.setPersonalId(userPersonalId);
+					s_upd.setUserType("BPM_USER_NATURAL");
+					s_upd.setUserAddress(userAddress);
+					s_upd.setUserPostalCode(userPostalCode);
+					s_upd.setUserMunicipality(userMunicipality);
+					s_upd.setCreateWithLogin(true);
+					s_upd.setUserName(userPersonalId);
+                </expression>
+				<variable name='ownerUserData' access='write' mapped-name='s_upd' />
+				<variable name='string_ownerPersonalId' access='read' mapped-name='userPersonalId' />
+				<variable name='string_ownerAddress' access='read' mapped-name='userAddress' />
+				<variable name='string_ownerPostalCode' access='read' mapped-name='userPostalCode' />
+				<variable name='string_ownerMunicipality' access='read' mapped-name='userMunicipality' />
+				<variable name='string_ownerFullName' access='read' mapped-name='userFullName' />
+				<variable name='string_ownerEmailAddress' access='read' mapped-name='userEmailAddress' />
+			</script>
+		</event>
+		<transition to="loginAlreadyExists" name="toCheckForloginAlreadyExists"></transition>
 	</start-state>
-
 	<node name="createAccount">
+		<event type="node-enter">
+			<action class="com.idega.jbpm.identity.authentication.CreateUserHandler">
+				<userDataExp>
+					#{ownerUserData}
+				</userDataExp>
+			</action>
+		</event>
 		<transition to="sendMessage" name="toSendMessage"></transition>
 	</node>
-
 	<node name="sendMessage">
 		<transition to="end-state1" name="toEnd"></transition>
 	</node>
-
+	<decision name="loginAlreadyExists">
+		<handler class="com.idega.bpm.process.register.LoginExistsDecisionHandler">
+			<userDataExp>#{ownerUserData}</userDataExp>
+		</handler>
+		<transition to="throwException" name="true"></transition>
+		<transition to="createAccount" name="false"></transition>
+	</decision>
+	<node name="throwException">
+		<transition to="end-state1"></transition>
+	</node>
 	<end-state name="end-state1"></end-state>
 </process-definition>
