@@ -47,6 +47,18 @@
 		<transition to="sendMessage" name="toSendMessage"></transition>
 	</node>
 	<node name="sendMessage">
+		<event type="node-enter">
+			<action class="com.idega.bpm.process.messages.SendMessagesHandler">
+				<inlineSubject key-type='java.lang.String' value-type='java.lang.String'>
+                    <entry><key>en</key><value>Registration successful</value></entry>
+                </inlineSubject>
+	            <inlineMessage key-type='java.lang.String' value-type='java.lang.String'>
+	                <entry><key>en</key><value>Hello, {0}. Your registration were successful. You need to login and set your password with your login name {1}</value></entry>
+	            </inlineMessage>
+	            <messageValues>{list: {mv: [{type: "bean", value: "upd.fullName"}, {type: "bean", value: "upd.userName"}]}}</messageValues>
+	            <userDataExp>#{ownerUserData}</userDataExp>
+			</action>
+		</event>
 		<transition to="end-state1" name="toEnd"></transition>
 	</node>
 	<decision name="loginAlreadyExists">
@@ -57,7 +69,14 @@
 		<transition to="createAccount" name="false"></transition>
 	</decision>
 	<node name="throwException">
-		<transition to="end-state1"></transition>
+	   <event type="node-leave">
+            <script>
+                <expression>
+                    throw new RuntimeException("Login already exists"); 
+                </expression>
+            </script>
+        </event>
+		<transition to="end-state1" name="toEnd2"></transition>
 	</node>
 	<end-state name="end-state1"></end-state>
 </process-definition>
