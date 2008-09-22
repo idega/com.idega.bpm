@@ -53,7 +53,7 @@
                     <entry><key>en</key><value>Registration successful</value></entry>
                 </inlineSubject>
 	            <inlineMessage key-type='java.lang.String' value-type='java.lang.String'>
-	                <entry><key>en</key><value>Hello, {0}. Your registration were successful. You need to login and set your password with your login name {1} and password {2}</value></entry>
+	                <entry><key>en</key><value>Hello, {0}. Your registration was successful. You can login with your login name {1} and password {2}</value></entry>
 	            </inlineMessage>
 	            <messageValues>{list: {mv: [{type: "bean", value: "upd.fullName"}, {type: "bean", value: "upd.userName"}, {type: "bean", value: "upd.userPassword"}]}}</messageValues>
 	            <userDataExp>#{ownerUserData}</userDataExp>
