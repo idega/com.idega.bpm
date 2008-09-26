@@ -1,9 +1,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
 xmlns:ev="http://www.w3.org/2001/xml-events"
+xmlns:idega="http://idega.com/xforms"
 xmlns:xf="http://www.w3.org/2002/xforms"
-xmlns:xs="http://www.w3.org/2001/XMLSchema"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-xmlns:idega="http://idega.com/xforms">
+xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <head>
 <title>
 <xf:output model="data_model" ref="instance('localized_strings')/form.title[@lang=instance('localized_strings')/current_language]"/>
@@ -11,15 +10,16 @@ xmlns:idega="http://idega.com/xforms">
 <xf:model id="submission_model" schema="#fb-schema">
 <xf:instance id="data-instance" xmlns="">
 <data>
-<form_id>584</form_id>
+<form_id>676</form_id>
 <readonlyHideButton/>
-<Email_fbc_8 mapping="string_ownerEmailAddress" xsi:nil="true"/>
-<Email_fbc_9 xsi:nil="true"/>
 <Address_fbc_10 mapping="string_ownerAddress"/>
 <Postal_code_fbc_11 mapping="string_ownerPostalCode"/>
 <City_fbc_12 mapping="string_ownerMunicipality"/>
 <Name_fbc_13 mapping="string_ownerFullName"/>
 <Personal_id_fbc_14 mapping="string_ownerPersonalId"/>
+<Matching_emails_2_fbc_15 xsi:nil="true"/>
+<Matching_emails_1_fbc_16
+mapping="string_ownerEmailAddress" xsi:nil="true"/>
 </data>
 </xf:instance>
 <xf:instance id="control-instance">
@@ -39,10 +39,6 @@ id="submit_data_submission" method="post" replace="none">
 </xf:action>
 <xf:bind id="bind.readonlyHideButton"
 nodeset="readonlyHideButton" relevant="instance('control-instance')/readonly != 'true'"/>
-<xf:bind id="bind.fbc_8" nodeset="Email_fbc_8"
-required="not(instance('control-instance')/required = 'false')" type="fbc_8fb_email"/>
-<xf:bind id="bind.fbc_9" nodeset="Email_fbc_9"
-required="not(instance('control-instance')/required = 'false')" type="fbc_9fb_email"/>
 <xf:bind id="bind.fbc_10" nodeset="Address_fbc_10" type="xs:string"/>
 <xf:instance id="fbc_10_autofill-instance"
 relevant="false()" src="context:fb-afk-loginSession.user.usersMainAddress.streetAddress"/>
@@ -60,135 +56,5 @@ relevant="false()" src="context:fb-afk-loginSession.user.name"/>
 required="not(instance('control-instance')/required = 'false')" type="xs:string"/>
 <xf:instance id="fbc_14_autofill-instance"
 relevant="false()" src="context:fb-afk-loginSession.user.personalID"/>
-</xf:model>
-<xf:model id="data_model">
-<xf:instance id="localized_strings" xmlns="">
-<localized_strings>
-<default_language>en</default_language>
-<current_language>en</current_language>
-<page-1-error.label lang="en">Submission error. Please check your form!</page-1-error.label>
-<page-1-error.label lang="is_IS">Submission error. Please check your form!</page-1-error.label>
-<form.title lang="en">New user registration</form.title>
-<page-1.label lang="en">First section</page-1.label>
-<page-1.label lang="is_IS">First section</page-1.label>
-<page-2.label lang="en">Submitted</page-2.label>
-<page-2.label lang="is_IS">Sent</page-2.label>
-<page-1-submit.label lang="en">Submit</page-1-submit.label>
-<page-1-submit.label lang="is_IS">Submit</page-1-submit.label>
-<page-2.info lang="en">Form submitted, thank You!</page-2.info>
-<page-2.info lang="is_IS">Form submitted, thank You!</page-2.info>
-<fbc_5.info lang="en">Follow up text can not be empty</fbc_5.info>
-<fbc_5.info lang="is_IS">Follow up text can not be empty</fbc_5.info>
-<form.title lang="is_IS">Title</form.title>
-<fbc_8.title lang="is_IS">Email</fbc_8.title>
-<fbc_8.title lang="en">Email</fbc_8.title>
-<fbc_8.error lang="is_IS">Invalid email</fbc_8.error>
-<fbc_8.error lang="en">Invalid email</fbc_8.error>
-<fbc_9.title lang="is_IS">Email</fbc_9.title>
-<fbc_9.title lang="en">Email</fbc_9.title>
-<fbc_9.error lang="is_IS">Invalid email</fbc_9.error>
-<fbc_9.error lang="en">Invalid email</fbc_9.error>
-<fbc_10.title lang="is_IS">Address</fbc_10.title>
-<fbc_10.title lang="en">Address</fbc_10.title>
-<fbc_11.title lang="is_IS">Postal code</fbc_11.title>
-<fbc_11.title lang="en">Postal code</fbc_11.title>
-<fbc_12.title lang="is_IS">City</fbc_12.title>
-<fbc_12.title lang="en">City</fbc_12.title>
-<fbc_13.title lang="is_IS">Name</fbc_13.title>
-<fbc_13.title lang="en">Name</fbc_13.title>
-<fbc_14.title lang="is_IS">Personal id</fbc_14.title>
-<fbc_14.title lang="en">Personal id</fbc_14.title>
-</localized_strings>
-</xf:instance>
-<xf:instance id="locale-instance" relevant="false()" src="context:fb-afk-loginSession.currentLocale"/>
-<xf:action ev:event="xforms-ready">
-<xf:setvalue model="data_model"
-ref="instance('localized_strings')/current_language" value="instance('locale-instance')/fb-afk-loginSession.currentLocale"/>
-</xf:action>
-</xf:model>
-<xs:schema id="fb-schema">
-<xs:simpleType name="fbc_8fb_email">
-<xs:restriction base="xs:string">
-<xs:pattern value="[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+(\.[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+)*@[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+(\.[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+)*"/>
-</xs:restriction>
-</xs:simpleType>
-<xs:simpleType name="fbc_9fb_email">
-<xs:restriction base="xs:string">
-<xs:pattern value="[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+(\.[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+)*@[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+(\.[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+)*"/>
-</xs:restriction>
-</xs:simpleType>
-</xs:schema>
-<xf:model id="x-autofill-model">
-<xf:action ev:event="xforms-ready">
-<xf:setvalue bind="bind.fbc_10"
-id="fbc_10-autofill-setvalue"
-model="submission_model" value="instance('fbc_10_autofill-instance')/fb-afk-loginSession.user.usersMainAddress.streetAddress"/>
-<xf:setvalue bind="bind.fbc_11"
-id="fbc_11-autofill-setvalue"
-model="submission_model" value="instance('fbc_11_autofill-instance')/fb-afk-loginSession.user.usersMainAddress.postalCode.postalCode"/>
-<xf:setvalue bind="bind.fbc_12"
-id="fbc_12-autofill-setvalue"
-model="submission_model" value="instance('fbc_12_autofill-instance')/fb-afk-loginSession.user.usersMainAddress.city"/>
-<xf:setvalue bind="bind.fbc_13"
-id="fbc_13-autofill-setvalue"
-model="submission_model" value="instance('fbc_13_autofill-instance')/fb-afk-loginSession.user.name"/>
-<xf:setvalue bind="bind.fbc_14"
-id="fbc_14-autofill-setvalue"
-model="submission_model" value="instance('fbc_14_autofill-instance')/fb-afk-loginSession.user.personalID"/>
-</xf:action>
-</xf:model>
-</head>
-<body>
-<xf:group appearance="full">
-<xf:switch>
-<xf:case id="fbc_1">
-<xf:group appearance="full">
-<xf:label model="data_model" ref="instance('localized_strings')/page-1.label[@lang=instance('localized_strings')/current_language]"/>
-<xf:output class="fbc_required_text"
-model="data_model" value="if(instance('control-instance')/validation='false' and instance('data-instance')/Request_text_fbc_5 ='' , instance('localized_strings')/fbc_5.info[@lang=instance('localized_strings')/current_language], '')"/>
-<xf:input bind="bind.fbc_13" id="fbc_13">
-<xf:label model="data_model" ref="instance('localized_strings')/fbc_13.title[@lang=instance('localized_strings')/current_language]"/>
-</xf:input>
-<xf:input bind="bind.fbc_14" id="fbc_14">
-<xf:label model="data_model" ref="instance('localized_strings')/fbc_14.title[@lang=instance('localized_strings')/current_language]"/>
-</xf:input>
-<xf:input bind="bind.fbc_8" id="fbc_8">
-<xf:label model="data_model" ref="instance('localized_strings')/fbc_8.title[@lang=instance('localized_strings')/current_language]"/>
-<xf:alert ref="instance('localized_strings')/fbc_8.error[@lang=instance('localized_strings')/current_language]"/>
-</xf:input>
-<xf:input bind="bind.fbc_9" id="fbc_9">
-<xf:label model="data_model" ref="instance('localized_strings')/fbc_9.title[@lang=instance('localized_strings')/current_language]"/>
-<xf:alert ref="instance('localized_strings')/fbc_9.error[@lang=instance('localized_strings')/current_language]"/>
-</xf:input>
-<xf:input bind="bind.fbc_10" id="fbc_10">
-<xf:label model="data_model" ref="instance('localized_strings')/fbc_10.title[@lang=instance('localized_strings')/current_language]"/>
-</xf:input>
-<xf:input bind="bind.fbc_11" id="fbc_11">
-<xf:label model="data_model" ref="instance('localized_strings')/fbc_11.title[@lang=instance('localized_strings')/current_language]"/>
-</xf:input>
-<xf:input bind="bind.fbc_12" id="fbc_12">
-<xf:label model="data_model" ref="instance('localized_strings')/fbc_12.title[@lang=instance('localized_strings')/current_language]"/>
-</xf:input>
-<div class="fbc_button_area" id="fbc_2" name="fbc_button_area">
-<xf:trigger bind="bind.readonlyHideButton"
-class="fbc_button_submit" id="fbc_3" name="fbc_button_submit">
-<xf:label model="data_model" ref="instance('localized_strings')/page-1-submit.label[@lang=instance('localized_strings')/current_language]"/>
-<xf:action ev:event="DOMActivate">
-<xf:setvalue
-ref="instance('control-instance')/validation" value="'false'"/>
-<xf:send submission="submit_data_submission"/>
-</xf:action>
-</xf:trigger>
-</div>
-</xf:group>
-</xf:case>
-<xf:case id="fbc_4" name="thx_page">
-<xf:group appearance="full">
-<xf:label model="data_model" ref="instance('localized_strings')/page-2.label[@lang=instance('localized_strings')/current_language]"/>
-<xf:output model="data_model" ref="instance('localized_strings')/page-2.info[@lang=instance('localized_strings')/current_language]"/>
-</xf:group>
-</xf:case>
-</xf:switch>
-</xf:group>
-</body>
-</html>
+<xf:bind id="bind.fbc_15" nodeset="Matching_emails_2_fbc_15"
+required="not(instance('control-instance')/required = 'false')" type="fbc_15fb_email"/> <xf:bind id="bind.fbc_16" nodeset="Matching_emails_1_fbc_16" required="not(instance('control-instance')/required = 'false')" type="fbc_16fb_email"/> </xf:model> <xf:model id="data_model"> <xf:instance id="localized_strings" xmlns=""> <localized_strings> <default_language>en</default_language> <current_language>en</current_language> <page-1-error.label lang="en">Submission error. Please check your form!</page-1-error.label> <page-1-error.label lang="is_IS">Submission error. Please check your form!</page-1-error.label> <form.title lang="en">New user registration</form.title> <page-1.label lang="en">First section</page-1.label> <page-1.label lang="is_IS">First section</page-1.label> <page-2.label lang="en">Submitted</page-2.label> <page-2.label lang="is_IS">Sent</page-2.label> <page-1-submit.label lang="en">Submit</page-1-submit.label> <page-1-submit.label lang="is_IS">Submit</page-1-submit.label> <page-2.info lang="en">Form submitted, thank You!</page-2.info> <page-2.info lang="is_IS">Form submitted, thank You!</page-2.info> <fbc_5.info lang="en">Follow up text can not be empty</fbc_5.info> <fbc_5.info lang="is_IS">Follow up text can not be empty</fbc_5.info> <form.title lang="is_IS">Title</form.title> <fbc_8.error lang="is_IS">Invalid email</fbc_8.error> <fbc_8.error lang="en">Invalid email</fbc_8.error> <fbc_10.title lang="is_IS">Address</fbc_10.title> <fbc_10.title lang="en">Address</fbc_10.title> <fbc_11.title lang="is_IS">Postal code</fbc_11.title> <fbc_11.title lang="en">Postal code</fbc_11.title> <fbc_12.title lang="is_IS">City</fbc_12.title> <fbc_12.title lang="en">City</fbc_12.title> <fbc_13.title lang="is_IS">Name</fbc_13.title> <fbc_13.title lang="en">Name</fbc_13.title> <fbc_14.title lang="is_IS">Personal id</fbc_14.title> <fbc_14.title lang="en">Personal id</fbc_14.title> <fbc_14.required lang="is_IS">Please fill in personal id</fbc_14.required> <fbc_14.required lang="en">Please fill in personal id</fbc_14.required> <fbc_14.exists lang="is_IS">Account already exists with this personal id</fbc_14.exists> <fbc_14.exists lang="en">Account already exists with this personal id</fbc_14.exists> <fbc_15.title lang="is_IS">Email</fbc_15.title> <fbc_15.title lang="en">Matching emails 2</fbc_15.title> <fbc_16.title lang="is_IS">Email</fbc_16.title> <fbc_16.title lang="en">Matching emails 1</fbc_16.title> <fbc_16.required lang="is_IS">Email is required</fbc_16.required> <fbc_16.required lang="en">Email is required</fbc_16.required> <fbc_15.required lang="is_IS">Email is required</fbc_15.required> <fbc_15.required lang="en">Email is required</fbc_15.required> <fbc_15.validation lang="is_IS">Email is incorrect</fbc_15.validation> <fbc_15.validation lang="en">Email is incorrect</fbc_15.validation> <fbc_16.validation lang="is_IS">Email is incorrect</fbc_16.validation> <fbc_16.validation lang="en">Email is incorrect</fbc_16.validation> <fbc_16.custom lang="en">Emails must match</fbc_16.custom> <fbc_16.custom lang="is_IS">Emails must match</fbc_16.custom> </localized_strings> </xf:instance> <xf:bind id="errors" nodeset="instance('error-instance')/error"/> <xf:instance id="error-instance" xmlns=""> <data> <error for=""/> </data> </xf:instance> <xf:instance id="locale-instance" relevant="false()" src="context:fb-afk-loginSession.currentLocale"/> <xf:action ev:event="xforms-ready"> <idega:dispatch name="idega-xforms-ready" target="//h:body//*[starts-with(@id, 'fbc_')]"/> <xf:setvalue model="data_model" ref="instance('localized_strings')/current_language" value="instance('locale-instance')/fb-afk-loginSession.currentLocale"/> </xf:action> </xf:model> <xs:schema id="fb-schema"> <xs:simpleType name="fbc_8fb_email"> <xs:restriction base="xs:string"> <xs:pattern value="[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+(\.[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+)*@[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+(\.[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+)*"/> </xs:restriction> </xs:simpleType> <xs:simpleType name="fbc_9fb_email"> <xs:restriction base="xs:string"> <xs:pattern value="[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+(\.[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+)*@[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+(\.[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+)*"/> </xs:restriction> </xs:simpleType> <xs:simpleType name="fbc_15fb_email"> <xs:restriction base="xs:string"> <xs:pattern value="[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+(\.[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+)*@[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+(\.[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+)*"/> </xs:restriction> </xs:simpleType> <xs:simpleType name="fbc_16fb_email"> <xs:restriction base="xs:string"> <xs:pattern value="[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+(\.[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+)*@[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+(\.[A-Za-z0-9!#-'\*\+\-/=\?\^_`\{-~]+)*"/> </xs:restriction> </xs:simpleType> </xs:schema> <xf:model id="x-autofill-model"> <xf:action ev:event="xforms-ready"> <xf:setvalue bind="bind.fbc_10" id="fbc_10-autofill-setvalue" model="submission_model" value="instance('fbc_10_autofill-instance')/fb-afk-loginSession.user.usersMainAddress.streetAddress"/> <xf:setvalue bind="bind.fbc_11" id="fbc_11-autofill-setvalue" model="submission_model" value="instance('fbc_11_autofill-instance')/fb-afk-loginSession.user.usersMainAddress.postalCode.postalCode"/> <xf:setvalue bind="bind.fbc_12" id="fbc_12-autofill-setvalue" model="submission_model" value="instance('fbc_12_autofill-instance')/fb-afk-loginSession.user.usersMainAddress.city"/> <xf:setvalue bind="bind.fbc_13" id="fbc_13-autofill-setvalue" model="submission_model" value="instance('fbc_13_autofill-instance')/fb-afk-loginSession.user.name"/> <xf:setvalue bind="bind.fbc_14" id="fbc_14-autofill-setvalue" model="submission_model" value="instance('fbc_14_autofill-instance')/fb-afk-loginSession.user.personalID"/> </xf:action> </xf:model> </head> <body> <xf:group appearance="full" id="allgoodness"> <xf:repeat bind="errors"> <xf:output ref="."/> </xf:repeat> <idega:setError ev:event="idega-validation-error" ref="instance('error-instance')/error"/> <xf:switch> <xf:case id="fbc_1"> <xf:group appearance="full"> <xf:label model="data_model" ref="instance('localized_strings')/page-1.label[@lang=instance('localized_strings')/current_language]"/> <xf:output class="fbc_required_text" model="data_model" value="if(instance('control-instance')/validation='false' and instance('data-instance')/Request_text_fbc_5 ='' , instance('localized_strings')/fbc_5.info[@lang=instance('localized_strings')/current_language], '')"/> <xf:input bind="bind.fbc_13" id="fbc_13"> <xf:label model="data_model" ref="instance('localized_strings')/fbc_13.title[@lang=instance('localized_strings')/current_language]"/> </xf:input> <xf:input bind="bind.fbc_14" id="fbc_14"> <xf:label model="data_model" ref="instance('localized_strings')/fbc_14.title[@lang=instance('localized_strings')/current_language]"/> <xf:dispatch ev:event="idega-xforms-ready" name="idega-validate" target="fbc_14"/> <xf:dispatch ev:event="xforms-value-changed" name="idega-validate" target="fbc_14"/> <idega:validator ev:event="idega-validate" validateif="not(idega:userNameAlreadyExists(instance('data-instance')/Personal_id_fbc_14))"> <idega:message errorType="required" model="data_model" value="instance('localized_strings')/fbc_14.required[@lang=instance('localized_strings')/current_language]"/> <idega:message errorType="custom" model="data_model" value="instance('localized_strings')/fbc_14.exists[@lang=instance('localized_strings')/current_language]"/> </idega:validator> <xf:alert ref="instance('error-instance')/error[@for='fbc_14']"/> </xf:input> <xf:group> <xf:input bind="bind.fbc_16" id="fbc_16"> <xf:label model="data_model" ref="instance('localized_strings')/fbc_16.title[@lang=instance('localized_strings')/current_language]"/> <xf:alert ref="instance('error-instance')/error[@for='fbc_16']"/> <xf:dispatch ev:event="idega-xforms-ready" name="idega-validate" target="fbc_16"/> <xf:action ev:event="xforms-value-changed"> <xf:dispatch name="idega-validate" target="fbc_16"/> <xf:dispatch name="idega-validate" target="fbc_15"/> </xf:action> <idega:validator ev:event="idega-validate" validateif="instance('data-instance')/Matching_emails_2_fbc_15 = instance('data-instance')/Matching_emails_1_fbc_16"> <idega:message errorType="required" model="data_model" value="instance('localized_strings')/fbc_16.required[@lang=instance('localized_strings')/current_language]"/> <idega:message errorType="validation" model="data_model" value="instance('localized_strings')/fbc_16.validation[@lang=instance('localized_strings')/current_language]"/> <idega:message errorType="custom" model="data_model" value="instance('localized_strings')/fbc_16.custom[@lang=instance('localized_strings')/current_language]"/> </idega:validator> </xf:input> <xf:input bind="bind.fbc_15" id="fbc_15"> <xf:label model="data_model" ref="instance('localized_strings')/fbc_15.title[@lang=instance('localized_strings')/current_language]"/> <xf:alert ref="instance('error-instance')/error[@for='fbc_15']"/> <xf:dispatch ev:event="idega-xforms-ready" name="idega-validate" target="fbc_15"/> <xf:action ev:event="xforms-value-changed"> <xf:dispatch name="idega-validate" target="fbc_16"/> <xf:dispatch name="idega-validate" target="fbc_15"/> </xf:action> <idega:validator ev:event="idega-validate"> <idega:message errorType="required" model="data_model" value="instance('localized_strings')/fbc_15.required[@lang=instance('localized_strings')/current_language]"/> <idega:message errorType="validation" model="data_model" value="instance('localized_strings')/fbc_15.validation[@lang=instance('localized_strings')/current_language]"/> </idega:validator> </xf:input> </xf:group> <xf:input bind="bind.fbc_10" id="fbc_10"> <xf:label model="data_model" ref="instance('localized_strings')/fbc_10.title[@lang=instance('localized_strings')/current_language]"/> </xf:input> <xf:input bind="bind.fbc_11" id="fbc_11"> <xf:label model="data_model" ref="instance('localized_strings')/fbc_11.title[@lang=instance('localized_strings')/current_language]"/> </xf:input> <xf:input bind="bind.fbc_12" id="fbc_12"> <xf:label model="data_model" ref="instance('localized_strings')/fbc_12.title[@lang=instance('localized_strings')/current_language]"/> </xf:input> <div class="fbc_button_area" id="fbc_2" name="fbc_button_area"> <xf:trigger bind="bind.readonlyHideButton" class="fbc_button_submit" id="fbc_3" name="fbc_button_submit"> <xf:label model="data_model" ref="instance('localized_strings')/page-1-submit.label[@lang=instance('localized_strings')/current_language]"/> <xf:action ev:event="DOMActivate" if="count-non-empty(instance('error-instance')/error)=0"> <xf:setvalue ref="instance('control-instance')/validation" value="'false'"/> <xf:send submission="submit_data_submission"/> </xf:action> </xf:trigger> </div> </xf:group> </xf:case> <xf:case id="fbc_4" name="thx_page"> <xf:group appearance="full"> <xf:label model="data_model" ref="instance('localized_strings')/page-2.label[@lang=instance('localized_strings')/current_language]"/> <xf:output model="data_model" ref="instance('localized_strings')/page-2.info[@lang=instance('localized_strings')/current_language]"/> </xf:group> </xf:case> </xf:switch> </xf:group> </body> </html> 
