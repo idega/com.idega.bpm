@@ -37,9 +37,9 @@ import com.idega.util.SendMail;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  *
- * Last modified: $Date: 2008/09/19 15:20:36 $ by $Author: civilis $
+ * Last modified: $Date: 2008/09/27 13:37:26 $ by $Author: civilis $
  */
 @Scope("singleton")
 @SendMessageType("email")
@@ -100,12 +100,13 @@ public class SendMailMessageImpl implements SendMessage {
 				
 //				TODO: if upd contains userId, we can get User here and add to message value context
 				
+				Locale preferredLocale = iwc != null ? iwc.getCurrentLocale() : defaultLocale;
+				
 				for (String email : emailAddresses) {
-					
-					Locale preferredLocale = iwc != null ? iwc.getCurrentLocale() : defaultLocale;
 					
 					mvCtx.setValue(MessageValueContext.updBean, upd);
 					mvCtx.setValue(MessageValueContext.piwBean, piw);
+					mvCtx.setValue(MessageValueContext.iwcBean, iwc);
 					
 					String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
 					String subject = subjAndMsg[0];
