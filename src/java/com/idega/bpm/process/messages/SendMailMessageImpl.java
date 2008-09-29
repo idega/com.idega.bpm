@@ -37,9 +37,9 @@ import com.idega.util.SendMail;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  *
- * Last modified: $Date: 2008/09/27 13:37:26 $ by $Author: civilis $
+ * Last modified: $Date: 2008/09/29 08:05:00 $ by $Author: arunas $
  */
 @Scope("singleton")
 @SendMessageType("email")
@@ -157,6 +157,7 @@ public class SendMailMessageImpl implements SendMessage {
 			formattedSubject = getFormattedMessage(unformattedSubject, msgs.getSubjectValuesExp(), tkn, mvCtx);
 		
 		formattedMsg = StringConverterUtility.loadConvert(formattedMsg);
+		formattedSubject = StringConverterUtility.loadConvert(formattedSubject);
 		
 		return new String[] {formattedSubject, formattedMsg};
 	}
