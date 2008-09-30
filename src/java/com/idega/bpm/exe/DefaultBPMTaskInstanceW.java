@@ -38,6 +38,7 @@ import com.idega.jbpm.identity.BPMAccessControlException;
 import com.idega.jbpm.identity.BPMUser;
 import com.idega.jbpm.identity.Role;
 import com.idega.jbpm.identity.RolesManager;
+import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
 import com.idega.presentation.IWContext;
@@ -48,9 +49,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  *
- * Last modified: $Date: 2008/09/30 13:19:19 $ by $Author: civilis $
+ * Last modified: $Date: 2008/09/30 13:55:12 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -370,7 +371,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		this.variablesHandler = variablesHandler;
 	}
 
-	public void addAttachment(Variable variable, String fileName, InputStream is) {
+	public BinaryVariable addAttachment(Variable variable, String fileName, InputStream is) {
 		
 		String filesFolder = getTaskInstanceId()+System.currentTimeMillis() + CoreConstants.SLASH;
 		
@@ -379,12 +380,17 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		Collection<URI> uris = getFileUploadManager().getFilesUris(filesFolder, null, getUploadedResourceResolver());
 		URI uri = uris.iterator().next();
 		
-		HashMap<String, Object> vars = new HashMap<String, Object>(1);
-		vars.put(variable.getDefaultStringRepresentation(), uri);
-
-		getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
+		String variableName = variable.getDefaultStringRepresentation();
 		
+		Map<String, Object> vars = new HashMap<String, Object>(1);
+		vars.put(variableName, uri);
+
+		vars = getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
+		
+		BinaryVariable binVar = (BinaryVariable)vars.get(variableName);
 		getFileUploadManager().cleanup(filesFolder, null, getUploadedResourceResolver());
+		
+		return binVar;
 	}
 
 	TmpFilesManager getFileUploadManager() {
