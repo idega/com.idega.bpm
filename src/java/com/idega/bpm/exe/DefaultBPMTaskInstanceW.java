@@ -31,6 +31,7 @@ import com.idega.jbpm.identity.BPMAccessControlException;
 import com.idega.jbpm.identity.BPMUser;
 import com.idega.jbpm.identity.Role;
 import com.idega.jbpm.identity.RolesManager;
+import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
 import com.idega.presentation.IWContext;
@@ -41,9 +42,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  *
- * Last modified: $Date: 2008/09/18 17:11:10 $ by $Author: civilis $
+ * Last modified: $Date: 2008/09/30 12:30:35 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -358,5 +359,13 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Autowired
 	public void setVariablesHandler(VariablesHandler variablesHandler) {
 		this.variablesHandler = variablesHandler;
+	}
+
+	public void addAttachment(String variableName, BinaryVariable attachment) {
+		
+		HashMap<String, Object> vars = new HashMap<String, Object>(1);
+		vars.put(variableName, attachment);
+
+		getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
 	}
 }
