@@ -6,4 +6,6 @@ public interface ProcessTaskInstanceConverterToPDF {
 	
 	public String getGeneratedPDFFromXForm(String taskInstanceId, String formId, String uploadPath, boolean checkExistence);
 	
+	public String getHashValueForGeneratedPDFFromXForm(String taskInstanceId, boolean checkExistence);
+	
 }
