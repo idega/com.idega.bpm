@@ -1,6 +1,9 @@
 package com.idega.bpm.exe;
 
+import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -16,11 +19,15 @@ import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.idega.block.process.variables.Variable;
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.business.IBOLookup;
 import com.idega.business.IBOLookupException;
 import com.idega.business.IBORuntimeException;
 import com.idega.core.cache.IWCacheManager2;
+import com.idega.core.file.tmp.TmpFileResolver;
+import com.idega.core.file.tmp.TmpFileResolverType;
+import com.idega.core.file.tmp.TmpFilesManager;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.exe.BPMFactory;
@@ -31,7 +38,6 @@ import com.idega.jbpm.identity.BPMAccessControlException;
 import com.idega.jbpm.identity.BPMUser;
 import com.idega.jbpm.identity.Role;
 import com.idega.jbpm.identity.RolesManager;
-import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
 import com.idega.presentation.IWContext;
@@ -42,13 +48,16 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  *
- * Last modified: $Date: 2008/09/30 12:30:35 $ by $Author: civilis $
+ * Last modified: $Date: 2008/09/30 13:19:19 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
 public class DefaultBPMTaskInstanceW implements TaskInstanceW {
+	
+	@Autowired private TmpFilesManager fileUploadManager;
+	@Autowired @TmpFileResolverType("defaultResolver") private TmpFileResolver uploadedResourceResolver;
 	
 	private Long taskInstanceId;
 	private TaskInstance taskInstance;
@@ -361,11 +370,28 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		this.variablesHandler = variablesHandler;
 	}
 
-	public void addAttachment(String variableName, BinaryVariable attachment) {
+	public void addAttachment(Variable variable, String fileName, InputStream is) {
+		
+		String filesFolder = getTaskInstanceId()+System.currentTimeMillis() + CoreConstants.SLASH;
+		
+		getFileUploadManager().uploadToTmpDir(filesFolder, fileName, is, getUploadedResourceResolver());
+		
+		Collection<URI> uris = getFileUploadManager().getFilesUris(filesFolder, null, getUploadedResourceResolver());
+		URI uri = uris.iterator().next();
 		
 		HashMap<String, Object> vars = new HashMap<String, Object>(1);
-		vars.put(variableName, attachment);
+		vars.put(variable.getDefaultStringRepresentation(), uri);
 
 		getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
+		
+		getFileUploadManager().cleanup(filesFolder, null, getUploadedResourceResolver());
+	}
+
+	TmpFilesManager getFileUploadManager() {
+		return fileUploadManager;
+	}
+
+	TmpFileResolver getUploadedResourceResolver() {
+		return uploadedResourceResolver;
 	}
 }
