@@ -49,9 +49,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  *
- * Last modified: $Date: 2008/09/30 14:49:57 $ by $Author: civilis $
+ * Last modified: $Date: 2008/09/30 14:55:21 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -387,8 +387,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 		vars = getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
 		
-		@SuppressWarnings("unchecked")
-		List<BinaryVariable> binVars = (List<BinaryVariable>)vars.get(variableName);
+		List<BinaryVariable> binVars = getVariablesHandler().getBinaryVariablesHandler().resolveBinaryVariablesAsList(vars);
 		BinaryVariable binVar = binVars.iterator().next();
 		
 		getFileUploadManager().cleanup(filesFolder, null, getUploadedResourceResolver());
