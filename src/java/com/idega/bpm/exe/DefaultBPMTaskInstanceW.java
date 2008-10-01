@@ -25,6 +25,7 @@ import com.idega.business.IBOLookup;
 import com.idega.business.IBOLookupException;
 import com.idega.business.IBORuntimeException;
 import com.idega.core.cache.IWCacheManager2;
+import com.idega.core.file.data.ExtendedFile;
 import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
@@ -49,9 +50,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  *
- * Last modified: $Date: 2008/09/30 14:55:21 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/01 13:44:16 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -371,7 +372,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		this.variablesHandler = variablesHandler;
 	}
 
-	public BinaryVariable addAttachment(Variable variable, String fileName, InputStream is) {
+	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is) {
 		
 		String filesFolder = getTaskInstanceId()+System.currentTimeMillis() + CoreConstants.SLASH;
 		
@@ -383,7 +384,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		String variableName = variable.getDefaultStringRepresentation();
 		
 		Map<String, Object> vars = new HashMap<String, Object>(1);
-		vars.put(variableName, uri);
+		vars.put(variableName, new ExtendedFile(uri, description));
 
 		vars = getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
 		
