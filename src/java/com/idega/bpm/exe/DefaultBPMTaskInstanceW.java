@@ -50,9 +50,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  *
- * Last modified: $Date: 2008/10/06 11:20:57 $ by $Author: anton $
+ * Last modified: $Date: 2008/10/07 10:21:13 $ by $Author: anton $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -227,7 +227,6 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 	
 	public View loadView() {
-		
 		Long taskInstanceId = getTaskInstanceId();
 		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
 		
@@ -240,11 +239,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			View view;
 			
 			if(taskInstance.hasEnded()) {
-				
-				view = getBpmFactory().getViewByTaskInstance(taskInstanceId, false, preferred);
-				
+				view = getBpmFactory().getViewByTaskInstance(taskInstanceId, false, preferred);	
 			} else {
-				
 				view = getBpmFactory().takeView(taskInstanceId, true, preferred);
 			}
 			
@@ -293,7 +289,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	
 	public String getName(Locale locale) {
 		
-		final IWMainApplication iwma = getIWMA();
+		final IWMainApplication iwma = getIWma();
 		@SuppressWarnings("unchecked")
 		Map<Long, Map<Locale, String>> cashTaskNames = IWCacheManager2.getInstance(iwma).getCache(CASHED_TASK_NAMES);
 		final Map<Locale, String> names;
@@ -303,10 +299,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 //			synchronizing on CASHED_TASK_NAMES map, as it's accessed from multiple threads
 			
 			if(cashTaskNames.containsKey(taskInstanceId)) {
-			
 				names = cashTaskNames.get(getTaskInstanceId());
 			} else {
-				
 				names = new HashMap<Locale, String>(5);
 				cashTaskNames.put(taskInstanceId, names);
 			}
@@ -317,12 +311,10 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		if(names.containsKey(locale))
 			name = names.get(locale);
 		else {
-			
 			View taskInstanceView = loadView();
 			name = taskInstanceView.getDisplayName(locale);
 			names.put(locale, name);
 		}
-		
 		return name;
 	}
 	
@@ -335,16 +327,13 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		);
 	}
 	
-	private IWMainApplication getIWMA() {
-		
-		final IWContext iwc = IWContext.getCurrentInstance();
+	private IWMainApplication getIWma() {
+		final IWContext iwc = CoreUtil.getIWContext();
 		final IWMainApplication iwma;
 //		trying to get iwma from iwc, if available, downgrading to default iwma, if not
 		
 		if(iwc != null) {
-			
 			iwma = iwc.getIWMainApplication();
-			
 		} else {
 			iwma = IWMainApplication.getDefaultIWMainApplication();
 		}

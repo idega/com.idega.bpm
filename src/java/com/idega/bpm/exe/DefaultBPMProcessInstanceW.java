@@ -4,8 +4,11 @@ package com.idega.bpm.exe;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,6 +23,9 @@ import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.idega.bpm.xformsview.XFormsView;
+import com.idega.core.cache.IWCacheManager2;
+import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessDefinitionW;
@@ -31,15 +37,17 @@ import com.idega.jbpm.identity.BPMUser;
 import com.idega.jbpm.identity.Role;
 import com.idega.jbpm.identity.permission.BPMTypedPermission;
 import com.idega.jbpm.identity.permission.PermissionsFactory;
+import com.idega.jbpm.view.View;
+import com.idega.presentation.IWContext;
 import com.idega.user.data.User;
 import com.idega.user.util.UserComparator;
 import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  *
- * Last modified: $Date: 2008/09/18 17:11:10 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/07 10:21:13 $ by $Author: anton $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -54,6 +62,8 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	private BPMFactory bpmFactory;
 	@Autowired
 	private PermissionsFactory permissionsFactory;
+	
+	private static final String CASHED_TASK_NAMES = "defaultBPM_taskinstance_names";
 	
 	public List<TaskInstanceW> getAllTaskInstances() {
 		
@@ -249,5 +259,65 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 
 	public ProcessWatch getProcessWatcher() {
 		return null;
+	}
+	
+	public String getName(Locale locale) {
+		final IWMainApplication iwma = getIWma();
+		@SuppressWarnings("unchecked")
+		Map<Long, Map<Locale, String>> cashTaskNames = IWCacheManager2.getInstance(iwma).getCache(CASHED_TASK_NAMES);
+		final Map<Locale, String> names;
+		final Long taskInstanceId = getProcessDefinitionW().getProcessDefinition().getTaskMgmtDefinition().getStartTask().getId();
+			
+		if(cashTaskNames.containsKey(taskInstanceId)) {
+			names = cashTaskNames.get(taskInstanceId);
+		} else {
+			names = new HashMap<Locale, String>(5);
+			cashTaskNames.put(taskInstanceId, names);
+		}
+		final String name;
+		
+		if(names.containsKey(locale))
+			name = names.get(locale);
+		else {
+			View taskInstanceView = loadView();
+			name = taskInstanceView.getDisplayName(locale);
+			names.put(locale, name);
+		}
+		
+		return name;
+	}
+	
+	private IWMainApplication getIWma() {
+		final IWContext iwc = CoreUtil.getIWContext();
+		final IWMainApplication iwma;
+		
+		if(iwc != null) {	
+			iwma = iwc.getIWMainApplication();		
+		} else {
+			iwma = IWMainApplication.getDefaultIWMainApplication();
+		}
+		
+		return iwma;
+	}
+	
+	public View loadView() {
+		Long taskId = getProcessDefinitionW().getProcessDefinition().getTaskMgmtDefinition().getStartTask().getId();
+		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
+		
+		try {
+			List<String> preferred = new ArrayList<String>(1);
+			preferred.add(XFormsView.VIEW_TYPE);
+			
+			View view = getBpmFactory().getViewByTask(taskId, false, preferred);	
+		
+			return view;
+		
+		} catch(RuntimeException e) {
+			throw e;
+		} catch(Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			getIdegaJbpmContext().closeAndCommit(ctx);
+		}
 	}
 }
