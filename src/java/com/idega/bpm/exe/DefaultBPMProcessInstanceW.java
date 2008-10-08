@@ -1,6 +1,8 @@
 package com.idega.bpm.exe;
 
 
+import java.security.AccessControlException;
+import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -35,8 +37,10 @@ import com.idega.jbpm.exe.ProcessWatch;
 import com.idega.jbpm.exe.TaskInstanceW;
 import com.idega.jbpm.identity.BPMUser;
 import com.idega.jbpm.identity.Role;
+import com.idega.jbpm.identity.permission.Access;
 import com.idega.jbpm.identity.permission.BPMTypedPermission;
 import com.idega.jbpm.identity.permission.PermissionsFactory;
+import com.idega.jbpm.rights.Right;
 import com.idega.jbpm.view.View;
 import com.idega.presentation.IWContext;
 import com.idega.user.data.User;
@@ -45,9 +49,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  *
- * Last modified: $Date: 2008/10/07 10:21:13 $ by $Author: anton $
+ * Last modified: $Date: 2008/10/08 18:53:25 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -318,6 +322,32 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			throw new RuntimeException(e);
 		} finally {
 			getIdegaJbpmContext().closeAndCommit(ctx);
+		}
+	}
+	
+	/**
+	 * checks right for process instance and current logged in user
+	 * 
+	 * @param right
+	 * @return
+	 */
+	public boolean hasRight(Right right) {
+		
+		switch (right) {
+		case processHandler:
+			
+			try {
+				Permission perm = getPermissionsFactory().getAccessPermission(getProcessInstanceId(), Access.processHandler);
+				getBpmFactory().getRolesManager().checkPermission(perm);
+				
+				return true;
+				
+			} catch (AccessControlException e) {
+				return false;
+			}
+
+		default:
+			throw new IllegalArgumentException("Right type "+right+" not supported for cases process instance");
 		}
 	}
 }
