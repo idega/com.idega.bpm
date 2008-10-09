@@ -4,11 +4,12 @@
 		<task name="New User Registration">
 			<controller>
 				<variable access="read,write,required" name="string_ownerEmailAddress"></variable>
-				<variable access="read,write" name="string_ownerAddress"></variable>
-				<variable access="read,write" name="string_ownerPostalCode"></variable>
-				<variable access="read,write" name="string_ownerMunicipality"></variable>
+				<variable access="read,write,required" name="string_ownerAddress"></variable>
+				<variable access="read,write,required" name="string_ownerPostalCode"></variable>
+				<variable access="read,write,required" name="string_ownerMunicipality"></variable>
 				<variable access="read,write,required" name="string_ownerFullName"></variable>
 				<variable access="read,write,required" name="string_ownerPersonalId"></variable>
+				<variable access="read,write,required" name="string_ownerGender"></variable>
 			</controller>
 		</task>
 		<event type="node-leave">
@@ -24,6 +25,7 @@
 					s_upd.setUserMunicipality(userMunicipality);
 					s_upd.setCreateWithLogin(true);
 					s_upd.setUserName(userPersonalId);
+					s_upd.setGenderName(userGenderName);
                 </expression>
 				<variable name='ownerUserData' access='write' mapped-name='s_upd' />
 				<variable name='string_ownerPersonalId' access='read' mapped-name='userPersonalId' />
@@ -32,6 +34,7 @@
 				<variable name='string_ownerMunicipality' access='read' mapped-name='userMunicipality' />
 				<variable name='string_ownerFullName' access='read' mapped-name='userFullName' />
 				<variable name='string_ownerEmailAddress' access='read' mapped-name='userEmailAddress' />
+				<variable name='string_ownerGender' access='read' mapped-name='userGenderName' />
 			</script>
 		</event>
 		<transition to="loginAlreadyExists" name="toCheckForloginAlreadyExists"></transition>

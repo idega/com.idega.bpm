@@ -7,7 +7,6 @@
             <xf:instance xmlns="" id="data-instance">
                 <data>
                     <form_id>704</form_id>
-                    <readonlyHideButton/>
                     <Address_fbc_10 mapping="string_ownerAddress"/>
                     <Postal_code_fbc_11 mapping="string_ownerPostalCode"/>
                     <City_fbc_12 mapping="string_ownerMunicipality"/>
@@ -15,36 +14,51 @@
                     <Personal_id_fbc_14 mapping="string_ownerPersonalId" xsi:nil="true"/>
                     <Matching_emails_2_fbc_15 xsi:nil="true"/>
                     <Matching_emails_1_fbc_16 mapping="string_ownerEmailAddress" xsi:nil="true"/>
+                    <Gender_fbc_19 mapping="string_ownerGender"/>
                 </data>
             </xf:instance>
             <xf:instance id="control-instance">
                 <control xmlns="">
-                    <enable>true</enable>
-                    <required>true</required>
                     <readonly>false</readonly>
-                    <validation>true</validation>
                     <submission>false</submission>
+                    <generatePdf>false</generatePdf>
+                    <sendLinkSubmission>false</sendLinkSubmission>
+                    <submissionButton/>
+                    <controlsButton/>
                 </control>
             </xf:instance>
+            
+            <xf:bind id="errorsGroup" nodeset="instance('error-instance')/error" relevant="instance('control-instance')/submission = 'true' and count-non-empty(instance('error-instance')/error)!=0"/>
+            <xf:bind id="errors" nodeset="instance('error-instance')/error[. != '']"/>
+            <xf:instance xmlns="" id="error-instance">
+                <data>
+                    <error for=""/>
+                    <sendLinkError for=""/>
+                </data>
+            </xf:instance>
+            
+            <xf:bind id="bind.submissionButton" nodeset="instance('control-instance')/submissionButton" relevant="instance('control-instance')/readonly != 'true' and instance('control-instance')/generatePdf != 'true'" />
+            
             <xf:submission action="xformsBPM:/nouri" id="submit_data_submission" method="post" replace="none">
                 <xf:toggle case="fbc_4" ev:event="xforms-submit-done"/>
             </xf:submission>
             <xf:action ev:event="xforms-submit-error" id="submission-error">
                 <xf:message level="modeless" ref="instance('localized_strings')/page-1-error.label[@lang=instance('localized_strings')/current_language]"/>
             </xf:action>
-            <xf:bind id="bind.readonlyHideButton" nodeset="readonlyHideButton" relevant="instance('control-instance')/readonly != 'true'"/>
-            <xf:bind id="bind.fbc_10" nodeset="Address_fbc_10" type="xs:string"/>
+            
+            <xf:bind id="bind.fbc_10" nodeset="Address_fbc_10" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
             <xf:instance id="fbc_10_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.usersMainAddress.streetAddress"/>
-            <xf:bind id="bind.fbc_11" nodeset="Postal_code_fbc_11" type="xs:string"/>
+            <xf:bind id="bind.fbc_11" nodeset="Postal_code_fbc_11" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
             <xf:instance id="fbc_11_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.usersMainAddress.postalCode.postalCode"/>
-            <xf:bind id="bind.fbc_12" nodeset="City_fbc_12" type="xs:string"/>
+            <xf:bind id="bind.fbc_12" nodeset="City_fbc_12" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
             <xf:instance id="fbc_12_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.usersMainAddress.city"/>
-            <xf:bind id="bind.fbc_13" nodeset="Name_fbc_13" required="not(instance('control-instance')/required = 'false')" type="xs:string"/>
+            <xf:bind id="bind.fbc_13" nodeset="Name_fbc_13" required="instance('control-instance')/generatePdf != 'true'" type="xs:string"/>
             <xf:instance id="fbc_13_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.name"/>
-            <xf:bind id="bind.fbc_14" nodeset="Personal_id_fbc_14" required="not(instance('control-instance')/required = 'false')" type="xs:integer"/>
+            <xf:bind id="bind.fbc_14" nodeset="Personal_id_fbc_14" required="instance('control-instance')/generatePdf != 'true'" type="xs:integer"/>
             <xf:instance id="fbc_14_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.personalID"/>
-            <xf:bind id="bind.fbc_15" nodeset="Matching_emails_2_fbc_15" required="not(instance('control-instance')/required = 'false')" type="fbc_15fb_email"/>
-            <xf:bind id="bind.fbc_16" nodeset="Matching_emails_1_fbc_16" required="not(instance('control-instance')/required = 'false')" type="fbc_16fb_email"/>
+            <xf:bind id="bind.fbc_15" nodeset="Matching_emails_2_fbc_15" required="instance('control-instance')/generatePdf != 'true'" type="fbc_15fb_email"/>
+            <xf:bind id="bind.fbc_16" nodeset="Matching_emails_1_fbc_16" required="instance('control-instance')/generatePdf != 'true'" type="fbc_16fb_email"/>
+            <xf:bind id="bind.fbc_19" nodeset="Gender_fbc_19" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
         </xf:model>
         <xf:model id="data_model">
             <xf:instance xmlns="" id="localized_strings">
@@ -97,20 +111,42 @@
                     <fbc_16.validation lang="en">Email is incorrect</fbc_16.validation>
                     <fbc_16.custom lang="en">Emails must match</fbc_16.custom>
                     <fbc_16.custom lang="is_IS">Emails must match</fbc_16.custom>
+                    <fbc_19.title lang="is_IS">Kyn</fbc_19.title>
+                    <fbc_19.title lang="en">Gender</fbc_19.title>
                 </localized_strings>
             </xf:instance>
-            <xf:bind id="errorsGroup" nodeset="instance('error-instance')/error" relevant="idega:instance('submission_model', 'control-instance')/submission = 'true'"/>
-            <xf:bind id="errors" nodeset="instance('error-instance')/error[. != '']"/>
-            <xf:instance xmlns="" id="error-instance">
-                <data>
-                    <error for=""/>
-                </data>
-            </xf:instance>
+            
             <xf:instance id="locale-instance" relevant="false()" src="context:fb-afk-loginSession.currentLocale"/>
             <xf:action ev:event="xforms-ready">
-                <idega:dispatch name="idega-xforms-ready" target="//h:body//*[starts-with(@id, 'fbc_')]"/>
                 <xf:setvalue model="data_model" ref="instance('localized_strings')/current_language" value="instance('locale-instance')/fb-afk-loginSession.currentLocale"/>
+                <idega:dispatch name="idega-xforms-ready" target="//h:body//*[starts-with(@id, 'fbc_')]"/>
             </xf:action>
+            
+            <xf:instance xmlns="" id="fbc_19_lds">
+                <local_src>
+                    <localizedEntries lang="en">
+                        <item>
+                            <itemLabel>Male</itemLabel>
+                            <itemValue>male</itemValue>
+                        </item>
+                        <item>
+                            <itemLabel>Female</itemLabel>
+                            <itemValue>female</itemValue>
+                        </item>
+                    </localizedEntries>
+                    <localizedEntries lang="is_IS">
+                        <item>
+                            <itemLabel>KK</itemLabel>
+                            <itemValue>male</itemValue>
+                        </item>
+                        <item>
+                            <itemLabel>KVK</itemLabel>
+                            <itemValue>female</itemValue>
+                        </item>
+                    </localizedEntries>
+                </local_src>
+            </xf:instance>
+            
         </xf:model>
         <xs:schema id="fb-schema">
             <xs:simpleType name="fbc_8fb_email">
@@ -151,7 +187,7 @@
                     <xf:output ref="."/>
                 </xf:repeat>
             </xf:group>
-            <idega:setError ev:event="idega-validation-error" ref="instance('error-instance')/error"/>
+            <idega:setError ev:event="idega-validation-error" id="formSetErrorHandler" ref="instance('error-instance')/error"/>
             <xf:switch>
                 <xf:case id="fbc_1">
                     <xf:group appearance="full">
@@ -207,15 +243,38 @@
                         </xf:group>
                         <xf:input bind="bind.fbc_10" id="fbc_10">
                             <xf:label model="data_model" ref="instance('localized_strings')/fbc_10.title[@lang=instance('localized_strings')/current_language]"/>
+                            <xf:dispatch ev:event="idega-xforms-ready" name="idega-validate" target="fbc_10"/>
+                            <xf:dispatch ev:event="xforms-value-changed" name="idega-validate" target="fbc_10"/>
+                            <idega:validator ev:event="idega-validate" />
+                            <xf:alert ref="instance('error-instance')/error[@for='fbc_10']"/>
                         </xf:input>
                         <xf:input bind="bind.fbc_11" id="fbc_11">
                             <xf:label model="data_model" ref="instance('localized_strings')/fbc_11.title[@lang=instance('localized_strings')/current_language]"/>
+                            <xf:dispatch ev:event="idega-xforms-ready" name="idega-validate" target="fbc_11"/>
+                            <xf:dispatch ev:event="xforms-value-changed" name="idega-validate" target="fbc_11"/>
+                            <idega:validator ev:event="idega-validate" />
+                            <xf:alert ref="instance('error-instance')/error[@for='fbc_11']"/>
                         </xf:input>
                         <xf:input bind="bind.fbc_12" id="fbc_12">
                             <xf:label model="data_model" ref="instance('localized_strings')/fbc_12.title[@lang=instance('localized_strings')/current_language]"/>
+                            <xf:dispatch ev:event="idega-xforms-ready" name="idega-validate" target="fbc_12"/>
+                            <xf:dispatch ev:event="xforms-value-changed" name="idega-validate" target="fbc_12"/>
+                            <idega:validator ev:event="idega-validate" />
+                            <xf:alert ref="instance('error-instance')/error[@for='fbc_12']"/>
                         </xf:input>
+                        <xf:select1 appearance="full" bind="bind.fbc_19" id="fbc_19">
+                            <xf:label model="data_model" ref="instance('localized_strings')/fbc_19.title[@lang=instance('localized_strings')/current_language]"/>
+                            <xf:itemset model="data_model" nodeset="instance('fbc_19_lds')/localizedEntries[@lang=instance('localized_strings')/current_language]/item">
+                                <xf:label ref="itemLabel"/>
+                                <xf:value ref="itemValue"/>
+                            </xf:itemset>
+                            <xf:dispatch ev:event="idega-xforms-ready" name="idega-validate" target="fbc_19"/>
+                            <xf:dispatch ev:event="xforms-value-changed" name="idega-validate" target="fbc_19"/>
+                            <idega:validator ev:event="idega-validate" />
+                            <xf:alert ref="instance('error-instance')/error[@for='fbc_19']"/>
+                        </xf:select1>
                         <div class="fbc_button_area" id="fbc_2" name="fbc_button_area">
-                            <xf:trigger bind="bind.readonlyHideButton" class="fbc_button_submit" id="fbc_3" name="fbc_button_submit">
+                            <xf:trigger bind="bind.submissionButton" class="fbc_button_submit" id="fbc_3" name="fbc_button_submit">
                                 <xf:label model="data_model" ref="instance('localized_strings')/page-1-submit.label[@lang=instance('localized_strings')/current_language]"/>
                                 <xf:action ev:event="DOMActivate">
                                     <xf:setvalue ref="instance('control-instance')/submission" value="'true'"/>
@@ -225,9 +284,9 @@
                                     <xf:dispatch name="xforms-revalidate" target="data_model"/>
                                     <xf:dispatch name="xforms-refresh" target="data_model"/>
                                     <xf:action if="count-non-empty(instance('error-instance')/error)=0">
-                                    <xf:setvalue ref="instance('control-instance')/validation" value="'false'"/>
                                     <xf:send submission="submit_data_submission"/>
                                     </xf:action>
+                                    <xf:message if="count-non-empty(instance('error-instance')/error)!=0" level="modeless" ref="instance('localized_strings')/page-1-error.label[@lang=instance('localized_strings')/current_language]"/>
                                 </xf:action>
                             </xf:trigger>
                         </div>
