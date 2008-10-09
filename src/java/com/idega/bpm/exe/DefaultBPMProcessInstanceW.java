@@ -49,9 +49,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  *
- * Last modified: $Date: 2008/10/09 10:03:19 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/09 11:42:04 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -338,7 +338,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		case processHandler:
 			
 			try {
-				Permission perm = getPermissionsFactory().getAccessPermission(getProcessInstanceId(), Access.processHandler);
+				Permission perm = getPermissionsFactory().getAccessPermission(getProcessInstanceId(), Access.caseHandler);
 				getBpmFactory().getRolesManager().checkPermission(perm);
 				
 				return true;
