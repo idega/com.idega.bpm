@@ -49,9 +49,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  *
- * Last modified: $Date: 2008/10/09 11:42:04 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/13 09:25:00 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -176,8 +176,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	
 	public String getProcessIdentifier() {
 	    
-		System.out.println("______CALLED DEFAULT BPM getProcessIdentifier");
-		   return null;
+		return null;
 	}
 	
 	public ProcessDefinitionW getProcessDefinitionW () {
