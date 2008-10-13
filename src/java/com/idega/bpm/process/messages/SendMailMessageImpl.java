@@ -33,13 +33,14 @@ import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.util.CoreConstants;
 import com.idega.util.SendMail;
+import com.idega.util.SendMailMessageValue;
 
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  *
- * Last modified: $Date: 2008/09/29 08:05:00 $ by $Author: arunas $
+ * Last modified: $Date: 2008/10/13 09:25:56 $ by $Author: civilis $
  */
 @Scope("singleton")
 @SendMessageType("email")
@@ -79,49 +80,60 @@ public class SendMailMessageImpl implements SendMessage {
 		
 		final Locale defaultLocale = iwma.getDefaultLocale();
 		
-		new Thread(new Runnable() {
-
-			public void run() {
-				
-				long pid = pi.getId();
-				ProcessInstanceW piw = getBpmFactory().getProcessManagerByProcessInstanceId(pid).getProcessInstance(pid);
-				
-				HashMap<Locale, String[]> unformattedForLocales = new HashMap<Locale, String[]>(5);
-				MessageValueContext mvCtx = new MessageValueContext(5);
-				
-//				TODO: get default email
-				String from = msgs.getFrom();
-				
-				if(from == null || CoreConstants.EMPTY.equals(from) || !EmailValidator.getInstance().isValid(from)) {
-					from = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_SYSTEM_MAIL_FROM_ADDRESS, "staff@idega.is");
-				}
-				
-				String host = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_SYSTEM_SMTP_MAILSERVER, "mail.idega.is");
-				
-//				TODO: if upd contains userId, we can get User here and add to message value context
-				
-				Locale preferredLocale = iwc != null ? iwc.getCurrentLocale() : defaultLocale;
-				
-				for (String email : emailAddresses) {
-					
-					mvCtx.setValue(MessageValueContext.updBean, upd);
-					mvCtx.setValue(MessageValueContext.piwBean, piw);
-					mvCtx.setValue(MessageValueContext.iwcBean, iwc);
-					
-					String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
-					String subject = subjAndMsg[0];
-					String text = subjAndMsg[1];
-					
-					try {
-						SendMail.send(from, email, null, null, host, subject, text);
-					} catch (javax.mail.MessagingException me) {
-						Logger.getLogger(getClass().getName()).log(Level.SEVERE, "Exception while sending email message", me);
-					}
-					
-				}
-			}
+		long pid = pi.getId();
+		ProcessInstanceW piw = getBpmFactory().getProcessManagerByProcessInstanceId(pid).getProcessInstance(pid);
+		
+		HashMap<Locale, String[]> unformattedForLocales = new HashMap<Locale, String[]>(5);
+		MessageValueContext mvCtx = new MessageValueContext(5);
+		
+//		TODO: get default email
+		String from = msgs.getFrom();
+		
+		if(from == null || CoreConstants.EMPTY.equals(from) || !EmailValidator.getInstance().isValid(from)) {
+			from = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_SYSTEM_MAIL_FROM_ADDRESS, "staff@idega.is");
+		}
+		
+		String host = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_SYSTEM_SMTP_MAILSERVER, "mail.idega.is");
+		
+//		TODO: if upd contains userId, we can get User here and add to message value context
+		
+		Locale preferredLocale = iwc != null ? iwc.getCurrentLocale() : defaultLocale;
+		final ArrayList<SendMailMessageValue> messageValuesToSend = new ArrayList<SendMailMessageValue>(emailAddresses.size());
+		
+		for (String email : emailAddresses) {
 			
-		}).start();
+			mvCtx.setValue(MessageValueContext.updBean, upd);
+			mvCtx.setValue(MessageValueContext.piwBean, piw);
+			mvCtx.setValue(MessageValueContext.iwcBean, iwc);
+			
+			String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
+			String subject = subjAndMsg[0];
+			String text = subjAndMsg[1];
+			
+			messageValuesToSend.add(new SendMailMessageValue(
+					null, null, null, from, host, subject, text, email, null
+					)
+			);
+		}
+		
+		if(messageValuesToSend != null && !messageValuesToSend.isEmpty()) {
+		
+			new Thread(new Runnable() {
+
+				public void run() {
+					
+					for (SendMailMessageValue mv : messageValuesToSend) {
+					
+						try {
+							SendMail.send(mv);
+						} catch (javax.mail.MessagingException me) {
+							Logger.getLogger(getClass().getName()).log(Level.SEVERE, "Exception while sending email message", me);
+						}
+					}
+				}
+				
+			}).start();
+		}
 	}
 	
 	protected String[] getFormattedMessage(MessageValueContext mvCtx, Locale preferredLocale, LocalizedMessages msgs, Map<Locale, String[]> unformattedForLocales, Token tkn) {
