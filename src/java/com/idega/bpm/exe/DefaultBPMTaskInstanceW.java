@@ -50,9 +50,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  *
- * Last modified: $Date: 2008/10/07 13:31:11 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/14 11:44:21 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -383,13 +383,29 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		
 		String variableName = variable.getDefaultStringRepresentation();
 		
-		Map<String, Object> vars = new HashMap<String, Object>(1);
-		vars.put(variableName, new ExtendedFile(uri, description));
-
-		vars = getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
+		List<BinaryVariable> binVars = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId(), variable);
 		
-		List<BinaryVariable> binVars = getVariablesHandler().getBinaryVariablesHandler().resolveBinaryVariablesAsList(vars);
-		BinaryVariable binVar = binVars.iterator().next();
+		Map<String, Object> vars = new HashMap<String, Object>(1);
+		BinaryVariable binVar;
+		
+		if(binVars != null) {
+			
+			binVar = getVariablesHandler().getBinaryVariablesHandler()
+				.createStoreBinaryVariable(variable, String.valueOf(getTaskInstanceId()), uri);
+			binVars.add(binVar);
+			
+//			variable.put(getVariable().getDefaultStringRepresentation(), binVars);
+			vars.put(variableName, binVars);
+			vars = getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
+			
+		} else {
+		
+			vars.put(variableName, new ExtendedFile(uri, description));
+			vars = getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
+			
+			binVars = getVariablesHandler().getBinaryVariablesHandler().resolveBinaryVariablesAsList(vars);
+			binVar = binVars.iterator().next();
+		}
 		
 		getFileUploadManager().cleanup(filesFolder, null, getUploadedResourceResolver());
 		
