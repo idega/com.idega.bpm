@@ -47,12 +47,13 @@ import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
+import com.idega.util.ListUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  *
- * Last modified: $Date: 2008/10/14 11:44:21 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/14 12:33:32 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -388,7 +389,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		Map<String, Object> vars = new HashMap<String, Object>(1);
 		BinaryVariable binVar;
 		
-		if(binVars != null) {
+		if(!ListUtil.isEmpty(binVars)) {
 			
 			binVar = getVariablesHandler().getBinaryVariablesHandler()
 				.createStoreBinaryVariable(variable, String.valueOf(getTaskInstanceId()), uri);
