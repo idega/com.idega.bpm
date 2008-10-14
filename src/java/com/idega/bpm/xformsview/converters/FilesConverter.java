@@ -14,17 +14,18 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.idega.block.process.variables.VariableDataType;
-import com.idega.core.file.data.ExtendedFile;
 import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
+import com.idega.jbpm.variables.BinaryVariable;
+import com.idega.jbpm.variables.impl.BinaryVariableImpl;
 import com.idega.util.xml.XPathUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  *
- * Last modified: $Date: 2008/09/17 13:09:39 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/14 18:23:43 $ by $Author: civilis $
  */
 @Scope("singleton")
 @Service
@@ -44,16 +45,26 @@ public class FilesConverter implements DataConverter {
 		String variableName = ctx.getAttribute(mappingAtt);
 		
 		Collection<URI> filesUris = getUploadsManager().getFilesUris(variableName, ctx, getUploadResourceResolver());
-		Collection<ExtendedFile> filesAndDescriptions = new ArrayList<ExtendedFile>();
 		
-		for(URI fileUri : filesUris) {
+		if(filesUris != null && !filesUris.isEmpty()) {
+		
+			ArrayList<BinaryVariable> binVars = new ArrayList<BinaryVariable>(filesUris.size());
 			
-			String description = getDescriptionByUri(variableName, ctx, fileUri);
-			ExtendedFile exFile = new ExtendedFile(fileUri, description);
-			filesAndDescriptions.add(exFile);
+			for(URI fileUri : filesUris) {
+				
+				String description = getDescriptionByUri(variableName, ctx, fileUri);
+				
+				BinaryVariableImpl binVar = new BinaryVariableImpl();
+				binVar.setDescription(description);
+				binVar.setUri(fileUri);
+				
+				binVars.add(binVar);
+			}
+			
+			return binVars;
 		}
 		
-		return filesAndDescriptions;
+		return null;
 	}
 	
 	private String getDescriptionByUri(String identifier, Object resource, URI uri) {
