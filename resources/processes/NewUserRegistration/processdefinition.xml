@@ -54,11 +54,11 @@
 			<action class="com.idega.bpm.process.messages.SendMessagesHandler">
 				<inlineSubject key-type='java.lang.String' value-type='java.lang.String'>
                     <entry><key>en</key><value>Registration successful</value></entry>
-                    <entry><key>is_IS</key><value>Registration successful</value></entry>
+                    <entry><key>is_IS</key><value>N\u00fdskr\u00e1ning m\u00f3ttekin</value></entry>
                 </inlineSubject>
 	            <inlineMessage key-type='java.lang.String' value-type='java.lang.String'>
-	                <entry><key>en</key><value>Hello, {0}. Your registration was successful. You can login with your login name {1} and password {2} by going to {3}</value></entry>
-	                <entry><key>is_IS</key><value>Hello, {0}. Your registration was successful. You can login with your login name {1} and password {2} by going to {3}</value></entry>
+	                <entry><key>en</key><value>Hello, {0}. \n\nYour registration was successful. You can login with your login name {1} and password {2} by going to {3}</value></entry>
+	                <entry><key>is_IS</key><value>S\u00e6l/ll, {0}. \n\nN\u00fdskr\u00e1ning \u00fe\u00edn t\u00f3kst og \u00fe\u00fa getur n\u00fa innskr\u00e1\u00f0 \u00feig me\u00f0 notandanafninu {1} og lykilor\u00f0inu {2} \u00e1 sl\u00f3\u00f0inni {3}</value></entry>
 	            </inlineMessage>
 	            <messageValues>{list: {mv: [{type: "bean", value: "upd.fullName"}, {type: "bean", value: "upd.userName"}, {type: "bean", value: "upd.userPassword"}, {type: "bean", value: "iwc.domain.URL"}]}}</messageValues>
 	            <userDataExp>#{ownerUserData}</userDataExp>
