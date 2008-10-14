@@ -25,7 +25,6 @@ import com.idega.business.IBOLookup;
 import com.idega.business.IBOLookupException;
 import com.idega.business.IBORuntimeException;
 import com.idega.core.cache.IWCacheManager2;
-import com.idega.core.file.data.ExtendedFile;
 import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
@@ -41,19 +40,19 @@ import com.idega.jbpm.identity.Role;
 import com.idega.jbpm.identity.RolesManager;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
+import com.idega.jbpm.variables.impl.BinaryVariableImpl;
 import com.idega.jbpm.view.View;
 import com.idega.presentation.IWContext;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
-import com.idega.util.ListUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.13 $
+ * @version $Revision: 1.14 $
  *
- * Last modified: $Date: 2008/10/14 12:33:32 $ by $Author: juozas $
+ * Last modified: $Date: 2008/10/14 18:23:18 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -382,30 +381,28 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		Collection<URI> uris = getFileUploadManager().getFilesUris(filesFolder, null, getUploadedResourceResolver());
 		URI uri = uris.iterator().next();
 		
-		String variableName = variable.getDefaultStringRepresentation();
-		
 		List<BinaryVariable> binVars = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId(), variable);
 		
-		Map<String, Object> vars = new HashMap<String, Object>(1);
-		BinaryVariable binVar;
+		if(binVars == null)
+			binVars = new ArrayList<BinaryVariable>(1);
 		
-		if(!ListUtil.isEmpty(binVars)) {
-			
-			binVar = getVariablesHandler().getBinaryVariablesHandler()
-				.createStoreBinaryVariable(variable, String.valueOf(getTaskInstanceId()), uri);
+		Map<String, Object> vars = new HashMap<String, Object>(1);
+		String variableName = variable.getDefaultStringRepresentation();
+		
+		final BinaryVariableImpl binVar = new BinaryVariableImpl();
+		binVar.setUri(uri);
+		binVar.setDescription(description);
+		
+		binVars.add(binVar);
+		vars.put(variableName, binVars);
+		vars = getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
+		
+		if(binVars != null) {
+
 			binVars.add(binVar);
 			
-//			variable.put(getVariable().getDefaultStringRepresentation(), binVars);
 			vars.put(variableName, binVars);
 			vars = getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
-			
-		} else {
-		
-			vars.put(variableName, new ExtendedFile(uri, description));
-			vars = getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
-			
-			binVars = getVariablesHandler().getBinaryVariablesHandler().resolveBinaryVariablesAsList(vars);
-			binVar = binVars.iterator().next();
 		}
 		
 		getFileUploadManager().cleanup(filesFolder, null, getUploadedResourceResolver());
