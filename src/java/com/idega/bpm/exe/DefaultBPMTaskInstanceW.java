@@ -50,9 +50,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.14 $
+ * @version $Revision: 1.15 $
  *
- * Last modified: $Date: 2008/10/14 18:23:18 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/16 17:46:24 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -397,13 +397,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		vars.put(variableName, binVars);
 		vars = getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
 		
-		if(binVars != null) {
 
-			binVars.add(binVar);
-			
-			vars.put(variableName, binVars);
-			vars = getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
-		}
 		
 		getFileUploadManager().cleanup(filesFolder, null, getUploadedResourceResolver());
 		
