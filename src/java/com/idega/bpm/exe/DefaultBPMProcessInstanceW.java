@@ -49,9 +49,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  *
- * Last modified: $Date: 2008/10/13 09:25:00 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/22 14:51:29 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -333,11 +333,23 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	 */
 	public boolean hasRight(Right right) {
 		
+		return hasRight(right, null);
+	}
+	
+	/**
+	 * checks right for process instance and user provided
+	 * 
+	 * @param right
+	 * @param user to check right against
+	 * @return
+	 */
+	public boolean hasRight(Right right, User user) {
+		
 		switch (right) {
 		case processHandler:
 			
 			try {
-				Permission perm = getPermissionsFactory().getAccessPermission(getProcessInstanceId(), Access.caseHandler);
+				Permission perm = getPermissionsFactory().getAccessPermission(getProcessInstanceId(), Access.caseHandler, user);
 				getBpmFactory().getRolesManager().checkPermission(perm);
 				
 				return true;
