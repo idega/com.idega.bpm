@@ -20,9 +20,9 @@ import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  *
- * Last modified: $Date: 2008/09/19 15:20:36 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/22 14:53:43 $ by $Author: civilis $
  */
 public class SendMessagesHandler implements ActionHandler {
 
@@ -36,7 +36,7 @@ public class SendMessagesHandler implements ActionHandler {
 	private List<String> sendToEmails;
 	private String userDataExp;
 	private String sendFromProcessInstanceExp;
-	private Map<String, String> inlineSubject;
+ 	private Map<String, String> inlineSubject;
 	private Map<String, String> inlineMessage;
 	
 	private SendMessage sendMessage;
@@ -54,7 +54,7 @@ public class SendMessagesHandler implements ActionHandler {
 		getLocalizedMessages().setSendToRoles(sendToRoles);
 		getLocalizedMessages().setSendToEmails(sendToEmails);
 		
-		getSendMessage().send(upd, ectx.getProcessInstance(), getLocalizedMessages(), tkn);
+		getSendMessage().send(null, upd, ectx.getProcessInstance(), getLocalizedMessages(), tkn);
 	}
 	
 	protected LocalizedMessages getLocalizedMessages() {
