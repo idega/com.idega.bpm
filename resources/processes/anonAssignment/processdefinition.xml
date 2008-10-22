@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<process-definition
+  xmlns=""  name="AnonAssignment">
+  
+	<start-state name="start-state1">
+		<transition to="isCurrentUserLoggedIn"></transition>
+	</start-state>
+
+	<decision name="isCurrentUserLoggedIn">
+		<handler class="com.idega.jbpm.identity.authentication.TmpIsLoggedInDecisionHandler" />
+		<transition to="locateAssignee" name="false"></transition>
+		<transition to="end-state1" name="true"></transition>
+	</decision>
+
+	<node name="locateAssignee">
+		<event type="node-enter">
+			<action class="com.idega.jbpm.identity.authentication.LocateUserHandler">
+				<userDataExp>
+                    #{assigneeData}
+                </userDataExp>
+			</action>
+		</event>
+		<transition to="assigneeFound"></transition>
+	</node>
+
+	<node name="assignToRole">
+		<event type="node-enter">
+			<action class="com.idega.jbpm.identity.authentication.AssignUserToRoleHandler" name="AssignToRoleAction">
+			    <processInstanceIdExp>
+                    #{assignFromProcessInstanceId}
+                </processInstanceIdExp>
+                <roleExpressionExp>
+                    #{assigneeRoleExpression}
+                </roleExpressionExp>
+                <userIdExp>
+                    #{assigneeData.userId}
+                </userIdExp>
+			</action>
+		</event>
+		<transition to="assignUserAsFirstTaskSubmitter" name="toAssignUserAsFirstTaskSubmitter"></transition>
+	</node>
+
+	<decision name="assigneeFound" expression="#{assigneeData.userId != null}">
+		<transition to="createUser" name="false"></transition>
+		<transition to="assignToRole" name="true"></transition>
+	</decision>
+
+	<node name="createUser">
+		<event type="node-enter">
+			<action class="com.idega.jbpm.identity.authentication.CreateUserHandler">
+				<userDataExp>
+					#{assigneeData}
+				</userDataExp>
+			</action>
+		</event>
+		<transition to="assignToRole" name="toAssignRole"></transition>
+	</node>
+
+	<process-state name="sendInvitationToAssignee">
+		<sub-process name="participantInvitation" binding="late" />
+      
+	      <variable name="assignFromProcessInstanceId" access="read" mapped-name="sendFromProcessInstanceId" />
+	      <variable name="assigneeData" access="read" mapped-name="participantUserData" />
+	      <variable name="assigneeRoleExpression" access="read" mapped-name="participantRoleExpression" />
+	      
+		<event type="node-enter">
+			<script name="assignPropertiesToUserData">
+                <expression>
+                    upd.setHideInContacts(true);
+                </expression>
+                <variable name='assigneeData' access='read' mapped-name='upd' />
+			</script>
+		</event>
+	</process-state>
+
+	<node name="assignUserAsFirstTaskSubmitter">
+		<event type="node-enter">
+			<action class="com.idega.jbpm.identity.AssignUserToTaskInstanceSubmitterHandler" name="assignUserAsFirstTaskSubmitterAction">
+				<userIdExp>
+					#{assigneeData.userId}
+				</userIdExp>
+				<processInstanceIdExp>
+					#{assignFromProcessInstanceId}
+				</processInstanceIdExp>
+			</action>
+		</event>
+		<transition to="end-state1" name="toEnd"></transition>
+	</node>
+	<end-state name="end-state1"></end-state>
+	
+</process-definition>

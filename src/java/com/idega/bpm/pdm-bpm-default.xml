@@ -3,5 +3,8 @@
 <processes>
   
     <processBundle bundle="com.idega.bpm" propsUriWithinBundle="resources/processes/NewUserRegistration/bundle.properties" autoload="true" version="1" />
+    <processDefinition bundle="com.idega.bpm" uriWithinBundle="resources/processes/inviteParticipant/processdefinition.xml" autoload="true" version="10" />
+    <processDefinition bundle="com.idega.bpm" uriWithinBundle="resources/processes/assignmentAssist/processdefinition.xml" autoload="true" version="1" />
+    <processDefinition bundle="com.idega.bpm" uriWithinBundle="resources/processes/anonAssignment/processdefinition.xml" autoload="true" version="1" />
     
 </processes>

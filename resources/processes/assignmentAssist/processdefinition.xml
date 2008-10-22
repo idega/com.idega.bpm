@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<process-definition
+  xmlns=""  name="AssignmentAssist">
+  
+	<start-state name="start-state1">
+		<transition to="isCurrentUserAssistant"></transition>
+	</start-state>
+
+	<decision name="isCurrentUserAssistant">
+		<handler class="com.idega.jbpm.identity.authentication.BelongsToRoleDecisionHandler">
+			<roleExpressionExp>
+				#{assistantRoleExpression}
+			</roleExpressionExp>
+			<processInstanceIdExp>
+                #{assignFromProcessInstanceId}
+            </processInstanceIdExp>
+		</handler>
+		<transition to="locateAssignee" name="true"></transition>
+		<transition to="setNotAssigned" name="false"></transition>
+	</decision>
+
+	<node name="locateAssignee">
+		<event type="node-enter">
+			<action class="com.idega.jbpm.identity.authentication.LocateUserHandler">
+				<userDataExp>
+                    #{assigneeData}
+                </userDataExp>
+			</action>
+		</event>
+		<transition to="assigneeFound"></transition>
+	</node>
+
+	<node name="assignToRole">
+		<event type="node-enter">
+			<action class="com.idega.jbpm.identity.authentication.AssignUserToRoleHandler" name="AssignToRoleAction">
+			    <processInstanceIdExp>
+                    #{assignFromProcessInstanceId}
+                </processInstanceIdExp>
+                <roleExpressionExp>
+                    #{assigneeRoleExpression}
+                </roleExpressionExp>
+                <userIdExp>
+                    #{assigneeData.userId}
+                </userIdExp>
+			</action>
+		</event>
+		<transition to="sendInvitationToAssignee" name="toSendInvitationToAssignee"></transition>
+	</node>
+
+	<decision name="assigneeFound" expression="#{assigneeData.userId != null}">
+		<transition to="createUser" name="false"></transition>
+		<transition to="assignToRole" name="true"></transition>
+	</decision>
+
+	<node name="createUser">
+		<event type="node-enter">
+			<action class="com.idega.jbpm.identity.authentication.CreateUserHandler">
+				<userDataExp>
+					#{assigneeData}
+				</userDataExp>
+			</action>
+		</event>
+		<transition to="assignToRole" name="toAssignRole"></transition>
+	</node>
+
+	<process-state name="sendInvitationToAssignee">
+		<sub-process name="participantInvitation" binding="late" />
+      
+	      <variable name="assignFromProcessInstanceId" access="read" mapped-name="sendFromProcessInstanceId" />
+	      <variable name="assigneeData" access="read" mapped-name="participantUserData" />
+	      <variable name="assigneeRoleExpression" access="read" mapped-name="participantRoleExpression" />
+		<transition to="setAssigned" name="toSetAssigned"></transition>
+	</process-state>
+
+	<node name="setAssigned">
+		<event type="node-enter">
+			<script>
+			     <expression>
+			         assigned = true;
+			     </expression>
+			     <variable name='assigned' access='write' mapped-name='assigned' />
+			</script>
+		</event>
+		<transition to="end-state1" name="toEnd"></transition>
+	</node>
+
+	<node name="setNotAssigned">
+	   <event type="node-enter">
+            <script>
+                 <expression>
+                     assigned = false;
+                 </expression>
+                 <variable name='assigned' access='write' mapped-name='assigned' />
+            </script>
+        </event>
+		<transition to="end-state1" name="toEnd"></transition>
+	</node>
+	<end-state name="end-state1"></end-state>
+
+
+</process-definition>
