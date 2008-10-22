@@ -1,5 +1,6 @@
 package com.idega.bpm.process.messages;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -7,13 +8,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.idega.idegaweb.IWBundle;
+import com.idega.util.CoreConstants;
 
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  *
- * Last modified: $Date: 2008/09/19 15:20:36 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/22 14:52:21 $ by $Author: civilis $
  */
 public class LocalizedMessages {
 	
@@ -22,6 +24,8 @@ public class LocalizedMessages {
 	private List<String> sendToEmails;
 	private String subjectValuesExp;
 	private String messageValuesExp;
+	private LocalizedMessageTransformator subjectTransformator;
+	private LocalizedMessageTransformator messageTransformator;
 	
 	private IWBundle iwb;
 	
@@ -40,6 +44,20 @@ public class LocalizedMessages {
 	public void setInlineSubjects(Map<Locale, String> inlineSubjects) {
 		this.inlineSubjects = inlineSubjects;
 	}
+	public void setInlineSubject(Locale locale, String msg) {
+		
+		if(inlineSubjects == null)
+			inlineSubjects = new HashMap<Locale, String>(1);
+		
+		inlineSubjects.put(locale, msg);
+	}
+	public void setInlineMessage(Locale locale, String msg) {
+		
+		if(inlineMessages == null)
+			inlineMessages = new HashMap<Locale, String>(1);
+		
+		inlineMessages.put(locale, msg);
+	}
 	public void setInlineMessages(Map<Locale, String> inlineMessages) {
 		this.inlineMessages = inlineMessages;
 	}
@@ -49,28 +67,43 @@ public class LocalizedMessages {
 	
 	public String getLocalizedSubject(Locale locale) {
 	
+		String subject;
+		
 		if(iwb != null) {
-			return iwb.getResourceBundle(locale).getLocalizedString(subjectKey, subjectKey);
+			
+			subject = subjectKey != null ? iwb.getResourceBundle(locale).getLocalizedString(subjectKey, subjectKey) : CoreConstants.EMPTY;
 		} else if (inlineSubjects != null) {
-			return inlineSubjects.get(locale);
+			subject = inlineSubjects.get(locale);
 		} else {
 			
 			Logger.getLogger(getClass().getName()).log(Level.WARNING, "Tried to get localized subject, but neither iwb, nor inlineSubjects set");
-			return null;
+			subject = null;
 		}
+		
+		if(getSubjectTransformator() != null)
+			subject = getSubjectTransformator().apply(subject, locale);
+		
+		return subject;
 	}
 	
 	public String getLocalizedMessage(Locale locale) {
 		
+		String message;
+		
 		if(iwb != null) {
-			return iwb.getResourceBundle(locale).getLocalizedString(msgKey, msgKey);
+			message = msgKey != null ? iwb.getResourceBundle(locale).getLocalizedString(msgKey, msgKey) : CoreConstants.EMPTY;
 		} else if (inlineMessages != null) {
-			return inlineMessages.get(locale);
+			message = inlineMessages.get(locale);
 		} else {
 			
 			Logger.getLogger(getClass().getName()).log(Level.WARNING, "Tried to get localized message, but neither iwb, nor inlineMessages set");
-			return null;
+			message = null;
 		}
+		
+		if(getMessageTransformator() != null)
+			message = getMessageTransformator().apply(message, locale);
+		
+		return message;
 	}
 	public String getSubjectValuesExp() {
 		return subjectValuesExp;
@@ -101,5 +134,29 @@ public class LocalizedMessages {
 	}
 	public void setSendToEmails(List<String> sendToEmails) {
 		this.sendToEmails = sendToEmails;
+	}
+	public LocalizedMessageTransformator getSubjectTransformator() {
+		return subjectTransformator;
+	}
+	public void setSubjectTransformator(
+			LocalizedMessageTransformator subjectTransformator) {
+		this.subjectTransformator = subjectTransformator;
+	}
+	public LocalizedMessageTransformator getMessageTransformator() {
+		return messageTransformator;
+	}
+	public void setMessageTransformator(
+			LocalizedMessageTransformator messageTransformator) {
+		this.messageTransformator = messageTransformator;
+	}
+	
+	public boolean hasSubject() {
+		
+		return (inlineSubjects != null && !inlineSubjects.isEmpty()) || (subjectKey != null && subjectKey.length() != 0);
+	}
+	
+	public boolean hasMessage() {
+		
+		return (inlineMessages != null && !inlineMessages.isEmpty()) || (msgKey != null && msgKey.length() != 0);
 	}
 }
