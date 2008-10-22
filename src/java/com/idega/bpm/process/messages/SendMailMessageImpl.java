@@ -38,9 +38,9 @@ import com.idega.util.SendMailMessageValue;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  *
- * Last modified: $Date: 2008/10/13 09:25:56 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/22 14:53:07 $ by $Author: civilis $
  */
 @Scope("singleton")
 @SendMessageType("email")
@@ -52,7 +52,7 @@ public class SendMailMessageImpl implements SendMessage {
 	@Autowired
 	private MessageValueHandler messageValueHandler;
 
-	public void send(final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
+	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
 		
 		final UserPersonalData upd = (UserPersonalData)context;
 	
@@ -84,12 +84,11 @@ public class SendMailMessageImpl implements SendMessage {
 		ProcessInstanceW piw = getBpmFactory().getProcessManagerByProcessInstanceId(pid).getProcessInstance(pid);
 		
 		HashMap<Locale, String[]> unformattedForLocales = new HashMap<Locale, String[]>(5);
-		MessageValueContext mvCtx = new MessageValueContext(5);
 		
 //		TODO: get default email
 		String from = msgs.getFrom();
 		
-		if(from == null || CoreConstants.EMPTY.equals(from) || !EmailValidator.getInstance().isValid(from)) {
+		if(from == null || from.length() == 0 || !EmailValidator.getInstance().isValid(from)) {
 			from = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_SYSTEM_MAIL_FROM_ADDRESS, "staff@idega.is");
 		}
 		
@@ -100,15 +99,20 @@ public class SendMailMessageImpl implements SendMessage {
 		Locale preferredLocale = iwc != null ? iwc.getCurrentLocale() : defaultLocale;
 		final ArrayList<SendMailMessageValue> messageValuesToSend = new ArrayList<SendMailMessageValue>(emailAddresses.size());
 		
+		if(mvCtx == null)
+			mvCtx = new MessageValueContext(3);
+		
+		mvCtx.setValue(MessageValueContext.updBean, upd);
+		mvCtx.setValue(MessageValueContext.piwBean, piw);
+		mvCtx.setValue(MessageValueContext.iwcBean, iwc);
+		
 		for (String email : emailAddresses) {
-			
-			mvCtx.setValue(MessageValueContext.updBean, upd);
-			mvCtx.setValue(MessageValueContext.piwBean, piw);
-			mvCtx.setValue(MessageValueContext.iwcBean, iwc);
 			
 			String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
 			String subject = subjAndMsg[0];
 			String text = subjAndMsg[1];
+			
+//			System.out.println("_____would send to = "+email+" the text="+text);
 			
 			messageValuesToSend.add(new SendMailMessageValue(
 					null, null, null, from, host, subject, text, email, null

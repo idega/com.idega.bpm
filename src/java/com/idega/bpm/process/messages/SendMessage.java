@@ -3,14 +3,16 @@ package com.idega.bpm.process.messages;
 import org.jbpm.graph.exe.ProcessInstance;
 import org.jbpm.graph.exe.Token;
 
+import com.idega.jbpm.process.business.messages.MessageValueContext;
+
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  *
- * Last modified: $Date: 2008/09/19 15:20:36 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/22 14:53:18 $ by $Author: civilis $
  */
 public interface SendMessage {
 
-	public abstract void send(final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn);
+	public abstract void send(MessageValueContext mvCtx, Object context, ProcessInstance pi, LocalizedMessages msgs, Token tkn);
 }
