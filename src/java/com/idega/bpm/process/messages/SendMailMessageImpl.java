@@ -38,9 +38,9 @@ import com.idega.util.SendMailMessageValue;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  *
- * Last modified: $Date: 2008/10/22 14:53:07 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/23 09:35:20 $ by $Author: civilis $
  */
 @Scope("singleton")
 @SendMessageType("email")
@@ -111,8 +111,6 @@ public class SendMailMessageImpl implements SendMessage {
 			String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
 			String subject = subjAndMsg[0];
 			String text = subjAndMsg[1];
-			
-//			System.out.println("_____would send to = "+email+" the text="+text);
 			
 			messageValuesToSend.add(new SendMailMessageValue(
 					null, null, null, from, host, subject, text, email, null
