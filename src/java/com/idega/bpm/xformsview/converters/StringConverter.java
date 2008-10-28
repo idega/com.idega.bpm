@@ -10,13 +10,12 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.idega.block.process.variables.VariableDataType;
-import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  *
- * Last modified: $Date: 2008/09/17 13:09:39 $ by $Author: civilis $
+ * Last modified: $Date: 2008/10/28 10:32:53 $ by $Author: civilis $
  */
 @Scope("singleton")
 @Service
@@ -25,7 +24,7 @@ public class StringConverter implements DataConverter {
 	public Object convert(Element o) {
 
 		String txt = o.getTextContent();
-		return CoreConstants.EMPTY.equals(txt) ? null : txt;
+		return txt == null || txt.length() == 0 ? null : txt;
 	}
 	public Element revert(Object o, Element e) {
 	
