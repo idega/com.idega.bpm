@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.idega.documentmanager.business.DocumentManagerFactory;
+import com.idega.xformsmanager.business.DocumentManagerFactory;
 import com.idega.jbpm.data.dao.BPMDAO;
 import com.idega.jbpm.variables.Converter;
 import com.idega.jbpm.view.TaskView;
@@ -24,9 +24,9 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  *
- * Last modified: $Date: 2008/09/16 17:48:15 $ by $Author: civilis $
+ * Last modified: $Date: 2008/11/05 08:53:04 $ by $Author: civilis $
  */
 @Scope("singleton")
 @ViewFactoryType("xforms")

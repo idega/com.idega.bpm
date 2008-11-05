@@ -8,8 +8,8 @@ import javax.xml.parsers.DocumentBuilder;
 import org.w3c.dom.Document;
 
 import com.idega.bpm.xformsview.XFormsView;
-import com.idega.documentmanager.business.DocumentManager;
-import com.idega.documentmanager.business.DocumentManagerFactory;
+import com.idega.xformsmanager.business.DocumentManager;
+import com.idega.xformsmanager.business.DocumentManagerFactory;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.bundle.ProcessBundleResources;
 import com.idega.jbpm.view.View;
@@ -19,9 +19,9 @@ import com.idega.util.xml.XmlUtil;
 /**
  * 
  * @author <a href="civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  * 
- * Last modified: $Date: 2008/09/17 13:09:02 $ by $Author: civilis $
+ * Last modified: $Date: 2008/11/05 08:53:04 $ by $Author: civilis $
  * 
  */
 public class XFormViewResource implements ViewResource {
@@ -45,7 +45,7 @@ public class XFormViewResource implements ViewResource {
 				DocumentBuilder builder = XmlUtil.getDocumentBuilder();
 
 				Document xformXml = builder.parse(is);
-				com.idega.documentmanager.business.Document form = documentManager
+				com.idega.xformsmanager.business.Document form = documentManager
 					.openForm(xformXml);
 				
 				form.setFormType(XFormsView.FORM_TYPE);

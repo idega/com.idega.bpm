@@ -18,10 +18,10 @@ import org.w3c.dom.Node;
 import com.idega.block.form.data.XForm;
 import com.idega.block.form.data.dao.XFormsDAO;
 import com.idega.block.form.presentation.FormViewer;
-import com.idega.documentmanager.business.Document;
-import com.idega.documentmanager.business.DocumentManager;
-import com.idega.documentmanager.business.DocumentManagerFactory;
-import com.idega.documentmanager.util.FormManagerUtil;
+import com.idega.xformsmanager.business.Document;
+import com.idega.xformsmanager.business.DocumentManager;
+import com.idega.xformsmanager.business.DocumentManagerFactory;
+import com.idega.xformsmanager.util.FormManagerUtil;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.variables.Converter;
 import com.idega.jbpm.view.View;
@@ -32,9 +32,9 @@ import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  * 
- * Last modified: $Date: 2008/09/16 17:48:15 $ by $Author: civilis $
+ * Last modified: $Date: 2008/11/05 08:52:56 $ by $Author: civilis $
  */
 public class XFormsView implements View {
 

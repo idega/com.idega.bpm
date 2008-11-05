@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.idega.bpm.exe.DefaultBPMManagersCreator;
 import com.idega.bpm.graph.def.IdegaProcessDefinition;
-import com.idega.documentmanager.business.DocumentManagerFactory;
+import com.idega.xformsmanager.business.DocumentManagerFactory;
 import com.idega.idegaweb.IWBundle;
 import com.idega.jbpm.bundle.ProcessBundle;
 import com.idega.jbpm.bundle.ProcessBundleResources;
@@ -26,9 +26,9 @@ import com.idega.jbpm.view.ViewToTaskType;
 /**
  * 
  * @author <a href="civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  * 
- * Last modified: $Date: 2008/10/28 07:35:57 $ by $Author: anton $
+ * Last modified: $Date: 2008/11/05 08:53:04 $ by $Author: civilis $
  * 
  */
 @Scope("prototype")

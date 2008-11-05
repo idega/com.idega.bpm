@@ -17,7 +17,7 @@ import org.w3c.dom.Node;
 import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
-import com.idega.documentmanager.util.FormManagerUtil;
+import com.idega.xformsmanager.util.FormManagerUtil;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
@@ -26,9 +26,9 @@ import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  *
- * Last modified: $Date: 2008/09/18 17:11:31 $ by $Author: civilis $
+ * Last modified: $Date: 2008/11/05 08:53:04 $ by $Author: civilis $
  */
 public class XFormsBPMSubmissionHandler extends AbstractConnector implements SubmissionHandler {
 	
