@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jbpm.JbpmContext;
+import org.jbpm.graph.def.Transition;
 import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
@@ -50,9 +51,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.15 $
+ * @version $Revision: 1.16 $
  *
- * Last modified: $Date: 2008/10/16 17:46:24 $ by $Author: juozas $
+ * Last modified: $Date: 2008/11/06 08:17:22 $ by $Author: arunas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -206,11 +207,21 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		if(proceed) {
 		
 			String actionTaken = (String)ti.getVariable(ProcessConstants.actionTakenVariableName);
-	    	
-	    	if(actionTaken != null && !CoreConstants.EMPTY.equals(actionTaken) && false)
+//			TODO
+			boolean takeTransitionAction = false;
+			for (Object transition : ti.getAvailableTransitions()){
+				
+				Transition trans = (Transition) transition;
+				
+				if (actionTaken.equals(trans.getName()))
+					takeTransitionAction = true;
+			}
+				
+	    	if(actionTaken != null && !CoreConstants.EMPTY.equals(actionTaken) && takeTransitionAction)
 	    		ti.end(actionTaken);
 	    	else
-	    		ti.end();
+	    	  	ti.end();
+	    		
 		} else {
 			ti.setEnd(new Date());
 		}
