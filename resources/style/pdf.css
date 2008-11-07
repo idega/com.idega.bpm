@@ -1,1 +1,98 @@
-@CHARSET "UTF-8";
+html, body {
+	margin: 0;
+	padding: 0;
+}
+
+div.legend {
+	display: block !important;
+}
+
+div.group div, .legend {
+	display: block !important;
+	text-align: left !important;
+}
+
+div.input, div.select1 {
+	clear: both;
+	margin-bottom: 8px;
+}
+
+div.input label, div.textarea label, div.select1 label {
+	display: block;
+	float: left !important;
+	font-size: 14px;
+	width: 20% !important;
+}
+
+div.input div.replaceForInputStyle, div.textarea textarea, div.select1 div.replaceForSelectSingle {
+	float: left;
+	width: auto;
+	clear: none;
+	font-size: 14px;
+	color: #101010;
+	display: block !important;
+	width: 70%;
+}
+
+span.output {
+	margin-top: 8px;
+	margin-bottom: 8px;
+	width: 100%;
+	overflow: hidden;
+}
+
+span.output label {
+	display: block;
+	float: left !important;
+	font-size: 14px;
+	width: 200px !important;
+	padding: 0 !important;
+}
+
+span.output span {
+	padding: 0 !important;
+	color: #101010;
+	font-size: 14px;
+	font-weight: bold;
+}
+
+hr {
+	display: none;
+}
+
+div.fbc_header_text {
+	margin-top: 8px !important;
+	margin-bottom: 8px !important;
+	border-top: 1px #A4A4A4 solid;
+}
+
+div.fbc_simple_text {
+	margin-bottom: 8px !important;
+}
+
+div.fbc_header_text span.output, div.fbc_simple_text span {
+	margin: 0;
+	font-size: 12px !important;
+}
+
+div.fbc_simple_text label {
+	width: auto !important;
+}
+
+div.deselected-case div.label {
+	clear: both;
+	border-top: 1px #b2b6b8 solid;
+}
+
+div.deselected-case span.output {
+	clear: both;
+}
+
+div.deselected-case span.output label {
+	width: auto !important;
+	padding: 8px 13px !important;
+}
+
+div.deselected-case span.output label span {
+	font-weight: normal !important;
+}
