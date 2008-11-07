@@ -40,7 +40,7 @@
             <xf:bind id="bind.submissionButton" nodeset="instance('control-instance')/submissionButton" relevant="instance('control-instance')/readonly != 'true' and instance('control-instance')/generatePdf != 'true'" />
             
             <xf:submission action="xformsBPM:/nouri" id="submit_data_submission" method="post" replace="none">
-                <xf:toggle case="fbc_4" ev:event="xforms-submit-done"/>
+                <idega:toggle case="fbc_4" ev:event="xforms-submit-done"/>
             </xf:submission>
              <xf:action ev:event="xforms-submit-error" id="submission-error">
                 <xf:dispatch name="idega-submit-error" target="idega-submission-error"/>
@@ -201,8 +201,8 @@
                 </xf:repeat>
             </xf:group>
             <idega:setError ev:event="idega-validation-error" id="formSetErrorHandler" ref="instance('error-instance')/error"/>
-            <xf:switch>
-                <xf:case id="fbc_1">
+            <idega:switch>
+                <idega:case id="fbc_1">
                     <xf:group appearance="full">
                     <!--  
                         <xf:label model="data_model" ref="instance('localized_strings')/page-1.label[@lang=instance('localized_strings')/current_language]"/>
@@ -319,14 +319,14 @@
                             </xf:trigger>
                         </div>
                     </xf:group>
-                </xf:case>
-                <xf:case id="fbc_4" name="thx_page">
+                </idega:case>
+                <idega:case id="fbc_4" name="thx_page">
                     <xf:group appearance="full">
                         <xf:label model="data_model" ref="instance('localized_strings')/page-2.label[@lang=instance('localized_strings')/current_language]"/>
                         <xf:output model="data_model" ref="instance('localized_strings')/page-2.info[@lang=instance('localized_strings')/current_language]"/>
                     </xf:group>
-                </xf:case>
-            </xf:switch>
+                </idega:case>
+            </idega:switch>
         </xf:group>
     </body>
 </html>
