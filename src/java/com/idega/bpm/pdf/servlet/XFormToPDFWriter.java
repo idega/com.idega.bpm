@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.httpclient.HttpException;
 import org.apache.webdav.lib.WebdavResource;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.idega.bpm.BPMConstants;
 import com.idega.bpm.pdf.business.ProcessTaskInstanceConverterToPDF;
@@ -25,45 +26,72 @@ import com.idega.util.CoreConstants;
 import com.idega.util.FileUtil;
 import com.idega.util.StringUtil;
 import com.idega.util.expression.ELUtil;
+import com.idega.xformsmanager.business.PersistenceManager;
+import com.idega.xformsmanager.business.Submission;
+import com.idega.xformsmanager.business.XFormPersistenceType;
 
 /**
  * Downloads PDF for provided XForm
  * @author <a href="mailto:valdas@idega.com>Valdas Žemaitis</a>
  * Created: 2008.05.10
- * @version $Revision: 1.1 $
- * Last modified: $Date: 2008/09/26 15:03:34 $ by $Author: valdas $
+ * @version $Revision: 1.2 $
+ * Last modified: $Date: 2008/11/07 12:52:13 $ by $Author: valdas $
  */
 public class XFormToPDFWriter extends DownloadWriter implements MediaWritable { 
 	
 	public static final String XFORM_ID_PARAMETER = "XFormIdToDownload";
 	public static final String TASK_INSTANCE_ID_PARAMETER = "taskInstanceId";
 	public static final String PATH_IN_SLIDE_PARAMETER = "pathInSlideForXFormPDF";
+	public static final String XFORM_SUBMISSION_ID_PARAMETER = "XFormSubmitionId";
 	public static final String DO_NOT_CHECK_EXISTENCE_OF_XFORM_IN_PDF_PARAMETER = "doNotCheckExistence";
 	
 	private static final Logger logger = Logger.getLogger(XFormToPDFWriter.class.getName());
 	
 	private WebdavResource xformInPDF = null;
 	
+	@Autowired(required = false)
+	@XFormPersistenceType("slide")
+	private transient PersistenceManager persistenceManager;
+	
 	@Override
 	public void init(HttpServletRequest req, IWContext iwc) {
 		String taskInstanceId = iwc.getParameter(TASK_INSTANCE_ID_PARAMETER);
 		String formId = iwc.getParameter(XFORM_ID_PARAMETER);
-		if (taskInstanceId == null && formId == null) {
-			logger.log(Level.SEVERE, "Do not know what to download: taskInstanceId and formId are nulls");
-			return;
-		}
+		String formSubmitionId = iwc.getParameter(XFORM_SUBMISSION_ID_PARAMETER);
 		
 		String pathInSlide = null;
-		if (iwc.isParameterSet(PATH_IN_SLIDE_PARAMETER)) {
-			pathInSlide = iwc.getParameter(PATH_IN_SLIDE_PARAMETER);
 		
-			if (pathInSlide == null || CoreConstants.EMPTY.equals(pathInSlide)) {
-				logger.log(Level.SEVERE, "Unknown path for XForm in Slide");
+		if (taskInstanceId == null && formId == null && formSubmitionId == null) {
+			logger.log(Level.SEVERE, "Do not know what to download: taskInstanceId, formId and formSubmitionId are nulls");
+			return;
+		}
+		if (!StringUtil.isEmpty(formSubmitionId)) {
+			if (getPersistenceManager() == null) {
+				logger.log(Level.SEVERE, "Unable to get instance of: " + PersistenceManager.class.getName());
 				return;
 			}
+			Submission xformSubmition = null;
+			xformSubmition = getPersistenceManager().getSubmission(Long.valueOf(formSubmitionId));
+			if (xformSubmition == null) {
+				logger.log(Level.SEVERE, "Unable to get instance of XForm submition by id: " + formSubmitionId);
+				return;
+			}
+			
+			pathInSlide = xformSubmition.getSubmissionStorageIdentifier();
 		}
-		else {
-			pathInSlide = BPMConstants.PDF_OF_XFORMS_PATH_IN_SLIDE;
+		
+		if (StringUtil.isEmpty(pathInSlide)) {
+			if (iwc.isParameterSet(PATH_IN_SLIDE_PARAMETER)) {
+				pathInSlide = iwc.getParameter(PATH_IN_SLIDE_PARAMETER);
+			
+				if (pathInSlide == null || CoreConstants.EMPTY.equals(pathInSlide)) {
+					logger.log(Level.SEVERE, "Unknown path for XForm in Slide");
+					return;
+				}
+			}
+			else {
+				pathInSlide = BPMConstants.PDF_OF_XFORMS_PATH_IN_SLIDE;
+			}
 		}
 		
 		boolean checkExistence = false;
@@ -81,7 +109,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			return;
 		}
 		
-		String pathToPdf = pdfGenerator.getGeneratedPDFFromXForm(taskInstanceId, formId, pathInSlide, checkExistence);
+		String pathToPdf = pdfGenerator.getGeneratedPDFFromXForm(taskInstanceId, formId, formSubmitionId, pathInSlide, checkExistence);
 		if (StringUtil.isEmpty(pathToPdf)) {
 			logger.log(Level.SEVERE, "PDF from XForm was not generated!");
 			return;
@@ -141,5 +169,20 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	public String getMimeType() {
 		return MimeTypeUtil.MIME_TYPE_PDF_1;
 	}
-	
+
+	public PersistenceManager getPersistenceManager() {
+		if (persistenceManager == null) {
+			try {
+				ELUtil.getInstance().autowire(this);
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return persistenceManager;
+	}
+
+	public void setPersistenceManager(PersistenceManager persistenceManager) {
+		this.persistenceManager = persistenceManager;
+	}
+
 }
