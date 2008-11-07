@@ -42,8 +42,11 @@
             <xf:submission action="xformsBPM:/nouri" id="submit_data_submission" method="post" replace="none">
                 <xf:toggle case="fbc_4" ev:event="xforms-submit-done"/>
             </xf:submission>
-            <xf:action ev:event="xforms-submit-error" id="submission-error">
-                <xf:message level="modeless" ref="instance('localized_strings')/page-1-error.label[@lang=instance('localized_strings')/current_language]"/>
+             <xf:action ev:event="xforms-submit-error" id="submission-error">
+                <xf:dispatch name="idega-submit-error" target="idega-submission-error"/>
+            </xf:action>
+            <xf:action ev:event="idega-submit-error" id="idega-submission-error">
+                <xf:message level="modeless" ref="instance('localized_strings')/submission-error_message[@lang=instance('localized_strings')/current_language]"/>
             </xf:action>
             
             <xf:bind id="bind.fbc_10" nodeset="Address_fbc_10" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
@@ -65,8 +68,8 @@
                 <localized_strings>
                     <default_language>en</default_language>
                     <current_language>en</current_language>
-                    <page-1-error.label lang="en">Submission error. Please check your form!</page-1-error.label>
-                    <page-1-error.label lang="is_IS">Submission error. Please check your form!</page-1-error.label>
+                    <submission-error_message lang="en">Submission error. Please check your form!</submission-error_message>
+                    <submission-error_message lang="is_IS">Villa varð við að senda formið vinsamlegast athugið hvort stjörnumerktir reitir hafi allir verið útfylltir og að engar villur séu í forminu.</submission-error_message>
                     <form.title lang="en">Create an account</form.title>
                     <form.title lang="is_IS">Nýskráning</form.title>
                     <formInfo.section-1 lang="en">Please enter you details.</formInfo.section-1>
@@ -311,7 +314,7 @@
                                     <xf:action if="count-non-empty(instance('error-instance')/error)=0">
                                     <xf:send submission="submit_data_submission"/>
                                     </xf:action>
-                                    <xf:message if="count-non-empty(instance('error-instance')/error)!=0" level="modeless" ref="instance('localized_strings')/page-1-error.label[@lang=instance('localized_strings')/current_language]"/>
+                                    <xf:dispatch if="count-non-empty(instance('error-instance')/error)!=0" name="idega-submit-error" target="idega-submission-error"/>
                                 </xf:action>
                             </xf:trigger>
                         </div>
