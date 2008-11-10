@@ -51,9 +51,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.17 $
+ * @version $Revision: 1.18 $
  *
- * Last modified: $Date: 2008/11/10 14:05:47 $ by $Author: arunas $
+ * Last modified: $Date: 2008/11/10 14:08:40 $ by $Author: arunas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -209,12 +209,14 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			String actionTaken = (String)ti.getVariable(ProcessConstants.actionTakenVariableName);
 //			TODO
 			boolean takeTransitionAction = false;
-			for (Object transition : ti.getAvailableTransitions()){
+			if (actionTaken != null) {
+				for (Object transition : ti.getAvailableTransitions()){
 				
-				Transition trans = (Transition) transition;
+					Transition trans = (Transition) transition;
 				
-				if (actionTaken != null && actionTaken.equals(trans.getName()))
-					takeTransitionAction = true;
+					if (actionTaken.equals(trans.getName()))
+						takeTransitionAction = true;
+				}
 			}
 				
 	    	if(actionTaken != null && !CoreConstants.EMPTY.equals(actionTaken) && takeTransitionAction)
