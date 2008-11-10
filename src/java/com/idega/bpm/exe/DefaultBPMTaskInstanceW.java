@@ -51,9 +51,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.16 $
+ * @version $Revision: 1.17 $
  *
- * Last modified: $Date: 2008/11/06 08:17:22 $ by $Author: arunas $
+ * Last modified: $Date: 2008/11/10 14:05:47 $ by $Author: arunas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -213,7 +213,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 				
 				Transition trans = (Transition) transition;
 				
-				if (actionTaken.equals(trans.getName()))
+				if (actionTaken != null && actionTaken.equals(trans.getName()))
 					takeTransitionAction = true;
 			}
 				
