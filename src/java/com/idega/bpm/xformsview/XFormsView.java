@@ -32,9 +32,9 @@ import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  * 
- * Last modified: $Date: 2008/11/05 08:52:56 $ by $Author: civilis $
+ * Last modified: $Date: 2008/11/12 11:44:17 $ by $Author: valdas $
  */
 public class XFormsView implements View {
 
@@ -97,17 +97,21 @@ public class XFormsView implements View {
 	}
 
 	public UIComponent getViewForDisplay() {
+		return getViewForDisplay(false);
+	}
 
+	public UIComponent getViewForDisplay(boolean pdfViewer) {
 		FacesContext context = FacesContext.getCurrentInstance();
 		Application application = context.getApplication();
 
 		FormViewer formviewer = (FormViewer) application
 				.createComponent(FormViewer.COMPONENT_TYPE);
 		formviewer.setXFormsDocument(getFormDocument().getXformsDocument());
+		formviewer.setPdfViewer(pdfViewer);
 
 		return formviewer;
 	}
-
+	
 	public void setFormDocument(Document formDocument) {
 
 		form = formDocument;
