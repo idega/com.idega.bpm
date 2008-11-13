@@ -34,8 +34,8 @@ import com.idega.xformsmanager.business.XFormPersistenceType;
  * Downloads PDF for provided XForm
  * @author <a href="mailto:valdas@idega.com>Valdas Žemaitis</a>
  * Created: 2008.05.10
- * @version $Revision: 1.2 $
- * Last modified: $Date: 2008/11/07 12:52:13 $ by $Author: valdas $
+ * @version $Revision: 1.3 $
+ * Last modified: $Date: 2008/11/13 07:17:21 $ by $Author: valdas $
  */
 public class XFormToPDFWriter extends DownloadWriter implements MediaWritable { 
 	
@@ -47,7 +47,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	
 	private static final Logger logger = Logger.getLogger(XFormToPDFWriter.class.getName());
 	
-	private WebdavResource xformInPDF = null;
+	private WebdavResource resourceInPDF = null;
 	
 	@Autowired(required = false)
 	@XFormPersistenceType("slide")
@@ -85,7 +85,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 				pathInSlide = iwc.getParameter(PATH_IN_SLIDE_PARAMETER);
 			
 				if (pathInSlide == null || CoreConstants.EMPTY.equals(pathInSlide)) {
-					logger.log(Level.SEVERE, "Unknown path for XForm in Slide");
+					logger.log(Level.SEVERE, "Unknown path for resource in Slide");
 					return;
 				}
 			}
@@ -125,20 +125,20 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			return;
 		}
 		
-		if (!setXForm(slide, pathToPdf)) {
+		if (!setResource(slide, pathToPdf)) {
 			logger.log(Level.SEVERE, "Error reading PDF document: " + pathToPdf);
 			return;
 		}
-		if (xformInPDF == null || !xformInPDF.exists()) {
+		if (resourceInPDF == null || !resourceInPDF.exists()) {
 			return;
 		}
-		Long length = Long.valueOf(xformInPDF.getGetContentLength());
-		setAsDownload(iwc, xformInPDF.getDisplayName(), length.intValue());
+		Long length = Long.valueOf(resourceInPDF.getGetContentLength());
+		setAsDownload(iwc, resourceInPDF.getDisplayName(), length.intValue());
 	}
 
-	private boolean setXForm(IWSlideService slide, String pathToForm) {
+	private boolean setResource(IWSlideService slide, String pathToPDF) {
 		try {
-			xformInPDF = slide.getWebdavResourceAuthenticatedAsRoot(pathToForm);
+			resourceInPDF = slide.getWebdavResourceAuthenticatedAsRoot(pathToPDF);
 		} catch (HttpException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {
@@ -147,17 +147,17 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			e.printStackTrace();
 		}
 		
-		return xformInPDF == null ? false : true;
+		return resourceInPDF == null ? false : true;
 	}
 	
 	@Override
 	public void writeTo(OutputStream streamOut) throws IOException {
-		if (xformInPDF == null) {
-			logger.log(Level.SEVERE, "Unable to get XForm");
+		if (resourceInPDF == null) {
+			logger.log(Level.SEVERE, "Unable to get resource: " + resourceInPDF.getName());
 			return;
 		}
 		
-		InputStream streamIn = xformInPDF.getMethodData();
+		InputStream streamIn = resourceInPDF.getMethodData();
 		FileUtil.streamToOutputStream(streamIn, streamOut);
 		
 		streamOut.flush();
