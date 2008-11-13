@@ -7,7 +7,7 @@
    </start-state>
    <node name="sendInvitation">
       <event type="node-enter">
-         <action name="sendInvitationAction" class="com.idega.bpm.process.invitation.SendParticipantInvitationMessageHandler">
+        <!--  <action name="sendInvitationAction" class="com.idega.bpm.process.invitation.SendParticipantInvitationMessageHandler">
 				<messageExp>
 					#{participantInvitationMessage}
 				</messageExp>
@@ -29,6 +29,45 @@
 	                <entry><key>is_IS</key><value>Opna\u00F0u eftirfarandi sl\u00F3\u00F0 til a\u00F0 sko\u00F0a m\u00E1li\u00F0 sem a\u00F0 um r\u00E6\u00F0ir\: {0}</value></entry>
 	            </inlineMessage>
 	            <messageValues>{list: {mv: [{type: "bean", value: "bpmUser.urlToTheProcess"}]}}</messageValues>
+			</action>  -->
+			<action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+				<handlerName>sendParticipantInvitationMessageHandler</handlerName>
+				<propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+			        <entry><key>messageExp</key><value>#{participantInvitationMessage}</value></entry>
+					<entry><key>userDataExp</key><value>#{participantUserData}</value></entry>
+			        <entry><key>processInstanceIdExp</key><value>#{sendFromProcessInstanceId}</value></entry>
+			        <entry><key>bpmUserIdExp</key><value>#{bpmUserId}</value></entry>
+			       
+			        <entry>
+			           	<key>inlineSubject</key>
+			        	<value>
+			        		${
+			        		Map subjectMap = new HashMap();
+			        		subjectMap.put("en", "You've been invited to participate in case");
+			        		subjectMap.put("is_IS", "\u00DE\u00E9r hefur veri\u00F0 bo\u00F0i\u00F0 a\u00F0 taka \u00FE\u00E1tt e\u00F0a gefa \u00E1lit \u00E1 m\u00E1li");
+			        		return subjectMap;
+			        		}
+			        		
+                		</value>
+                	</entry>
+                	<entry>
+			        	<key>inlineMessage</key>
+			        	<value>
+			        		${
+			        		Map messageMap = new HashMap();
+			        		messageMap.put("en", "Hello. \n\nYou have been invited to the case, you may follow the link to the case: {0}");
+			        		messageMap.put("is_IS", "Opna\u00F0u eftirfarandi sl\u00F3\u00F0 til a\u00F0 sko\u00F0a m\u00E1li\u00F0 sem a\u00F0 um r\u00E6\u00F0ir: {0}");
+			        		return messageMap;
+			        		}
+                		</value>
+                	</entry>
+                	<entry>
+			        	<key>messageValues</key>
+			        	<value>
+			        		{list: {mv: [{type: "bean", value: "bpmUser.urlToTheProcess"}]}}
+                		</value>
+                	</entry>
+			    </propertyMap>
 			</action>
       </event>
       <transition name="toEnd" to="end1"></transition>
@@ -36,7 +75,7 @@
 
 	<node name="createBpmUser">
 		<event type="node-enter">
-			<action name="createBpmUserAction" class="com.idega.jbpm.identity.CreateBPMUserHandler">
+		<!-- <action name="createBpmUserAction" class="com.idega.jbpm.identity.CreateBPMUserHandler">
 				<processInstanceIdExp>
 					#{sendFromProcessInstanceId}
 				</processInstanceIdExp>
@@ -50,6 +89,15 @@
                     bpmUserId
                 </bpmUserIdVariableNameExp>
 				
+			</action>  -->	
+			<action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+				<handlerName>createBPMUserHandler</handlerName>
+				<propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+					<entry><key>processInstanceIdExp</key><value>#{sendFromProcessInstanceId}</value></entry>
+					<entry><key>userDataExp</key><value>#{participantUserData}</value></entry>
+					<entry><key>roleExpressionExp</key><value>#{participantRoleExpression}</value></entry>
+			        <entry><key>bpmUserIdVariableNameExp</key><value>#{bpmUserId}</value></entry>
+			    </propertyMap>
 			</action>
 		</event>
 		<transition to="sendInvitation" name="toSendInvitation"></transition>
@@ -57,7 +105,7 @@
 
 	<node name="assignRoleToBpmUser">
 		<event type="node-enter">
-			<action class="com.idega.jbpm.identity.authentication.AssignUserToRoleHandler" name="assingRoleToBpmUserAction">
+		<!--	<action class="com.idega.jbpm.identity.authentication.AssignUserToRoleHandler" name="assingRoleToBpmUserAction">
 				<processInstanceIdExp>
 					#{sendFromProcessInstanceId}
 				</processInstanceIdExp>
@@ -67,12 +115,23 @@
 				<userIdExp>
 					#{bpmUserId}
 				</userIdExp>
+			</action> -->
+			<action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+				<handlerName>assignUserToRoleHandler</handlerName>
+				<propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+					<entry><key>processInstanceIdExp</key><value>#{sendFromProcessInstanceId}</value></entry>
+					<entry><key>roleExpressionExp</key><value>#{participantRoleExpression}</value></entry>
+					<entry><key>userIdExp</key><value>#{bpmUserId}</value></entry>
+			    </propertyMap>
 			</action>
 		</event>
 	</node>
    <end-state name="end1">
       <event type="node-enter">
-         <action name="endProcessAction" class="com.idega.jbpm.process.business.EndProcessHandler" config-type="constructor"></action>
+      <!-- <action name="endProcessAction" class="com.idega.jbpm.process.business.EndProcessHandler" config-type="constructor"></action> -->
+         <action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+				<handlerName>endProcessHandler</handlerName>
+		 </action>
       </event>
    </end-state>
 </process-definition>

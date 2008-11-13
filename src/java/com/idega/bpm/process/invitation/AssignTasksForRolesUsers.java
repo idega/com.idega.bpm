@@ -14,6 +14,8 @@ import org.jbpm.jpdl.el.impl.JbpmExpressionEvaluator;
 import org.jbpm.taskmgmt.def.Task;
 import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
 
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.identity.RolesManager;
@@ -22,20 +24,22 @@ import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  *
- * Last modified: $Date: 2008/10/22 14:51:54 $ by $Author: civilis $
+ * Last modified: $Date: 2008/11/13 15:08:12 $ by $Author: juozas $
  */
+@Service("assignTasksForRolesUsers")
+@Scope("prototype")
 public class AssignTasksForRolesUsers implements ActionHandler {
 
 	private static final long serialVersionUID = -1873068611362644702L;
-	private String tasksExp;
+	private List<AssignTasksForRolesUsersBean> tasksExp;
 	private BPMFactory bpmFactory;
 
 	public void execute(ExecutionContext ectx) throws Exception {
 
 		@SuppressWarnings("unchecked")
-		final List<AssignTasksForRolesUsersBean> tasksBeans = (List<AssignTasksForRolesUsersBean>)JbpmExpressionEvaluator.evaluate(getTasksExp(), ectx);
+		final List<AssignTasksForRolesUsersBean> tasksBeans = getTasksExp();//(List<AssignTasksForRolesUsersBean>)JbpmExpressionEvaluator.evaluate(getTasksExp(), ectx);
 		
 		if(tasksBeans != null) {
 
@@ -73,11 +77,11 @@ public class AssignTasksForRolesUsers implements ActionHandler {
 		}
 	}
 
-	public String getTasksExp() {
+	public List<AssignTasksForRolesUsersBean>  getTasksExp() {
 		return tasksExp;
 	}
 
-	public void setTasksExp(String tasksExp) {
+	public void setTasksExp(List<AssignTasksForRolesUsersBean>  tasksExp) {
 		this.tasksExp = tasksExp;
 	}
 

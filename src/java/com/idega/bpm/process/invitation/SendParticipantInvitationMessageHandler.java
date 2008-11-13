@@ -9,6 +9,8 @@ import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.graph.exe.ProcessInstance;
 import org.jbpm.jpdl.el.impl.JbpmExpressionEvaluator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
 
 import com.idega.bpm.BPMConstants;
 import com.idega.bpm.process.messages.LocalizedMessages;
@@ -28,18 +30,20 @@ import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  *
- * Last modified: $Date: 2008/10/22 14:51:54 $ by $Author: civilis $
+ * Last modified: $Date: 2008/11/13 15:08:12 $ by $Author: juozas $
  */
+@Service("sendParticipantInvitationMessageHandler")
+@Scope("prototype")
 public class SendParticipantInvitationMessageHandler extends SendMessagesHandler {
 
 	private static final long serialVersionUID = -4337747330253308754L;
 	
-	private String processInstanceIdExp;
-	private String bpmUserIdExp;
-	private String userDataExp;
-	private String messageExp;
+	private Long processInstanceIdExp;
+	private Integer bpmUserIdExp;
+	private UserPersonalData userDataExp;
+	private Message messageExp;
 	
 	private SendMessage sendMessage;
 	@Autowired private BPMUserFactory bpmUserFactory;
@@ -50,11 +54,11 @@ public class SendParticipantInvitationMessageHandler extends SendMessagesHandler
 			
 			ELUtil.getInstance().autowire(this);
 			
-			final Long pid = 						(Long)JbpmExpressionEvaluator.evaluate(getProcessInstanceIdExp(), ectx);
-			final Integer bpmUserId = 				(Integer)JbpmExpressionEvaluator.evaluate(getBpmUserIdExp(), ectx);
+			final Long pid = getProcessInstanceIdExp();//(Long)JbpmExpressionEvaluator.evaluate(getProcessInstanceIdExp(), ectx);
+			final Integer bpmUserId = 	getBpmUserIdExp();//	(Integer)JbpmExpressionEvaluator.evaluate(getBpmUserIdExp(), ectx);
 			final ProcessInstance pi = 				ectx.getJbpmContext().getProcessInstance(pid);
-			final UserPersonalData upd = 			(UserPersonalData)JbpmExpressionEvaluator.evaluate(getUserDataExp(), ectx);
-			final Message msg = 					getMessageExp() != null ? (Message)JbpmExpressionEvaluator.evaluate(getMessageExp(), ectx) : null;
+			final UserPersonalData upd =  getUserDataExp();//			(UserPersonalData)JbpmExpressionEvaluator.evaluate(getUserDataExp(), ectx);
+			final Message msg = getMessageExp();//getMessageExp() != null ? (Message)JbpmExpressionEvaluator.evaluate(getMessageExp(), ectx) : null;
 			
 			final IWContext iwc = IWContext.getCurrentInstance();
 //			final IWResourceBundle iwrb = getResourceBundle(iwc);
@@ -138,35 +142,35 @@ public class SendParticipantInvitationMessageHandler extends SendMessagesHandler
 		}
 	}
 	
-	public String getUserDataExp() {
+	public UserPersonalData getUserDataExp() {
 		return userDataExp;
 	}
 
-	public void setUserDataExp(String userDataExp) {
+	public void setUserDataExp(UserPersonalData userDataExp) {
 		this.userDataExp = userDataExp;
 	}
 
-	public String getMessageExp() {
+	public Message getMessageExp() {
 		return messageExp;
 	}
 
-	public void setMessageExp(String messageExp) {
+	public void setMessageExp(Message messageExp) {
 		this.messageExp = messageExp;
 	}
 
-	public String getProcessInstanceIdExp() {
+	public Long getProcessInstanceIdExp() {
 		return processInstanceIdExp;
 	}
 
-	public void setProcessInstanceIdExp(String processInstanceIdExp) {
+	public void setProcessInstanceIdExp(Long processInstanceIdExp) {
 		this.processInstanceIdExp = processInstanceIdExp;
 	}
 
-	public String getBpmUserIdExp() {
+	public Integer getBpmUserIdExp() {
 		return bpmUserIdExp;
 	}
 
-	public void setBpmUserIdExp(String bpmUserIdExp) {
+	public void setBpmUserIdExp(Integer bpmUserIdExp) {
 		this.bpmUserIdExp = bpmUserIdExp;
 	}
 	

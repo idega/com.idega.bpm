@@ -15,10 +15,16 @@
 
 	<node name="locateAssignee">
 		<event type="node-enter">
-			<action class="com.idega.jbpm.identity.authentication.LocateUserHandler">
+		<!--	<action class=" com.idega.jbpm.identity.authentication.LocateUserHandler"> 
 				<userDataExp>
                     #{assigneeData}
                 </userDataExp>
+			</action>-->
+			<action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+				<handlerName>locateUserHandler</handlerName>
+				<propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+			        <entry><key>userDataExp</key><value>#{assigneeData}</value></entry>
+			    </propertyMap>
 			</action>
 		</event>
 		<transition to="assigneeFound"></transition>
@@ -26,7 +32,7 @@
 
 	<node name="assignToRole">
 		<event type="node-enter">
-			<action class="com.idega.jbpm.identity.authentication.AssignUserToRoleHandler" name="AssignToRoleAction">
+			<!-- <action class="com.idega.jbpm.identity.authentication.AssignUserToRoleHandler" name="AssignToRoleAction">
 			    <processInstanceIdExp>
                     #{assignFromProcessInstanceId}
                 </processInstanceIdExp>
@@ -36,6 +42,14 @@
                 <userIdExp>
                     #{assigneeData.userId}
                 </userIdExp>
+			</action> -->
+			<action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+				<handlerName>assignUserToRoleHandler</handlerName>
+				<propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+			        <entry><key>processInstanceIdExp</key><value>#{assignFromProcessInstanceId}</value></entry>
+			        <entry><key>roleExpressionExp</key><value>#{assigneeRoleExpression}</value></entry>
+			        <entry><key>userIdExp</key><value>#{assigneeData.userId}</value></entry>
+			    </propertyMap>
 			</action>
 		</event>
 		<transition to="assignUserAsFirstTaskSubmitter" name="toAssignUserAsFirstTaskSubmitter"></transition>
@@ -48,10 +62,16 @@
 
 	<node name="createUser">
 		<event type="node-enter">
-			<action class="com.idega.jbpm.identity.authentication.CreateUserHandler">
+		<!--	<action class="com.idega.jbpm.identity.authentication.CreateUserHandler">
 				<userDataExp>
 					#{assigneeData}
 				</userDataExp>
+			</action>  -->
+			<action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+				<handlerName>createUserHandler</handlerName>
+				<propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+			        <entry><key>userDataExp</key><value>#{assigneeData}</value></entry>
+			    </propertyMap>
 			</action>
 		</event>
 		<transition to="assignToRole" name="toAssignRole"></transition>
@@ -76,13 +96,20 @@
 
 	<node name="assignUserAsFirstTaskSubmitter">
 		<event type="node-enter">
-			<action class="com.idega.jbpm.identity.AssignUserToTaskInstanceSubmitterHandler" name="assignUserAsFirstTaskSubmitterAction">
+		<!-- 	<action class="com.idega.jbpm.identity.AssignUserToTaskInstanceSubmitterHandler" name="assignUserAsFirstTaskSubmitterAction">
 				<userIdExp>
 					#{assigneeData.userId}
 				</userIdExp>
 				<processInstanceIdExp>
 					#{assignFromProcessInstanceId}
 				</processInstanceIdExp>
+			</action>  -->
+			<action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+				<handlerName>assignUserToTaskInstanceSubmitterHandler</handlerName>
+				<propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+			        <entry><key>userIdExp</key><value>#{assigneeData.userId}</value></entry>
+			        <entry><key>processInstanceIdExp</key><value>#{assignFromProcessInstanceId}</value></entry>
+			    </propertyMap>
 			</action>
 		</event>
 		<transition to="end-state1" name="toEnd"></transition>

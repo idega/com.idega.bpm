@@ -11,6 +11,8 @@ import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.graph.exe.Token;
 import org.jbpm.jpdl.el.impl.JbpmExpressionEvaluator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
 
 import com.idega.core.localisation.business.ICLocaleBusiness;
 import com.idega.idegaweb.IWBundle;
@@ -20,10 +22,12 @@ import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  *
- * Last modified: $Date: 2008/10/22 14:53:43 $ by $Author: civilis $
+ * Last modified: $Date: 2008/11/13 15:08:12 $ by $Author: juozas $
  */
+@Service("sendMessagesHandler")
+@Scope("prototype")
 public class SendMessagesHandler implements ActionHandler {
 
 	private static final long serialVersionUID = -7421283155844789254L;
@@ -34,7 +38,7 @@ public class SendMessagesHandler implements ActionHandler {
 	private String messagesBundle;
 	private String sendToRoles;
 	private List<String> sendToEmails;
-	private String userDataExp;
+	private UserPersonalData userDataExp;
 	private String sendFromProcessInstanceExp;
  	private Map<String, String> inlineSubject;
 	private Map<String, String> inlineMessage;
@@ -47,7 +51,7 @@ public class SendMessagesHandler implements ActionHandler {
 		
 		final String sendToRoles = getSendToRoles() != null ? (String)JbpmExpressionEvaluator.evaluate(getSendToRoles(), ectx) : null;
 		final List<String> sendToEmails = getSendToEmails();
-		final UserPersonalData upd = getUserDataExp() != null ? (UserPersonalData)JbpmExpressionEvaluator.evaluate(getUserDataExp(), ectx) : null;
+		final UserPersonalData upd = getUserDataExp();//getUserDataExp() != null ? (UserPersonalData)JbpmExpressionEvaluator.evaluate(getUserDataExp(), ectx) : null;
 		
 		final Token tkn = ectx.getToken();
 		
@@ -194,11 +198,11 @@ public class SendMessagesHandler implements ActionHandler {
 		this.sendToEmails = sendToEmails;
 	}
 
-	public String getUserDataExp() {
+	public UserPersonalData getUserDataExp() {
 		return userDataExp;
 	}
 
-	public void setUserDataExp(String userDataExp) {
+	public void setUserDataExp(UserPersonalData userDataExp) {
 		this.userDataExp = userDataExp;
 	}
 	

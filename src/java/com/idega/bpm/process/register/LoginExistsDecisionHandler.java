@@ -3,6 +3,8 @@ package com.idega.bpm.process.register;
 import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.graph.node.DecisionHandler;
 import org.jbpm.jpdl.el.impl.JbpmExpressionEvaluator;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
 
 import com.idega.core.accesscontrol.business.LoginDBHandler;
 import com.idega.jbpm.identity.UserPersonalData;
@@ -12,15 +14,17 @@ import com.idega.util.expression.ELUtil;
  * Checks, if user exists by username provided in UserPersonalData userName property. If that's not set, personalId is used instead
  *   
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  * 
- * Last modified: $Date: 2008/09/18 17:11:40 $ by $Author: civilis $
+ * Last modified: $Date: 2008/11/13 15:08:12 $ by $Author: juozas $
  */
+@Service("loginExistsDecisionHandler")
+@Scope("prototype")
 public class LoginExistsDecisionHandler implements DecisionHandler {
 
 	private static final long serialVersionUID = -8215519082716301605L;
 
-	private String userDataExp;
+	private UserPersonalData userDataExp;
 
 	private static final String booleanTrue = 	"true";
 	private static final String booleanFalse = 	"false";
@@ -31,7 +35,7 @@ public class LoginExistsDecisionHandler implements DecisionHandler {
 		
 		if(getUserDataExp() != null) {
 			
-			UserPersonalData upd = (UserPersonalData)JbpmExpressionEvaluator.evaluate(getUserDataExp(), ectx);
+			UserPersonalData upd = getUserDataExp();//(UserPersonalData)JbpmExpressionEvaluator.evaluate(getUserDataExp(), ectx);
 			
 			String userName;
 			
@@ -46,11 +50,11 @@ public class LoginExistsDecisionHandler implements DecisionHandler {
 		return booleanTrue;
 	}
 
-	public String getUserDataExp() {
+	public UserPersonalData getUserDataExp() {
 		return userDataExp;
 	}
 
-	public void setUserDataExp(String userDataExp) {
+	public void setUserDataExp(UserPersonalData userDataExp) {
 		this.userDataExp = userDataExp;
 	}
 }
