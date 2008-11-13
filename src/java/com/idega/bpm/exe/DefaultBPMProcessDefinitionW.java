@@ -10,13 +10,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jbpm.JbpmContext;
+import org.jbpm.context.def.VariableAccess;
 import org.jbpm.graph.def.ProcessDefinition;
 import org.jbpm.graph.exe.ProcessInstance;
+import org.jbpm.taskmgmt.def.Task;
+import org.jbpm.taskmgmt.def.TaskController;
 import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.idega.block.process.variables.Variable;
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.exe.BPMFactory;
@@ -28,9 +32,9 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  *
- * Last modified: $Date: 2008/09/18 17:11:10 $ by $Author: civilis $
+ * Last modified: $Date: 2008/11/13 14:21:28 $ by $Author: alexis $
  */
 @Scope("prototype")
 @Service("defaultPDW")
@@ -44,6 +48,42 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	@Autowired private VariablesHandler variablesHandler;
 	
 	private static final Logger logger = Logger.getLogger(DefaultBPMProcessDefinitionW.class.getName());
+	
+	public List<Variable> getTaskVariableList(Long processDefinitionId) {
+		
+		JbpmContext ctx = getBpmContext().createJbpmContext();
+		
+		List<Variable> list = new ArrayList<Variable>();
+		
+		try {
+			
+			ProcessDefinition pdef = ctx.getGraphSession().getProcessDefinition(processDefinitionId);
+			
+			Task task = pdef.getTaskMgmtDefinition().getTask("");
+
+			TaskController tiController = task.getTaskController();
+			
+			if(tiController == null)
+				return null;
+			
+			@SuppressWarnings("unchecked")
+			List<VariableAccess> variableAccesses = tiController.getVariableAccesses();
+				
+			for (VariableAccess variableAccess : variableAccesses) {
+				
+				Variable variable = Variable.parseDefaultStringRepresentation(variableAccess.getVariableName());
+				
+				list.add(variable);
+				
+			}
+					
+			return list;
+			
+		} finally {
+			getBpmContext().closeAndCommit(ctx);
+		}
+		
+	}
 	
 	public void startProcess(View view) {
 		
