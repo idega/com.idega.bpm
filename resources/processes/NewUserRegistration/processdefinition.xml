@@ -3,6 +3,8 @@
 	<start-state name="registerNewUser">
 		<task name="New User Registration">
 			<controller>
+				<variable access="read,write" name="string_ownerPhone"></variable>
+				<variable access="read,write" name="string_ownerMobile"></variable>
 				<variable access="read,write,required" name="string_ownerEmailAddress"></variable>
 				<variable access="read,write,required" name="string_ownerAddress"></variable>
 				<variable access="read,write,required" name="string_ownerPostalCode"></variable>
@@ -26,6 +28,7 @@
 					s_upd.setCreateWithLogin(true);
 					s_upd.setUserName(userPersonalId);
 					s_upd.setGenderName(userGenderName);
+					s_upd.setUserPhone(userPhone);
                 </expression>
 				<variable name='ownerUserData' access='write' mapped-name='s_upd' />
 				<variable name='string_ownerPersonalId' access='read' mapped-name='userPersonalId' />
@@ -35,6 +38,7 @@
 				<variable name='string_ownerFullName' access='read' mapped-name='userFullName' />
 				<variable name='string_ownerEmailAddress' access='read' mapped-name='userEmailAddress' />
 				<variable name='string_ownerGender' access='read' mapped-name='userGenderName' />
+				<variable name='string_ownerPhone' access='read' mapped-name='userPhone' />
 			</script>
 		</event>
 		<transition to="loginAlreadyExists" name="toCheckForloginAlreadyExists"></transition>
