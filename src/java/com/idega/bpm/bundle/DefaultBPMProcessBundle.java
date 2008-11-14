@@ -24,25 +24,26 @@ import com.idega.jbpm.view.ViewToTask;
 import com.idega.jbpm.view.ViewToTaskType;
 
 /**
+ * Default implementation of ProcessBundle, uses XFormViewResource
  * 
  * @author <a href="civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  * 
- * Last modified: $Date: 2008/11/05 08:53:04 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/11/14 10:50:47 $ by $Author: civilis $
  * 
  */
 @Scope("prototype")
 @Service("defaultBPMProcessBundle")
 public class DefaultBPMProcessBundle implements ProcessBundle {
-	
+
 	private static final String processDefinitionFileName = "processdefinition.xml";
 	private static final String formsPath = "forms/";
 	private static final String dotRegExp = "\\.";
 	private static final String taskPrefix = "task";
-	
+
 	private static final String initTaskProp = "init_task";
 	private static final String taskNamePostfixProp = ".name";
-	
+
 	private static final String XFFileNamePropertyPostfix = ".view.xforms.file_name";
 
 	private ProcessBundleResources bundleResources;
@@ -50,30 +51,32 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 	private String bundlePropertiesLocationWithinBundle;
 	private DocumentManagerFactory documentManagerFactory;
 	private ProcessDefinition pd;
-	
+
 	private ViewToTask viewToTaskBinder;
 
 	public ProcessDefinition getProcessDefinition() throws IOException {
 
-		if(pd == null) {
+		if (pd == null) {
 
-			InputStream pdIs = getBundleResources().getResourceIS(processDefinitionFileName);
-			
-			if(pdIs != null) {
-				ProcessDefinition pd = IdegaProcessDefinition.parseXmlInputStream(pdIs);
+			InputStream pdIs = getBundleResources().getResourceIS(
+					processDefinitionFileName);
+
+			if (pdIs != null) {
+				ProcessDefinition pd = IdegaProcessDefinition
+						.parseXmlInputStream(pdIs);
 				this.pd = pd;
 			}
 		}
-		
+
 		return pd;
 	}
-	
+
 	public List<ViewResource> getViewResources(String taskName)
 			throws IOException {
 
 		ProcessBundleResources resources = getBundleResources();
 		InputStream propertiesIs = resources.getResourceIS("bundle.properties");
-		
+
 		final Properties properties = new Properties();
 		properties.load(propertiesIs);
 
@@ -82,10 +85,10 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 			if (taskName.equals(entry.getValue())) {
 
 				String key = (String) entry.getKey();
-				
-				if(!key.startsWith(taskPrefix))
+
+				if (!key.startsWith(taskPrefix))
 					continue;
-				
+
 				String taskIdentifier = key.split(dotRegExp)[0];
 				String fileName = properties.getProperty(taskIdentifier
 						+ XFFileNamePropertyPostfix);
@@ -94,10 +97,11 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 				resource.setTaskName(taskName);
 				resource.setDocumentManagerFactory(getDocumentManagerFactory());
 				String pathWithinBundle = formsPath + fileName;
-				
+
 				resource.setResourceLocation(resources, pathWithinBundle);
-				
-				ArrayList<ViewResource> viewResources = new ArrayList<ViewResource>(1);
+
+				ArrayList<ViewResource> viewResources = new ArrayList<ViewResource>(
+						1);
 				viewResources.add(resource);
 				return viewResources;
 			}
@@ -124,40 +128,43 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 	}
 
 	protected Properties resolveBundleProperties() throws IOException {
-	
-		InputStream propertiesIs = getBundleResources().getResourceIS("bundle.properties");
-		
-		if(propertiesIs != null) {
-		
+
+		InputStream propertiesIs = getBundleResources().getResourceIS(
+				"bundle.properties");
+
+		if (propertiesIs != null) {
+
 			final Properties properties = new Properties();
 			properties.load(propertiesIs);
-			
+
 			return properties;
 		} else {
 
 			throw new RuntimeException("Expected bundle.properties not found");
 		}
 	}
-	
+
 	public void configure(ProcessDefinition pd) {
-		
+
 		try {
 			Properties properties = resolveBundleProperties();
 			String initTaskKey = properties.getProperty(initTaskProp);
-			String initTaskName = properties.getProperty(initTaskKey+taskNamePostfixProp);
+			String initTaskName = properties.getProperty(initTaskKey
+					+ taskNamePostfixProp);
 			Task initTask = pd.getTaskMgmtDefinition().getTask(initTaskName);
 			pd.getTaskMgmtDefinition().setStartTask(initTask);
-			
+
 		} catch (IOException e) {
-			throw new RuntimeException("IOException while accessing process bundle properties");
+			throw new RuntimeException(
+					"IOException while accessing process bundle properties");
 		}
 	}
 
 	public String getManagersType() {
-		
+
 		return DefaultBPMManagersCreator.MANAGERS_TYPE;
 	}
-	
+
 	public ProcessBundleResources getBundleResources() {
 		return bundleResources;
 	}
@@ -165,7 +172,7 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 	public void setBundleResources(ProcessBundleResources bundleResources) {
 		this.bundleResources = bundleResources;
 	}
-	
+
 	public ViewToTask getViewToTaskBinder() {
 		return viewToTaskBinder;
 	}
