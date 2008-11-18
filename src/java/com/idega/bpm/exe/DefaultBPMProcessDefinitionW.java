@@ -32,9 +32,9 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  *
- * Last modified: $Date: 2008/11/13 14:21:28 $ by $Author: alexis $
+ * Last modified: $Date: 2008/11/18 07:38:24 $ by $Author: alexis $
  */
 @Scope("prototype")
 @Service("defaultPDW")
@@ -49,7 +49,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	
 	private static final Logger logger = Logger.getLogger(DefaultBPMProcessDefinitionW.class.getName());
 	
-	public List<Variable> getTaskVariableList(Long processDefinitionId) {
+	public List<Variable> getTaskVariableList(Long processDefinitionId, String taskName) {
 		
 		JbpmContext ctx = getBpmContext().createJbpmContext();
 		
@@ -59,7 +59,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			
 			ProcessDefinition pdef = ctx.getGraphSession().getProcessDefinition(processDefinitionId);
 			
-			Task task = pdef.getTaskMgmtDefinition().getTask("");
+			Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
 
 			TaskController tiController = task.getTaskController();
 			
