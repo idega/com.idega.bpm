@@ -1,6 +1,7 @@
 package com.idega.bpm.exe;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.logging.Logger;
 import org.jbpm.JbpmContext;
 import org.jbpm.context.def.VariableAccess;
 import org.jbpm.graph.def.ProcessDefinition;
+import org.jbpm.graph.def.Transition;
 import org.jbpm.graph.exe.ProcessInstance;
 import org.jbpm.taskmgmt.def.Task;
 import org.jbpm.taskmgmt.def.TaskController;
@@ -32,9 +34,9 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  *
- * Last modified: $Date: 2008/11/18 07:38:24 $ by $Author: alexis $
+ * Last modified: $Date: 2008/11/18 12:06:46 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPDW")
@@ -49,40 +51,26 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	
 	private static final Logger logger = Logger.getLogger(DefaultBPMProcessDefinitionW.class.getName());
 	
-	public List<Variable> getTaskVariableList(Long processDefinitionId, String taskName) {
+	public List<Variable> getTaskVariableList(String taskName) {
 		
-		JbpmContext ctx = getBpmContext().createJbpmContext();
+		ProcessDefinition pdef = getProcessDefinition();
+		Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
+		TaskController tiController = task.getTaskController();
 		
-		List<Variable> list = new ArrayList<Variable>();
+		if(tiController == null)
+			return null;
 		
-		try {
+		@SuppressWarnings("unchecked")
+		List<VariableAccess> variableAccesses = tiController.getVariableAccesses();
+		ArrayList<Variable> variables = new ArrayList<Variable>(variableAccesses.size());
 			
-			ProcessDefinition pdef = ctx.getGraphSession().getProcessDefinition(processDefinitionId);
+		for (VariableAccess variableAccess : variableAccesses) {
 			
-			Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
-
-			TaskController tiController = task.getTaskController();
-			
-			if(tiController == null)
-				return null;
-			
-			@SuppressWarnings("unchecked")
-			List<VariableAccess> variableAccesses = tiController.getVariableAccesses();
-				
-			for (VariableAccess variableAccess : variableAccesses) {
-				
-				Variable variable = Variable.parseDefaultStringRepresentation(variableAccess.getVariableName());
-				
-				list.add(variable);
-				
-			}
-					
-			return list;
-			
-		} finally {
-			getBpmContext().closeAndCommit(ctx);
+			Variable variable = Variable.parseDefaultStringRepresentation(variableAccess.getVariableName());
+			variables.add(variable);
 		}
-		
+				
+		return variables;
 	}
 	
 	public void startProcess(View view) {
@@ -189,6 +177,13 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		View view = getBpmFactory().getViewByTask(taskId, false, preferred);
 		
 		return view.getDisplayName(new Locale("is","IS"));
+	}
+	
+	public Collection<String> getTaskNodeTransitionsNames(Task task) {
+		
+		@SuppressWarnings("unchecked")
+		Map<String, Transition> leavingTransitions = task.getTaskNode().getLeavingTransitionsMap();
+		return leavingTransitions != null ? leavingTransitions.keySet() : null;
 	}
 	
 	public Long getProcessDefinitionId() {
