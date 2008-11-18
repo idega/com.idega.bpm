@@ -34,9 +34,9 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  *
- * Last modified: $Date: 2008/11/18 12:06:46 $ by $Author: civilis $
+ * Last modified: $Date: 2008/11/18 12:11:41 $ by $Author: alexis $
  */
 @Scope("prototype")
 @Service("defaultPDW")
@@ -179,7 +179,10 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		return view.getDisplayName(new Locale("is","IS"));
 	}
 	
-	public Collection<String> getTaskNodeTransitionsNames(Task task) {
+	public Collection<String> getTaskNodeTransitionsNames(String taskName) {
+		
+		ProcessDefinition pdef = getProcessDefinition();
+		Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
 		
 		@SuppressWarnings("unchecked")
 		Map<String, Transition> leavingTransitions = task.getTaskNode().getLeavingTransitionsMap();
