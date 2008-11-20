@@ -15,6 +15,7 @@ import org.jbpm.context.def.VariableAccess;
 import org.jbpm.graph.def.ProcessDefinition;
 import org.jbpm.graph.def.Transition;
 import org.jbpm.graph.exe.ProcessInstance;
+import org.jbpm.graph.node.TaskNode;
 import org.jbpm.taskmgmt.def.Task;
 import org.jbpm.taskmgmt.def.TaskController;
 import org.jbpm.taskmgmt.exe.TaskInstance;
@@ -34,9 +35,9 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  *
- * Last modified: $Date: 2008/11/20 11:33:09 $ by $Author: valdas $
+ * Last modified: $Date: 2008/11/20 12:36:09 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPDW")
@@ -184,9 +185,16 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		ProcessDefinition pdef = getProcessDefinition();
 		Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
 		
-		@SuppressWarnings("unchecked")
-		Map<String, Transition> leavingTransitions = task.getTaskNode().getLeavingTransitionsMap();
-		return leavingTransitions != null ? leavingTransitions.keySet() : null;
+		TaskNode taskNode = task.getTaskNode();
+		
+		if(taskNode != null) {
+		
+			@SuppressWarnings("unchecked")
+			Map<String, Transition> leavingTransitions = taskNode.getLeavingTransitionsMap();
+			return leavingTransitions != null ? leavingTransitions.keySet() : null;
+		} else
+//			task node is null, when task in start node
+			return null;
 	}
 	
 	public Long getProcessDefinitionId() {
