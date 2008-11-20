@@ -1,14 +1,19 @@
 package com.idega.bpm.exe;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.jbpm.JbpmContext;
 import org.jbpm.graph.def.ProcessDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.idega.block.process.business.CaseManager;
+import com.idega.block.process.business.CaseManagersProvider;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.exe.ProcessDefinitionW;
 import com.idega.jbpm.exe.ProcessInstanceW;
 import com.idega.jbpm.exe.ProcessManager;
 import com.idega.jbpm.exe.TaskInstanceW;
+import com.idega.util.ListUtil;
 
 /**
  * abstract implementation of ProcessManager. Default behavior is that bean
@@ -16,14 +21,17 @@ import com.idega.jbpm.exe.TaskInstanceW;
  * which create wanted bpm wrapper instances
  * 
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  * 
- *          Last modified: $Date: 2008/11/14 10:50:47 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/11/20 07:30:42 $ by $Author: valdas $
  */
 public abstract class DefaultBPMProcessManager implements ProcessManager {
 
 	@Autowired
 	private BPMContext bpmContext;
+	
+	@Autowired
+	private CaseManagersProvider caseManagersProvider;
 
 	public ProcessDefinitionW getProcessDefinition(long pdId) {
 
@@ -108,5 +116,33 @@ public abstract class DefaultBPMProcessManager implements ProcessManager {
 
 	public void setBpmContext(BPMContext bpmContext) {
 		this.bpmContext = bpmContext;
+	}
+	
+	public CaseManagersProvider getCaseManagersProvider() {
+		return caseManagersProvider;
+	}
+
+	public void setCaseManagersProvider(CaseManagersProvider caseManagersProvider) {
+		this.caseManagersProvider = caseManagersProvider;
+	}
+
+	public List<ProcessDefinitionW> getAllProcesses() {
+		List<CaseManager> caseManagers = getCaseManagersProvider().getCaseManagers();
+		if (ListUtil.isEmpty(caseManagers)) {
+			return null;
+		}
+		
+		List<ProcessDefinitionW> allProcesses = new ArrayList<ProcessDefinitionW>();
+		for (CaseManager caseManager: caseManagers) {
+			List<Long> caseProcesses = caseManager.getAllCaseProcessDefinitions();
+			
+			if (!ListUtil.isEmpty(caseProcesses)) {
+				for (Long id: caseProcesses) {
+					allProcesses.add(getProcessDefinition(id));
+				}
+			}
+		}
+		
+		return allProcesses;
 	}
 }

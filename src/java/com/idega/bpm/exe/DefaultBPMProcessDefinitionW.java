@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.idega.block.process.business.CaseManager;
 import com.idega.block.process.variables.Variable;
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.jbpm.BPMContext;
@@ -34,9 +35,9 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  *
- * Last modified: $Date: 2008/11/18 12:11:41 $ by $Author: alexis $
+ * Last modified: $Date: 2008/11/20 07:30:42 $ by $Author: valdas $
  */
 @Scope("prototype")
 @Service("defaultPDW")
@@ -48,6 +49,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	@Autowired private BPMFactory bpmFactory;
 	@Autowired private BPMContext bpmContext;
 	@Autowired private VariablesHandler variablesHandler;
+	@Autowired private CaseManager caseManager;
 	
 	private static final Logger logger = Logger.getLogger(DefaultBPMProcessDefinitionW.class.getName());
 	
@@ -221,6 +223,14 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		this.variablesHandler = variablesHandler;
 	}
 
+	public CaseManager getCaseManager() {
+		return caseManager;
+	}
+
+	public void setCaseManager(CaseManager caseManager) {
+		this.caseManager = caseManager;
+	}
+
 	public ProcessDefinition getProcessDefinition() {
 		
 		if(processDefinition == null && getProcessDefinitionId() != null) {
@@ -236,5 +246,13 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		}
 		
 		return processDefinition;
+	}
+
+	public String getProcessName(Locale locale) {
+		if (locale == null || processDefinitionId == null) {
+			return null;
+		}
+		
+		return getCaseManager().getProcessName(processDefinitionId, locale);
 	}
 }
