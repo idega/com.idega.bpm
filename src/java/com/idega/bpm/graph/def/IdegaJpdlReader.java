@@ -14,10 +14,8 @@ import org.jbpm.jpdl.xml.JpdlXmlReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.xml.sax.InputSource;
 
-import com.idega.slide.business.IWSlideResourceBundle;
 import com.idega.util.LocaleUtil;
 import com.idega.util.expression.ELUtil;
-import com.idega.util.messages.MessageResource;
 import com.idega.util.messages.MessageResourceFactory;
 
 /**
@@ -111,9 +109,10 @@ public class IdegaJpdlReader extends JpdlXmlReader {
 				}
 			}
 			
-	    	MessageResource resource = getMessageFactory().getResourceByIdentifier(IWSlideResourceBundle.RESOURCE_IDENTIFIER);
+//	    	MessageResource resource = getMessageFactory().getResourceByIdentifier(IWSlideResourceBundle.RESOURCE_IDENTIFIER);
 			for(Locale locale : localisedRoles.keySet()) {
-				resource.setMessages(localisedRoles.get(locale), null, locale);
+				getMessageFactory().setLocalisedMessages(localisedRoles.get(locale), null, locale);
+//				resource.setMessages(localisedRoles.get(locale), null, locale);
 			}
     	} catch(NoSuchElementException e) {
     		log.log(Level.WARNING, root.attributeValue(NAME) + " - process definition has no role localization tags");
