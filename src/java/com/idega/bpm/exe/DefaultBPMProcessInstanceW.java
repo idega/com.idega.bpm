@@ -1,6 +1,5 @@
 package com.idega.bpm.exe;
 
-
 import java.security.AccessControlException;
 import java.security.Permission;
 import java.util.ArrayList;
@@ -49,76 +48,143 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.7 $
- *
- * Last modified: $Date: 2008/10/22 14:51:29 $ by $Author: civilis $
+ * @version $Revision: 1.8 $
+ * 
+ *          Last modified: $Date: 2008/11/26 13:14:30 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPIW")
 public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
-	
+
 	private Long processInstanceId;
 	private ProcessInstance processInstance;
-	
+
 	private BPMContext idegaJbpmContext;
 	private ProcessManager processManager;
 	@Autowired
 	private BPMFactory bpmFactory;
 	@Autowired
 	private PermissionsFactory permissionsFactory;
-	
+
 	private static final String CASHED_TASK_NAMES = "defaultBPM_taskinstance_names";
-	
+
 	public List<TaskInstanceW> getAllTaskInstances() {
-		
-		ProcessInstance processInstance = getProcessInstance();
-		
-		@SuppressWarnings("unchecked")
-		Collection<TaskInstance> taskInstances = processInstance.getTaskMgmtInstance().getTaskInstances();
-		return encapsulateInstances(taskInstances);
+
+		return encapsulateInstances(getAllTaskInstancesPRVT());
 	}
-	
-	public List<TaskInstanceW> getUnfinishedTaskInstances(Token rootToken) {
-		
-		ProcessInstance processInstance = rootToken.getProcessInstance();
-		
+
+	private Collection<TaskInstance> getAllTaskInstancesPRVT() {
+
+		ProcessInstance processInstance = getProcessInstance();
+
 		@SuppressWarnings("unchecked")
-		Collection<TaskInstance> taskInstances = processInstance.getTaskMgmtInstance().getUnfinishedTasks(rootToken);
+		Collection<TaskInstance> taskInstances = processInstance
+				.getTaskMgmtInstance().getTaskInstances();
+
+		@SuppressWarnings("unchecked")
+		List<Token> tokens = processInstance.findAllTokens();
+
+		for (Token token : tokens) {
+
+			ProcessInstance subProcessInstance = token.getSubProcessInstance();
+
+			if (subProcessInstance != null) {
+
+				@SuppressWarnings("unchecked")
+				Collection<TaskInstance> subTis = subProcessInstance
+						.getTaskMgmtInstance().getTaskInstances();
+				taskInstances.addAll(subTis);
+			}
+		}
+
+		return taskInstances;
+	}
+
+	public List<TaskInstanceW> getSubmittedTaskInstances() {
+
+		Collection<TaskInstance> taskInstances = getAllTaskInstancesPRVT();
+
+		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator
+				.hasNext();) {
+			TaskInstance taskInstance = iterator.next();
+
+			if (!taskInstance.hasEnded())
+				iterator.remove();
+		}
 
 		return encapsulateInstances(taskInstances);
 	}
-	
-	public List<TaskInstanceW> getAllUnfinishedTaskInstances() {
-	
-		ProcessInstance processInstance = getProcessInstance();
-	
+
+	public List<TaskInstanceW> getUnfinishedTaskInstances(Token rootToken) {
+
+		ProcessInstance processInstance = rootToken.getProcessInstance();
+
 		@SuppressWarnings("unchecked")
-		Collection<TaskInstance> taskInstances = processInstance.getTaskMgmtInstance().getUnfinishedTasks(processInstance.getRootToken());
-		
+		Collection<TaskInstance> taskInstances = processInstance
+				.getTaskMgmtInstance().getUnfinishedTasks(rootToken);
+
+		return encapsulateInstances(taskInstances);
+	}
+
+	public List<TaskInstanceW> getAllUnfinishedTaskInstances() {
+
+		ProcessInstance processInstance = getProcessInstance();
+
+		@SuppressWarnings("unchecked")
+		Collection<TaskInstance> taskInstances = processInstance
+				.getTaskMgmtInstance().getUnfinishedTasks(
+						processInstance.getRootToken());
+
 		@SuppressWarnings("unchecked")
 		List<Token> tokens = processInstance.findAllTokens();
-		
+
 		for (Token token : tokens) {
-			
-			if(!token.equals(processInstance.getRootToken())) {
-		
+
+			// root token task instances already in the list
+			if (!token.equals(processInstance.getRootToken())) {
+
 				@SuppressWarnings("unchecked")
-				Collection<TaskInstance> tis = processInstance.getTaskMgmtInstance().getUnfinishedTasks(token);
+				Collection<TaskInstance> tis = processInstance
+						.getTaskMgmtInstance().getUnfinishedTasks(token);
 				taskInstances.addAll(tis);
+			}
+
+			ProcessInstance subProcessInstance = token.getSubProcessInstance();
+
+			if (subProcessInstance != null) {
+
+				// add unfinished task instances from subprocesses.
+				// HINT: if we need to have more than one level depth of finding
+				// those (i.e. process->subprocess->subprocess->task)
+				// then we need to do it recursively here
+
+				@SuppressWarnings("unchecked")
+				List<Token> subTokens = subProcessInstance.findAllTokens();
+
+				for (Token subToken : subTokens) {
+
+					@SuppressWarnings("unchecked")
+					Collection<TaskInstance> tis = subProcessInstance
+							.getTaskMgmtInstance().getUnfinishedTasks(subToken);
+					taskInstances.addAll(tis);
+				}
 			}
 		}
 
 		return encapsulateInstances(taskInstances);
 	}
-	
-	private ArrayList<TaskInstanceW> encapsulateInstances(Collection<TaskInstance> taskInstances) {
-		ArrayList<TaskInstanceW> instances = new ArrayList<TaskInstanceW>(taskInstances.size());
-		
-		for(TaskInstance instance : taskInstances) {
-			TaskInstanceW tiw = getProcessManager().getTaskInstance(instance.getId());
+
+	private ArrayList<TaskInstanceW> encapsulateInstances(
+			Collection<TaskInstance> taskInstances) {
+		ArrayList<TaskInstanceW> instances = new ArrayList<TaskInstanceW>(
+				taskInstances.size());
+
+		for (TaskInstance instance : taskInstances) {
+			TaskInstanceW tiw = getProcessManager().getTaskInstance(
+					instance.getId());
 			instances.add(tiw);
 		}
-		
+
 		return instances;
 	}
 
@@ -145,20 +211,21 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	}
 
 	@Required
-	@Resource(name="defaultBpmProcessManager")
+	@Resource(name = "defaultBpmProcessManager")
 	public void setProcessManager(ProcessManager processManager) {
 		this.processManager = processManager;
 	}
 
 	public ProcessInstance getProcessInstance() {
-		
-		if(processInstance == null && getProcessInstanceId() != null) {
-			
+
+		if (processInstance == null && getProcessInstanceId() != null) {
+
 			JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
-			
+
 			try {
-				processInstance = ctx.getProcessInstance(getProcessInstanceId());
-				
+				processInstance = ctx
+						.getProcessInstance(getProcessInstanceId());
+
 			} finally {
 				getIdegaJbpmContext().closeAndCommit(ctx);
 			}
@@ -168,81 +235,90 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 
 	public void assignHandler(Integer handlerUserId) {
 	}
-	
+
 	public String getProcessDescription() {
 
 		return null;
 	}
-	
+
 	public String getProcessIdentifier() {
-	    
+
 		return null;
 	}
-	
-	public ProcessDefinitionW getProcessDefinitionW () {
-		
+
+	public ProcessDefinitionW getProcessDefinitionW() {
+
 		Long pdId = getProcessInstance().getProcessDefinition().getId();
 		return getProcessManager().getProcessDefinition(pdId);
 	}
-	
+
 	public Integer getHandlerId() {
-		
+
 		return null;
 	}
-	
+
 	public List<User> getUsersConnectedToProcess() {
-		
+
 		final Collection<User> users;
-		
+
 		try {
 			Long processInstanceId = getProcessInstanceId();
-			BPMTypedPermission perm = (BPMTypedPermission)getPermissionsFactory().getRoleAccessPermission(processInstanceId, null, false);
-			users = getBpmFactory().getRolesManager().getAllUsersForRoles(null, processInstanceId, perm);
-			
-		} catch(Exception e) {
-			Logger.getLogger(getClass().getName()).log(Level.SEVERE, "Exception while resolving all process instance users", e);
+			BPMTypedPermission perm = (BPMTypedPermission) getPermissionsFactory()
+					.getRoleAccessPermission(processInstanceId, null, false);
+			users = getBpmFactory().getRolesManager().getAllUsersForRoles(null,
+					processInstanceId, perm);
+
+		} catch (Exception e) {
+			Logger.getLogger(getClass().getName()).log(Level.SEVERE,
+					"Exception while resolving all process instance users", e);
 			return null;
 		}
-		
-		if(users != null && !users.isEmpty()) {
 
-//			using separate list, as the resolved one could be cashed (shared) and so
+		if (users != null && !users.isEmpty()) {
+
+			// using separate list, as the resolved one could be cashed (shared)
+			// and so
 			ArrayList<User> connectedPeople = new ArrayList<User>(users);
 
-			for (Iterator<User> iterator = connectedPeople.iterator(); iterator.hasNext();) {
-				
+			for (Iterator<User> iterator = connectedPeople.iterator(); iterator
+					.hasNext();) {
+
 				User user = iterator.next();
-				String hideInContacts = user.getMetaData(BPMUser.HIDE_IN_CONTACTS);
-				
-				if(hideInContacts != null)
-//					excluding ones, that should be hidden in contacts list
+				String hideInContacts = user
+						.getMetaData(BPMUser.HIDE_IN_CONTACTS);
+
+				if (hideInContacts != null)
+					// excluding ones, that should be hidden in contacts list
 					iterator.remove();
 			}
-			
+
 			try {
-				Collections.sort(connectedPeople, new UserComparator(CoreUtil.getIWContext().getCurrentLocale()));
-			} catch(Exception e) {
-				Logger.getLogger(getClass().getName()).log(Level.SEVERE, "Exception while sorting contacts list ("+connectedPeople+")", e);
+				Collections.sort(connectedPeople, new UserComparator(CoreUtil
+						.getIWContext().getCurrentLocale()));
+			} catch (Exception e) {
+				Logger.getLogger(getClass().getName()).log(
+						Level.SEVERE,
+						"Exception while sorting contacts list ("
+								+ connectedPeople + ")", e);
 			}
-			
-			return connectedPeople; 
+
+			return connectedPeople;
 		}
-		
+
 		return null;
 	}
-	
+
 	public boolean hasHandlerAssignmentSupport() {
-		
+
 		return false;
 	}
-	
+
 	public void setContactsPermission(Role role, Integer userId) {
-		
+
 		Long processInstanceId = getProcessInstanceId();
-	
-		getBpmFactory().getRolesManager().setContactsPermission(
-				role, processInstanceId, userId
-		);
+
+		getBpmFactory().getRolesManager().setContactsPermission(role,
+				processInstanceId, userId);
 	}
 
 	public BPMFactory getBpmFactory() {
@@ -264,67 +340,71 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	public ProcessWatch getProcessWatcher() {
 		return null;
 	}
-	
+
 	public String getName(Locale locale) {
 		final IWMainApplication iwma = getIWma();
 		@SuppressWarnings("unchecked")
-		Map<Long, Map<Locale, String>> cashTaskNames = IWCacheManager2.getInstance(iwma).getCache(CASHED_TASK_NAMES);
+		Map<Long, Map<Locale, String>> cashTaskNames = IWCacheManager2
+				.getInstance(iwma).getCache(CASHED_TASK_NAMES);
 		final Map<Locale, String> names;
-		final Long taskInstanceId = getProcessDefinitionW().getProcessDefinition().getTaskMgmtDefinition().getStartTask().getId();
-			
-		if(cashTaskNames.containsKey(taskInstanceId)) {
+		final Long taskInstanceId = getProcessDefinitionW()
+				.getProcessDefinition().getTaskMgmtDefinition().getStartTask()
+				.getId();
+
+		if (cashTaskNames.containsKey(taskInstanceId)) {
 			names = cashTaskNames.get(taskInstanceId);
 		} else {
 			names = new HashMap<Locale, String>(5);
 			cashTaskNames.put(taskInstanceId, names);
 		}
 		final String name;
-		
-		if(names.containsKey(locale))
+
+		if (names.containsKey(locale))
 			name = names.get(locale);
 		else {
 			View taskInstanceView = loadView();
 			name = taskInstanceView.getDisplayName(locale);
 			names.put(locale, name);
 		}
-		
+
 		return name;
 	}
-	
+
 	private IWMainApplication getIWma() {
 		final IWContext iwc = CoreUtil.getIWContext();
 		final IWMainApplication iwma;
-		
-		if(iwc != null) {	
-			iwma = iwc.getIWMainApplication();		
+
+		if (iwc != null) {
+			iwma = iwc.getIWMainApplication();
 		} else {
 			iwma = IWMainApplication.getDefaultIWMainApplication();
 		}
-		
+
 		return iwma;
 	}
-	
+
 	public View loadView() {
-		Long taskId = getProcessDefinitionW().getProcessDefinition().getTaskMgmtDefinition().getStartTask().getId();
+		Long taskId = getProcessDefinitionW().getProcessDefinition()
+				.getTaskMgmtDefinition().getStartTask().getId();
 		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
-		
+
 		try {
 			List<String> preferred = new ArrayList<String>(1);
 			preferred.add(XFormsView.VIEW_TYPE);
-			
-			View view = getBpmFactory().getViewByTask(taskId, false, preferred);	
-		
+
+			View view = getBpmFactory().getViewByTask(taskId, false, preferred);
+
 			return view;
-		
-		} catch(RuntimeException e) {
+
+		} catch (RuntimeException e) {
 			throw e;
-		} catch(Exception e) {
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} finally {
 			getIdegaJbpmContext().closeAndCommit(ctx);
 		}
 	}
-	
+
 	/**
 	 * checks right for process instance and current logged in user
 	 * 
@@ -332,34 +412,37 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	 * @return
 	 */
 	public boolean hasRight(Right right) {
-		
+
 		return hasRight(right, null);
 	}
-	
+
 	/**
 	 * checks right for process instance and user provided
 	 * 
 	 * @param right
-	 * @param user to check right against
+	 * @param user
+	 *            to check right against
 	 * @return
 	 */
 	public boolean hasRight(Right right, User user) {
-		
+
 		switch (right) {
 		case processHandler:
-			
+
 			try {
-				Permission perm = getPermissionsFactory().getAccessPermission(getProcessInstanceId(), Access.caseHandler, user);
+				Permission perm = getPermissionsFactory().getAccessPermission(
+						getProcessInstanceId(), Access.caseHandler, user);
 				getBpmFactory().getRolesManager().checkPermission(perm);
-				
+
 				return true;
-				
+
 			} catch (AccessControlException e) {
 				return false;
 			}
 
 		default:
-			throw new IllegalArgumentException("Right type "+right+" not supported for cases process instance");
+			throw new IllegalArgumentException("Right type " + right
+					+ " not supported for cases process instance");
 		}
 	}
 }
