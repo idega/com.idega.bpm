@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<root-container name="participantInvitation" width="756" height="589">
+<root-container name="participantInvitation" width="1054" height="654">
   <node name="start" x="226" y="35" width="23" height="24">
     <edge>
       <label x="5" y="-10"/>

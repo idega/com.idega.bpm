@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<root-container name="NewUserRegistration" width="1128" height="483">
+<root-container name="NewUserRegistration" width="1054" height="654">
   <node name="registerNewUser" x="316" y="31" width="104" height="32">
     <edge>
       <label x="5" y="-10"/>

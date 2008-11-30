@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<root-container name="AnonAssignment" width="756" height="589">
+<root-container name="AnonAssignment" width="1055" height="655">
   <node name="start-state1" x="278" y="39" width="21" height="22">
-    <edge>
-      <label x="5" y="-10"/>
-    </edge>
-  </node>
-  <node name="isCurrentUserLoggedIn" x="221" y="118" width="132" height="36">
-    <edge>
-      <label x="5" y="-10"/>
-    </edge>
     <edge>
       <label x="5" y="-10"/>
     </edge>
@@ -45,4 +37,12 @@
     </edge>
   </node>
   <node name="end-state1" x="100" y="235" width="21" height="22"/>
+  <node name="isCurrentUserLoggedIn" x="0" y="0" width="132" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
 </root-container>
