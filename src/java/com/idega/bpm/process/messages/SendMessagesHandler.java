@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import org.jbpm.graph.def.ActionHandler;
 import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.graph.exe.Token;
-import org.jbpm.jpdl.el.impl.JbpmExpressionEvaluator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -18,13 +17,12 @@ import com.idega.core.localisation.business.ICLocaleBusiness;
 import com.idega.idegaweb.IWBundle;
 import com.idega.jbpm.identity.UserPersonalData;
 import com.idega.presentation.IWContext;
-import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  *
- * Last modified: $Date: 2008/11/13 15:08:12 $ by $Author: juozas $
+ * Last modified: $Date: 2008/11/30 08:19:04 $ by $Author: civilis $
  */
 @Service("sendMessagesHandler")
 @Scope("prototype")
@@ -38,8 +36,7 @@ public class SendMessagesHandler implements ActionHandler {
 	private String messagesBundle;
 	private String sendToRoles;
 	private List<String> sendToEmails;
-	private UserPersonalData userDataExp;
-	private String sendFromProcessInstanceExp;
+	private UserPersonalData userData;
  	private Map<String, String> inlineSubject;
 	private Map<String, String> inlineMessage;
 	
@@ -47,11 +44,9 @@ public class SendMessagesHandler implements ActionHandler {
 	
 	public void execute(ExecutionContext ectx) throws Exception {
 	
-		ELUtil.getInstance().autowire(this);
-		
-		final String sendToRoles = getSendToRoles() != null ? (String)JbpmExpressionEvaluator.evaluate(getSendToRoles(), ectx) : null;
+		final String sendToRoles = getSendToRoles();
 		final List<String> sendToEmails = getSendToEmails();
-		final UserPersonalData upd = getUserDataExp();//getUserDataExp() != null ? (UserPersonalData)JbpmExpressionEvaluator.evaluate(getUserDataExp(), ectx) : null;
+		final UserPersonalData upd = getUserData();
 		
 		final Token tkn = ectx.getToken();
 		
@@ -152,18 +147,6 @@ public class SendMessagesHandler implements ActionHandler {
 	public void setMessagesBundle(String messagesBundle) {
 		this.messagesBundle = messagesBundle;
 	}
-
-	/**
-	 * If send not from current process. Optional
-	 * @return Expression to resolve process instance
-	 */
-	public String getSendFromProcessInstanceExp() {
-		return sendFromProcessInstanceExp;
-	}
-
-	public void setSendFromProcessInstanceExp(String sendFromProcessInstanceExp) {
-		this.sendFromProcessInstanceExp = sendFromProcessInstanceExp;
-	}
 	
 	public SendMessage getSendMessage() {
 		return sendMessage;
@@ -198,19 +181,19 @@ public class SendMessagesHandler implements ActionHandler {
 		this.sendToEmails = sendToEmails;
 	}
 
-	public UserPersonalData getUserDataExp() {
-		return userDataExp;
-	}
-
-	public void setUserDataExp(UserPersonalData userDataExp) {
-		this.userDataExp = userDataExp;
-	}
-	
 	public String getSendToRoles() {
 		return sendToRoles;
 	}
 
 	public void setSendToRoles(String sendToRoles) {
 		this.sendToRoles = sendToRoles;
+	}
+
+	public UserPersonalData getUserData() {
+		return userData;
+	}
+
+	public void setUserData(UserPersonalData userData) {
+		this.userData = userData;
 	}
 }

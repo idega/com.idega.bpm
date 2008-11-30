@@ -1,22 +1,24 @@
 package com.idega.bpm.process.register;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.graph.node.DecisionHandler;
-import org.jbpm.jpdl.el.impl.JbpmExpressionEvaluator;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.idega.core.accesscontrol.business.LoginDBHandler;
 import com.idega.jbpm.identity.UserPersonalData;
-import com.idega.util.expression.ELUtil;
 
 /**
- * Checks, if user exists by username provided in UserPersonalData userName property. If that's not set, personalId is used instead
- *   
- * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * Checks, if user exists by username provided in UserPersonalData userName
+ * property. If that's not set, personalId is used instead
  * 
- * Last modified: $Date: 2008/11/13 15:08:12 $ by $Author: juozas $
+ * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
+ * @version $Revision: 1.3 $
+ * 
+ *          Last modified: $Date: 2008/11/30 08:19:04 $ by $Author: civilis $
  */
 @Service("loginExistsDecisionHandler")
 @Scope("prototype")
@@ -24,37 +26,40 @@ public class LoginExistsDecisionHandler implements DecisionHandler {
 
 	private static final long serialVersionUID = -8215519082716301605L;
 
-	private UserPersonalData userDataExp;
+	private UserPersonalData userData;
 
-	private static final String booleanTrue = 	"true";
-	private static final String booleanFalse = 	"false";
-	
+	private static final String booleanTrue = "true";
+	private static final String booleanFalse = "false";
+
 	public String decide(ExecutionContext ectx) throws Exception {
-		
-		ELUtil.getInstance().autowire(this);
-		
-		if(getUserDataExp() != null) {
-			
-			UserPersonalData upd = getUserDataExp();//(UserPersonalData)JbpmExpressionEvaluator.evaluate(getUserDataExp(), ectx);
-			
+
+		if (getUserData() != null) {
+
+			UserPersonalData upd = getUserData();
+
 			String userName;
-			
-			if((userName = upd.getUserName()) == null)
+
+			if ((userName = upd.getUserName()) == null)
 				userName = upd.getPersonalId();
-			
-			if(!LoginDBHandler.isLoginInUse(userName)) {
+
+			if (!LoginDBHandler.isLoginInUse(userName)) {
 				return booleanFalse;
 			}
+		} else {
+			Logger.getLogger(getClass().getName()).log(
+					Level.WARNING,
+					"Called locate user handler, but no user data provided. Process instance id="
+							+ ectx.getProcessInstance().getId());
 		}
-		
+
 		return booleanTrue;
 	}
 
-	public UserPersonalData getUserDataExp() {
-		return userDataExp;
+	public UserPersonalData getUserData() {
+		return userData;
 	}
 
-	public void setUserDataExp(UserPersonalData userDataExp) {
-		this.userDataExp = userDataExp;
+	public void setUserData(UserPersonalData userData) {
+		this.userData = userData;
 	}
 }
