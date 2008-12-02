@@ -3,9 +3,10 @@
 <process-definition
   xmlns=""  name="addAttachments">
    <start-state name="start">
-      <transition to="addAttachment" name="toAddAttachment"></transition>
+      <transition to="addAttachment"></transition>
    </start-state>
    <task-node name="addAttachment">
+   <!-- priority -1 means it's a forever task -->
       <task name="addAttachmentTask" priority="-1">
          <controller>
             <variable name="string_description" access="read,write"></variable>
@@ -22,8 +23,8 @@
 			</propertyMap>
 		 </assignment>
       </task>
-		<transition to="end-state1" name="toEnd"></transition>
+		<transition to="alwaysLive"></transition>
    </task-node>
 
-	<end-state name="end-state1"></end-state>
+	<state name="alwaysLive"></state>
 </process-definition>
