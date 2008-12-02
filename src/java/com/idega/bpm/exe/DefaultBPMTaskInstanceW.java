@@ -14,6 +14,8 @@ import java.util.logging.Logger;
 
 import org.jbpm.JbpmContext;
 import org.jbpm.graph.def.Transition;
+import org.jbpm.graph.exe.Token;
+import org.jbpm.taskmgmt.def.Task;
 import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
@@ -51,35 +53,41 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.19 $
- *
- * Last modified: $Date: 2008/12/02 09:57:12 $ by $Author: civilis $
+ * @version $Revision: 1.20 $
+ * 
+ *          Last modified: $Date: 2008/12/02 13:37:41 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
 public class DefaultBPMTaskInstanceW implements TaskInstanceW {
-	
-	@Autowired private TmpFilesManager fileUploadManager;
-	@Autowired @TmpFileResolverType("defaultResolver") private TmpFileResolver uploadedResourceResolver;
-	
+
+	public static final int PRIORITY_HIDDEN = -21;
+	public static final int PRIORITY_FOREVER_TASK = -1;
+
+	@Autowired
+	private TmpFilesManager fileUploadManager;
+	@Autowired
+	@TmpFileResolverType("defaultResolver")
+	private TmpFileResolver uploadedResourceResolver;
+
 	private Long taskInstanceId;
 	private TaskInstance taskInstance;
-	
+
 	private BPMFactory bpmFactory;
 	private BPMContext idegaJbpmContext;
 	private VariablesHandler variablesHandler;
-	
+
 	private static final String CASHED_TASK_NAMES = "defaultBPM_taskinstance_names";
-	
+
 	public TaskInstance getTaskInstance() {
-		
-		if(taskInstance == null && getTaskInstanceId() != null) {
-			
+
+		if (taskInstance == null && getTaskInstanceId() != null) {
+
 			JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
-			
+
 			try {
 				taskInstance = ctx.getTaskInstance(getTaskInstanceId());
-				
+
 			} finally {
 				getIdegaJbpmContext().closeAndCommit(ctx);
 			}
@@ -88,69 +96,72 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 
 	public void assign(User usr) {
-		
+
 		Object pk = usr.getPrimaryKey();
 		Integer userId;
-		
-		if(pk instanceof Integer)
-			userId = (Integer)pk;
+
+		if (pk instanceof Integer)
+			userId = (Integer) pk;
 		else
 			userId = new Integer(pk.toString());
-		
+
 		assign(userId);
 	}
-	
+
 	public void assign(int userId) {
-		
+
 		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
-		
+
 		try {
 			Long taskInstanceId = getTaskInstanceId();
 			RolesManager rolesManager = getBpmFactory().getRolesManager();
 			rolesManager.hasRightsToAssignTask(taskInstanceId, userId);
-			
+
 			getTaskInstance().setActorId(String.valueOf(userId));
 			ctx.save(getTaskInstance());
-		
+
 		} catch (BPMAccessControlException e) {
 			throw new ProcessException(e, e.getUserFriendlyMessage());
-			
+
 		} finally {
 			getIdegaJbpmContext().closeAndCommit(ctx);
 		}
 	}
-	
+
 	public User getAssignedTo() {
-		
+
 		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
-		
+
 		try {
 			Long taskInstanceId = getTaskInstanceId();
-			
+
 			TaskInstance taskInstance = ctx.getTaskInstance(taskInstanceId);
-			
+
 			String actorId = taskInstance.getActorId();
 
 			User usr;
-			
-			if(actorId != null) {
-				
+
+			if (actorId != null) {
+
 				try {
 					int assignedTo = Integer.parseInt(actorId);
 					usr = getUserBusiness().getUser(assignedTo);
-					
+
 				} catch (Exception e) {
-					Logger.getLogger(getClass().getName()).log(Level.SEVERE, "Exception while resolving assigned user name for actor id: "+actorId, e);
+					Logger.getLogger(getClass().getName()).log(
+							Level.SEVERE,
+							"Exception while resolving assigned user name for actor id: "
+									+ actorId, e);
 					usr = null;
 				}
 			} else
 				usr = null;
-			
+
 			return usr;
-		
+
 		} catch (BPMAccessControlException e) {
 			throw new ProcessException(e, e.getUserFriendlyMessage());
-			
+
 		} finally {
 			getIdegaJbpmContext().closeAndCommit(ctx);
 		}
@@ -158,20 +169,20 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	public void start(int userId) {
 		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
-		
+
 		try {
 			Long taskInstanceId = getTaskInstanceId();
 			RolesManager rolesManager = getBpmFactory().getRolesManager();
 			rolesManager.hasRightsToStartTask(taskInstanceId, userId);
-			
+
 			TaskInstance taskInstance = ctx.getTaskInstance(taskInstanceId);
 			taskInstance.start();
-			
+
 			ctx.save(taskInstance);
-		
+
 		} catch (BPMAccessControlException e) {
 			throw new ProcessException(e, e.getUserFriendlyMessage());
-			
+
 		} finally {
 			getIdegaJbpmContext().closeAndCommit(ctx);
 		}
@@ -182,101 +193,168 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 
 	public void submit(View view, boolean proceedProcess) {
-		
+
 		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
-		
+
 		try {
 			Long taskInstanceId = getTaskInstanceId();
 			TaskInstance taskInstance = ctx.getTaskInstance(taskInstanceId);
-			
-			if(taskInstance.hasEnded())
-				throw new ProcessException("Task instance ("+taskInstanceId+") is already submitted", "Task instance is already submitted");
-			
-	    	submitVariablesAndProceedProcess(taskInstance, view.resolveVariables(), proceedProcess);
-	    	ctx.save(taskInstance);
-			
+
+			if (taskInstance.hasEnded())
+				throw new ProcessException("Task instance (" + taskInstanceId
+						+ ") is already submitted",
+						"Task instance is already submitted");
+
+			submitVariablesAndProceedProcess(taskInstance, view
+					.resolveVariables(), proceedProcess);
+
+			// if priority was hidden, then setting to default priority after
+			// submission
+			if (taskInstance.getPriority() == PRIORITY_HIDDEN) {
+				taskInstance.setPriority(Task.PRIORITY_NORMAL);
+			}
+
+			ctx.save(taskInstance);
+
 		} finally {
 			getIdegaJbpmContext().closeAndCommit(ctx);
 		}
 	}
-	
-	protected void submitVariablesAndProceedProcess(TaskInstance ti, Map<String, Object> variables, boolean proceed) {
-		
+
+	protected void submitVariablesAndProceedProcess(TaskInstance ti,
+			Map<String, Object> variables, boolean proceed) {
+
 		getVariablesHandler().submitVariables(variables, ti.getId(), true);
-		
-		if(proceed) {
-		
-			String actionTaken = (String)ti.getVariable(ProcessConstants.actionTakenVariableName);
-//			TODO
+
+		if (proceed) {
+
+			String actionTaken = (String) ti
+					.getVariable(ProcessConstants.actionTakenVariableName);
+			// TODO
 			boolean takeTransitionAction = false;
 			if (actionTaken != null) {
-				for (Object transition : ti.getAvailableTransitions()){
-				
+				for (Object transition : ti.getAvailableTransitions()) {
+
 					Transition trans = (Transition) transition;
-				
+
 					if (actionTaken.equals(trans.getName()))
 						takeTransitionAction = true;
 				}
 			}
-				
-	    	if(actionTaken != null && actionTaken.length() != 0 && takeTransitionAction)
-	    		ti.end(actionTaken);
-	    	else
-	    	  	ti.end();
-	    		
+
+			if (actionTaken != null && actionTaken.length() != 0
+					&& takeTransitionAction)
+				ti.end(actionTaken);
+			else
+				ti.end();
+
 		} else {
 			ti.setEnd(new Date());
 		}
-    	
-		BPMUser bpmUser = getBpmFactory().getBpmUserFactory().getCurrentBPMUser();
-		
-		if(bpmUser != null) {
-		
+
+		BPMUser bpmUser = getBpmFactory().getBpmUserFactory()
+				.getCurrentBPMUser();
+
+		if (bpmUser != null) {
+
 			Integer usrId = bpmUser.getIdToUse();
-			
-			if(usrId != null)
+
+			if (usrId != null)
 				ti.setActorId(usrId.toString());
 		}
 	}
-	
+
 	public View loadView() {
-		
+
+		return loadView(true);
+	}
+
+	protected View loadView(boolean loadForDisplay) {
+
 		Long taskInstanceId = getTaskInstanceId();
 		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
-		
+
 		try {
-			TaskInstance taskInstance = ctx.getTaskInstance(taskInstanceId);
-			
+			TaskInstance taskInstance = getTaskInstance();
+
 			List<String> preferred = new ArrayList<String>(1);
 			preferred.add(XFormsView.VIEW_TYPE);
-			
+
 			View view;
-			
-			if(taskInstance.hasEnded()) {
-				
-				view = getBpmFactory().getViewByTaskInstance(taskInstanceId, false, preferred);
-				
+
+			if (taskInstance.hasEnded()) {
+
+				view = getBpmFactory().getViewByTaskInstance(taskInstanceId,
+						false, preferred);
+
 			} else {
-				
-				view = getBpmFactory().takeView(taskInstanceId, true, preferred);
+
+				if (loadForDisplay) {
+
+					if (taskInstance.getPriority() == PRIORITY_FOREVER_TASK) {
+
+						// forever task. The original task instance is kept
+						// intact, while new token and task instances
+						// are created
+
+						Token currentToken = taskInstance.getToken();
+
+						Token individualInstanceToken = new Token(currentToken
+								.getProcessInstance().getRootToken(),
+								"repeatedTask"
+										+ taskInstance.getTask().getName());
+
+						ctx.save(individualInstanceToken);
+
+						taskInstance = taskInstance.getTaskMgmtInstance()
+								.createTaskInstance(taskInstance.getTask(),
+										individualInstanceToken);
+
+						// setting hidden priority, so the task wouldn't appear
+						// in the tasks list
+						taskInstance.setPriority(PRIORITY_HIDDEN);
+
+						taskInstanceId = taskInstance.getId();
+					}
+				}
+
+				if (loadForDisplay) {
+
+					// if full load, then we take view before displaying it
+					view = getBpmFactory().takeView(taskInstanceId, true,
+							preferred);
+				} else {
+
+					// if not full load, then we just get view by task
+					view = getBpmFactory().getViewByTask(
+							getTaskInstance().getTask().getId(), true,
+							preferred);
+				}
 			}
-			
+
 			Map<String, String> parameters = new HashMap<String, String>(1);
-			parameters.put(ProcessConstants.TASK_INSTANCE_ID, String.valueOf(taskInstance.getId()));
+			parameters.put(ProcessConstants.TASK_INSTANCE_ID, String
+					.valueOf(taskInstanceId));
 			view.populateParameters(parameters);
-			view.populateVariables(getVariablesHandler().populateVariables(taskInstance.getId()));
-			
+			view.populateVariables(getVariablesHandler().populateVariables(
+					taskInstanceId));
+
 			return view;
-		
-		} catch(RuntimeException e) {
+
+		} catch (RuntimeException e) {
 			throw e;
-		} catch(Exception e) {
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} finally {
 			getIdegaJbpmContext().closeAndCommit(ctx);
 		}
 	}
-	
+
+	public View getView() {
+
+		return loadView(false);
+	}
+
 	public Long getTaskInstanceId() {
 		return taskInstanceId;
 	}
@@ -284,7 +362,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	public void setTaskInstanceId(Long taskInstanceId) {
 		this.taskInstanceId = taskInstanceId;
 	}
-	
+
 	public BPMFactory getBpmFactory() {
 		return bpmFactory;
 	}
@@ -294,74 +372,81 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	public void setBpmFactory(BPMFactory bpmFactory) {
 		this.bpmFactory = bpmFactory;
 	}
-	
+
 	protected UserBusiness getUserBusiness() {
 		try {
-			return (UserBusiness) IBOLookup.getServiceInstance(CoreUtil.getIWContext(), UserBusiness.class);
-		}
-		catch (IBOLookupException ile) {
+			return (UserBusiness) IBOLookup.getServiceInstance(CoreUtil
+					.getIWContext(), UserBusiness.class);
+		} catch (IBOLookupException ile) {
 			throw new IBORuntimeException(ile);
 		}
 	}
-	
+
 	public String getName(Locale locale) {
-		
+
 		final IWMainApplication iwma = getIWMA();
 		@SuppressWarnings("unchecked")
-		Map<Long, Map<Locale, String>> cashTaskNames = IWCacheManager2.getInstance(iwma).getCache(CASHED_TASK_NAMES);
+		Map<Long, Map<Locale, String>> cashTaskNames = IWCacheManager2
+				.getInstance(iwma).getCache(CASHED_TASK_NAMES);
 		final Map<Locale, String> names;
 		final Long taskInstanceId = getTaskInstanceId();
-		
-//		synchronized (cashTaskNames) {
-//			synchronizing on CASHED_TASK_NAMES map, as it's accessed from multiple threads
-			
-			if(cashTaskNames.containsKey(taskInstanceId)) {
-			
-				names = cashTaskNames.get(getTaskInstanceId());
-			} else {
-				
-				names = new HashMap<Locale, String>(5);
-				cashTaskNames.put(taskInstanceId, names);
-			}
-//		}
-		
+
+		// synchronized (cashTaskNames) {
+		// synchronizing on CASHED_TASK_NAMES map, as it's accessed from
+		// multiple threads
+
+		if (cashTaskNames.containsKey(taskInstanceId)) {
+
+			names = cashTaskNames.get(getTaskInstanceId());
+		} else {
+
+			names = new HashMap<Locale, String>(5);
+			cashTaskNames.put(taskInstanceId, names);
+		}
+		// }
+
 		final String name;
-		
-		if(names.containsKey(locale))
+
+		if (names.containsKey(locale))
 			name = names.get(locale);
 		else {
-			
-			View taskInstanceView = loadView();
+
+			List<String> preferred = new ArrayList<String>(1);
+			preferred.add(XFormsView.VIEW_TYPE);
+
+			View taskInstanceView = getView();
 			name = taskInstanceView.getDisplayName(locale);
 			names.put(locale, name);
 		}
-		
+
 		return name;
 	}
-	
-	public void setTaskRolePermissions(Role role, boolean setSameForAttachments, String variableIdentifier) {
-		
+
+	public void setTaskRolePermissions(Role role,
+			boolean setSameForAttachments, String variableIdentifier) {
+
 		Long processInstanceId = getTaskInstance().getProcessInstance().getId();
 
-		getBpmFactory().getRolesManager().setTaskRolePermissionsTIScope(
-				role, processInstanceId, getTaskInstanceId(), setSameForAttachments, variableIdentifier
-		);
+		getBpmFactory().getRolesManager().setTaskRolePermissionsTIScope(role,
+				processInstanceId, getTaskInstanceId(), setSameForAttachments,
+				variableIdentifier);
 	}
-	
+
 	private IWMainApplication getIWMA() {
-		
+
 		final IWContext iwc = IWContext.getCurrentInstance();
 		final IWMainApplication iwma;
-//		trying to get iwma from iwc, if available, downgrading to default iwma, if not
-		
-		if(iwc != null) {
-			
+		// trying to get iwma from iwc, if available, downgrading to default
+		// iwma, if not
+
+		if (iwc != null) {
+
 			iwma = iwc.getIWMainApplication();
-			
+
 		} else {
 			iwma = IWMainApplication.getDefaultIWMainApplication();
 		}
-		
+
 		return iwma;
 	}
 
@@ -385,35 +470,40 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		this.variablesHandler = variablesHandler;
 	}
 
-	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is) {
-		
-		String filesFolder = getTaskInstanceId()+System.currentTimeMillis() + CoreConstants.SLASH;
-		
-		getFileUploadManager().uploadToTmpDir(filesFolder, fileName, is, getUploadedResourceResolver());
-		
-		Collection<URI> uris = getFileUploadManager().getFilesUris(filesFolder, null, getUploadedResourceResolver());
+	public BinaryVariable addAttachment(Variable variable, String fileName,
+			String description, InputStream is) {
+
+		String filesFolder = getTaskInstanceId() + System.currentTimeMillis()
+				+ CoreConstants.SLASH;
+
+		getFileUploadManager().uploadToTmpDir(filesFolder, fileName, is,
+				getUploadedResourceResolver());
+
+		Collection<URI> uris = getFileUploadManager().getFilesUris(filesFolder,
+				null, getUploadedResourceResolver());
 		URI uri = uris.iterator().next();
-		
-		List<BinaryVariable> binVars = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId(), variable);
-		
-		if(binVars == null)
+
+		List<BinaryVariable> binVars = getVariablesHandler()
+				.resolveBinaryVariables(getTaskInstanceId(), variable);
+
+		if (binVars == null)
 			binVars = new ArrayList<BinaryVariable>(1);
-		
+
 		Map<String, Object> vars = new HashMap<String, Object>(1);
 		String variableName = variable.getDefaultStringRepresentation();
-		
+
 		final BinaryVariableImpl binVar = new BinaryVariableImpl();
 		binVar.setUri(uri);
 		binVar.setDescription(description);
-		
+
 		binVars.add(binVar);
 		vars.put(variableName, binVars);
-		vars = getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
-		
+		vars = getVariablesHandler().submitVariablesExplicitly(vars,
+				getTaskInstanceId());
 
-		
-		getFileUploadManager().cleanup(filesFolder, null, getUploadedResourceResolver());
-		
+		getFileUploadManager().cleanup(filesFolder, null,
+				getUploadedResourceResolver());
+
 		return binVar;
 	}
 
