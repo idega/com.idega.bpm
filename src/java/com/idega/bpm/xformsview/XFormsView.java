@@ -27,14 +27,15 @@ import com.idega.jbpm.variables.Converter;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewToTask;
 import com.idega.util.CoreConstants;
+import com.idega.util.StringUtil;
 import com.idega.util.URIUtil;
 import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  * 
- * Last modified: $Date: 2008/11/12 11:44:17 $ by $Author: valdas $
+ *          Last modified: $Date: 2008/12/02 13:37:59 $ by $Author: civilis $
  */
 public class XFormsView implements View {
 
@@ -111,7 +112,7 @@ public class XFormsView implements View {
 
 		return formviewer;
 	}
-	
+
 	public void setFormDocument(Document formDocument) {
 
 		form = formDocument;
@@ -129,18 +130,21 @@ public class XFormsView implements View {
 
 		if (getViewId() == null || CoreConstants.EMPTY.equals(getViewId()))
 			throw new NullPointerException("View id not set");
-		
+
 		Long formId = new Long(getViewId());
 
 		try {
 			FacesContext fctx = FacesContext.getCurrentInstance();
-			IWMainApplication iwma = fctx == null ? IWMainApplication.getDefaultIWMainApplication() : IWMainApplication.getIWMainApplication(fctx);
-			
-			DocumentManager documentManager = getDocumentManagerFactory().newDocumentManager(iwma);
+			IWMainApplication iwma = fctx == null ? IWMainApplication
+					.getDefaultIWMainApplication() : IWMainApplication
+					.getIWMainApplication(fctx);
+
+			DocumentManager documentManager = getDocumentManagerFactory()
+					.newDocumentManager(iwma);
 			Document form = documentManager.openForm(formId);
-			
-			if(form != null) {
-			
+
+			if (form != null) {
+
 				setFormDocument(form);
 			}
 
@@ -168,10 +172,10 @@ public class XFormsView implements View {
 	}
 
 	public void populateVariables(Map<String, Object> variables) {
-		
+
 		getConverter().revert(variables,
 				getFormDocument().getSubmissionInstanceElement());
-		
+
 		this.variables = variables;
 	}
 
@@ -192,51 +196,57 @@ public class XFormsView implements View {
 		throw new UnsupportedOperationException(
 				"Resolving variables from form not supported yet.");
 	}
-	
+
 	public void setSubmission(Submission submission, Node submissionInstance) {
 
-//		String action = submission.getElement().getAttribute(
-//				FormManagerUtil.action_att);
-		
-//		TODO: use ParametersManager or smth (unify god damnit)
-		
-		Element paramsEl = FormManagerUtil.getFormParamsElement(submissionInstance);
-		
-		parameters = paramsEl == null ? new URIUtil(null).getParameters() : new URIUtil(paramsEl.getTextContent()).getParameters();
+		// String action = submission.getElement().getAttribute(
+		// FormManagerUtil.action_att);
+
+		// TODO: use ParametersManager or smth (unify god damnit)
+
+		Element paramsEl = FormManagerUtil
+				.getFormParamsElement(submissionInstance);
+
+		parameters = paramsEl == null ? new URIUtil(null).getParameters()
+				: new URIUtil(paramsEl.getTextContent()).getParameters();
 		variables = getConverter().convert(submissionInstance);
 	}
 
 	public String getDisplayName() {
-		
-		if(displayName == null) {
+
+		if (displayName == null) {
 			try {
 				Document document = getFormDocument();
-				displayName = document.getFormTitle().getString(new Locale("en"));
-				
+				displayName = document.getFormTitle().getString(
+						new Locale("en"));
+
 			} catch (Exception e) {
 				displayName = null;
 			}
 		}
-		
+
 		return displayName;
 	}
 
 	public Date getDateCreated() {
-	
-//		TODO: implement
+
+		// TODO: implement
 		return new Date();
 	}
 
 	public void takeView() {
-		
+
 		Document formDocument = getFormDocument();
-		
+
 		FacesContext fctx = FacesContext.getCurrentInstance();
-		IWMainApplication iwma = fctx == null ? IWMainApplication.getDefaultIWMainApplication() : IWMainApplication.getIWMainApplication(fctx);
-		
-		DocumentManager docMan = getDocumentManagerFactory().newDocumentManager(iwma);
+		IWMainApplication iwma = fctx == null ? IWMainApplication
+				.getDefaultIWMainApplication() : IWMainApplication
+				.getIWMainApplication(fctx);
+
+		DocumentManager docMan = getDocumentManagerFactory()
+				.newDocumentManager(iwma);
 		formDocument = docMan.takeForm(formDocument.getFormId());
-		
+
 		setFormDocument(formDocument);
 	}
 
@@ -249,35 +259,40 @@ public class XFormsView implements View {
 	}
 
 	public String getDisplayName(Locale locale) {
-		if(displayName == null) {
+		if (displayName == null) {
 
 			try {
 				Document document = getFormDocument();
 				displayName = document.getFormTitle().getString(locale);
-				
+
 			} catch (Exception e) {
-				Logger.getLogger(getClass().getName()).log(Level.WARNING, "Exception while resolving form title by locale="+locale, e);
+				Logger.getLogger(getClass().getName()).log(
+						Level.WARNING,
+						"Exception while resolving form title by locale="
+								+ locale, e);
 				displayName = null;
 			}
 		}
-		
+
 		return displayName;
 	}
-	
+
 	public String getDefaultDisplayName() {
-		ELUtil.getInstance().autowire(this);
-		
-		if (getViewId() == null || CoreConstants.EMPTY.equals(getViewId()))
+
+		if (StringUtil.isEmpty(getViewId()))
 			throw new NullPointerException("View id not set");
-		
+
 		Long formId = new Long(getViewId());
 		XForm xform = getXformsDAO().getXFormById(formId);
-				
-		
+
 		return xform.getDisplayName();
 	}
-	
+
 	public XFormsDAO getXformsDAO() {
+
+		if (xformsDAO == null)
+			ELUtil.getInstance().autowire(this);
+
 		return xformsDAO;
 	}
 
