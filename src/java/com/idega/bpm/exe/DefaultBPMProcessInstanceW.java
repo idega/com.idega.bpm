@@ -48,9 +48,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  * 
- *          Last modified: $Date: 2008/11/26 13:14:30 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/02 13:37:14 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -93,6 +93,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 				@SuppressWarnings("unchecked")
 				Collection<TaskInstance> subTis = subProcessInstance
 						.getTaskMgmtInstance().getTaskInstances();
+				
 				taskInstances.addAll(subTis);
 			}
 		}
@@ -169,6 +170,14 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 					taskInstances.addAll(tis);
 				}
 			}
+		}
+		
+//		removing hidden task instances
+		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator.hasNext();) {
+			TaskInstance ti = iterator.next();
+			
+			if(ti.getPriority() == DefaultBPMTaskInstanceW.PRIORITY_HIDDEN)
+				iterator.remove();
 		}
 
 		return encapsulateInstances(taskInstances);
