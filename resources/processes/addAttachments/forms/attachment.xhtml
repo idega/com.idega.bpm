@@ -50,6 +50,16 @@
         <xf:bind id="fbc_6_bind-entries" nodeset="../entry[position() != last()]" type="xs:anyURI"/>
     </xf:bind>
 <xf:bind id="bind-submissionButton" idega:shared="true" nodeset="instance('control-instance')/submissionButton" relevant="instance('control-instance')/readonly != 'true' and instance('control-instance')/generatePdf != 'true'"/>
+
+ <xf:bind id="errorsGroup" idega:shared="true" nodeset="instance('error-instance')/error" relevant="instance('control-instance')/submission = 'true' and count-non-empty(instance('error-instance')/error)!=0"/>
+            <xf:bind id="errors" idega:shared="true" nodeset="instance('error-instance')/error[. != '']"/>
+            <xf:instance xmlns="" id="error-instance">
+                <data>
+                    <error for=""/>
+                    <sendLinkError for=""/>
+                </data>
+            </xf:instance>
+            
 </xf:model>
         <xf:model id="data_model">
             <xf:instance xmlns="" id="localized_strings">
@@ -108,6 +118,14 @@
     </head>
     <body>
         <xf:group appearance="full">
+         <xf:group bind="errorsGroup" class="xformErrors">
+                <xf:repeat bind="errors">
+                    <xf:output ref="."/>
+                </xf:repeat>
+            </xf:group>
+            <idega:setError ev:event="idega-validation-error" id="formSetErrorHandler" if="idega:instance('submission_model', 'saveForm-instance')/savePhase != 'true'" ref="instance('error-instance')/error"/>
+           
+        
             <idega:switch>
                   <idega:case id="fbc_1" show="instance('control-instance')/generatePdf='true'">
                         <xf:group appearance="full">
