@@ -115,7 +115,7 @@ public class IdegaJpdlReader extends JpdlXmlReader {
 //				resource.setMessages(localisedRoles.get(locale), null, locale);
 			}
     	} catch(NoSuchElementException e) {
-    		log.log(Level.WARNING, root.attributeValue(NAME) + " - process definition has no role localization tags");
+    		log.log(Level.INFO, root.attributeValue(NAME) + " - process definition has no role localization tags");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
