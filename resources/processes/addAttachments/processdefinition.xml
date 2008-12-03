@@ -3,7 +3,7 @@
 <process-definition
   xmlns=""  name="addAttachments">
    <start-state name="start">
-      <transition to="addAttachment"></transition>
+      <transition to="fork1"></transition>
    </start-state>
    <task-node name="addAttachment">
    <!-- priority -1 means it's a forever task -->
@@ -23,8 +23,16 @@
 			</propertyMap>
 		 </assignment>
       </task>
-		<transition to="alwaysLive"></transition>
+		<transition to="end-state1"></transition>
    </task-node>
 
 	<state name="alwaysLive"></state>
+
+	<fork name="fork1">
+		<transition to="alwaysLive" name="toAlwaysLive"></transition>
+		<transition to="addAttachment" name="toAddAttachment"></transition>
+	</fork>
+
+
+	<end-state name="end-state1"></end-state>
 </process-definition>

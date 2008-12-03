@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <root-container name="addAttachments" width="809" height="654">
-  <node name="start" x="90" y="56" width="79" height="34">
+  <node name="start" x="241" y="28" width="79" height="34">
     <edge>
       <label x="-46" y="-3"/>
     </edge>
   </node>
-  <node name="addAttachment" x="215" y="125" width="140" height="40">
+  <node name="addAttachment" x="219" y="165" width="140" height="40">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="alwaysLive" x="224" y="237" width="132" height="36"/>
+  <node name="alwaysLive" x="430" y="85" width="132" height="36"/>
+  <node name="fork1" x="273" y="91" width="23" height="24">
+    <edge>
+      <label x="-43" y="-12"/>
+    </edge>
+    <edge>
+      <label x="-46" y="-7"/>
+    </edge>
+  </node>
+  <node name="end-state1" x="276" y="242" width="25" height="28"/>
 </root-container>
