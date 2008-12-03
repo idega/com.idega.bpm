@@ -53,16 +53,21 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.20 $
+ * @version $Revision: 1.21 $
  * 
- *          Last modified: $Date: 2008/12/02 13:37:41 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/03 12:05:59 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
 public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	public static final int PRIORITY_HIDDEN = -21;
-	public static final int PRIORITY_FOREVER_TASK = -1;
+
+	/**
+	 * shared task means it can be opened by multiple users at the same time.
+	 * New tokens and task instances will be created for each user
+	 */
+	public static final int PRIORITY_SHARED_TASK = -1;
 
 	@Autowired
 	private TmpFilesManager fileUploadManager;
@@ -291,7 +296,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 				if (loadForDisplay) {
 
-					if (taskInstance.getPriority() == PRIORITY_FOREVER_TASK) {
+					if (taskInstance.getPriority() == PRIORITY_SHARED_TASK) {
 
 						// forever task. The original task instance is kept
 						// intact, while new token and task instances
@@ -299,10 +304,26 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 						Token currentToken = taskInstance.getToken();
 
-						Token individualInstanceToken = new Token(currentToken
-								.getProcessInstance().getRootToken(),
-								"repeatedTask"
-										+ taskInstance.getTask().getName());
+						String keepMeAliveTknName = "KeepMeAlive";
+						Token keepMeAliveTkn = currentToken
+								.getChild(keepMeAliveTknName);
+
+						if (keepMeAliveTkn == null) {
+
+							keepMeAliveTkn = new Token(currentToken,
+									keepMeAliveTknName);
+
+							ctx.save(keepMeAliveTkn);
+						}
+
+						// providing millis as token unique identifier for
+						// parent.
+						// This is needed, because parent holds children tokens
+						// in the map where key is token name
+						Token individualInstanceToken = new Token(currentToken,
+								"sharedTask_"
+										+ taskInstance.getTask().getName()
+										+ System.currentTimeMillis());
 
 						ctx.save(individualInstanceToken);
 
