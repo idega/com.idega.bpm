@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root-container name="additionalInformation" width="880" height="415">
+  <node name="start" x="282" y="57" width="79" height="34">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="alwaysLive" x="461" y="115" width="132" height="36"/>
+  <node name="requestAdditionalInformation" x="240" y="190" width="169" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="sendMessage" x="272" y="260" width="102" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="submitAdditionalInformation" x="233" y="327" width="180" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="fork1" x="310" y="119" width="27" height="24">
+    <edge>
+      <label x="-33" y="-17"/>
+    </edge>
+    <edge>
+      <label x="-84" y="-11"/>
+    </edge>
+  </node>
+  <node name="end-state1" x="310" y="389" width="23" height="25"/>
+</root-container>

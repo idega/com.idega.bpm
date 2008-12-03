@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+    process api
+           process accept following variables:
+                requestAdditionalInformationTaskAssignmentExpression - json expression 
+                    for request additional information task assignment
+                    
+                submitAdditionalInformationTaskAssignmentExpression - json expression 
+                    for submit additional information task assignment
+                    
+                 sendMessageHandler - bean identifier of send messages handler. Bean must extend SendMessagesHandler.
+                 subject - inline subject
+                 message - inline message
+                 subjectValues (optional) - values for subject 
+                 messageValues (optional) - values for the message
+                 sendToRoles - roles to send message to
+ -->
+<process-definition
+  xmlns=""  name="additionalInformation">
+   <start-state name="start">
+		<transition to="fork1"></transition>
+	</start-state>
+   <state name="alwaysLive"></state>
+
+	<task-node name="requestAdditionalInformation">
+	   <!-- priority -1 means it's a shared/never ending task -->
+	   <task name="requestAdditionalInformationTask" priority="-1">
+          <assignment class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+                <handlerName>jsonAssignmentHandler</handlerName>
+                <propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+                    <entry><key>expression</key>
+                        <value>
+                            #{requestAdditionalInformationTaskAssignmentExpression}
+                        </value>
+                    </entry>
+            </propertyMap>
+         </assignment>
+         <controller>
+            <variable name="string_additionalInformationRequestText" access="read,write,required"></variable>
+            <variable name="files_additionalAttachments"></variable>
+         </controller>
+      </task>
+		<transition to="sendMessage"></transition>
+	</task-node>
+
+	<node name="sendMessage">
+	   <event type="node-enter">
+         <action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+                <handlerName>#{sendMessageHandler}</handlerName>
+                <propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+                    
+                    <entry>
+                        <key>inlineSubject</key>
+                        <value>
+                            #{subject}
+                        </value>
+                    </entry>
+                    <entry>
+                        <key>inlineMessage</key>
+                        <value>
+                            #{message}
+                        </value>
+                    </entry>
+                    <entry>
+                        <key>subjectValues</key>
+                        <value>
+                            #{subjectValues}
+                        </value>
+                    </entry>
+                    <entry>
+                        <key>messageValues</key>
+                        <value>
+                            #{messageValues}
+                        </value>
+                    </entry>
+                    <entry><key>sendToRoles</key><value>#{sendToRoles}</value></entry>
+                </propertyMap>
+        </action>
+      </event>
+		<transition to="submitAdditionalInformation"></transition>
+	</node>
+
+	<task-node name="submitAdditionalInformation">
+	   <task name="submitAdditionalInformationTask">
+         <assignment class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+                <handlerName>jsonAssignmentHandler</handlerName>
+                <propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+                    <entry><key>expression</key>
+                        <value>
+                            #{submitAdditionalInformationTaskAssignmentExpression}
+                        </value>
+                </entry>
+            </propertyMap>
+         </assignment>
+         <controller>
+            <variable name="string_additionalInformationRequestText" access="read"></variable>
+            <variable name="string_additionalInformation" access="read,write,required"></variable>
+            <variable name="files_additionalAttachments"></variable>
+         </controller>
+      </task>
+	  <transition to="end-state1"></transition>
+	</task-node>
+
+	<fork name="fork1">
+		<transition to="alwaysLive" name="toAlwaysLive"></transition>
+		<transition to="requestAdditionalInformation" name="toRequestAdditionalInformation"></transition>
+	</fork>
+
+
+	<end-state name="end-state1"></end-state>
+</process-definition>
