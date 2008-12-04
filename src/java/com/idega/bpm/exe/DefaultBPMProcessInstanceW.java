@@ -23,11 +23,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.core.cache.IWCacheManager2;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
+import com.idega.jbpm.data.dao.BPMDAO;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessDefinitionW;
 import com.idega.jbpm.exe.ProcessInstanceW;
@@ -48,9 +50,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  * 
- *          Last modified: $Date: 2008/12/02 13:37:14 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/04 10:13:14 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -65,6 +67,8 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	private BPMFactory bpmFactory;
 	@Autowired
 	private PermissionsFactory permissionsFactory;
+	@Autowired
+	private BPMDAO bpmDAO;
 
 	private static final String CASHED_TASK_NAMES = "defaultBPM_taskinstance_names";
 
@@ -73,28 +77,40 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return encapsulateInstances(getAllTaskInstancesPRVT());
 	}
 
-	private Collection<TaskInstance> getAllTaskInstancesPRVT() {
+	@Transactional(readOnly = true)
+	Collection<TaskInstance> getAllTaskInstancesPRVT() {
 
 		ProcessInstance processInstance = getProcessInstance();
+
+		List<ProcessInstance> subProcessInstances = getBpmDAO()
+				.getSubprocessInstancesOneLevel(processInstance.getId());
 
 		@SuppressWarnings("unchecked")
 		Collection<TaskInstance> taskInstances = processInstance
 				.getTaskMgmtInstance().getTaskInstances();
 
-		@SuppressWarnings("unchecked")
-		List<Token> tokens = processInstance.findAllTokens();
+		// resolving task instances from subprocesses
 
-		for (Token token : tokens) {
+		if (!subProcessInstances.isEmpty()) {
 
-			ProcessInstance subProcessInstance = token.getSubProcessInstance();
+			JbpmContext jctx = getIdegaJbpmContext().createJbpmContext();
 
-			if (subProcessInstance != null) {
+			try {
+				for (ProcessInstance subProcessInstance : subProcessInstances) {
 
-				@SuppressWarnings("unchecked")
-				Collection<TaskInstance> subTis = subProcessInstance
-						.getTaskMgmtInstance().getTaskInstances();
-				
-				taskInstances.addAll(subTis);
+					// hopefully temporal solution. The entity should be in
+					// transaction and persistent (not transient)
+					subProcessInstance = (ProcessInstance) jctx.getSession()
+							.merge(subProcessInstance);
+
+					@SuppressWarnings("unchecked")
+					Collection<TaskInstance> subTaskInstances = subProcessInstance
+							.getTaskMgmtInstance().getTaskInstances();
+					taskInstances.addAll(subTaskInstances);
+				}
+
+			} finally {
+				getIdegaJbpmContext().closeAndCommit(jctx);
 			}
 		}
 
@@ -171,12 +187,13 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 				}
 			}
 		}
-		
-//		removing hidden task instances
-		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator.hasNext();) {
+
+		// removing hidden task instances
+		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator
+				.hasNext();) {
 			TaskInstance ti = iterator.next();
-			
-			if(ti.getPriority() == DefaultBPMTaskInstanceW.PRIORITY_HIDDEN)
+
+			if (ti.getPriority() == DefaultBPMTaskInstanceW.PRIORITY_HIDDEN)
 				iterator.remove();
 		}
 
@@ -453,5 +470,9 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			throw new IllegalArgumentException("Right type " + right
 					+ " not supported for cases process instance");
 		}
+	}
+
+	BPMDAO getBpmDAO() {
+		return bpmDAO;
 	}
 }
