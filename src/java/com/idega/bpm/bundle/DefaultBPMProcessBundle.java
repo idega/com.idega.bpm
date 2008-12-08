@@ -27,9 +27,9 @@ import com.idega.jbpm.view.ViewToTaskType;
  * Default implementation of ProcessBundle, uses XFormViewResource
  * 
  * @author <a href="civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  * 
- *          Last modified: $Date: 2008/12/08 10:15:19 $ by $Author: juozas $
+ *          Last modified: $Date: 2008/12/08 12:24:52 $ by $Author: juozas $
  * 
  */
 @Scope("prototype")
@@ -52,8 +52,6 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 	private String bundlePropertiesLocationWithinBundle;
 	private DocumentManagerFactory documentManagerFactory;
 	private ProcessDefinition pd;
-
-	private ViewToTask viewToTaskBinder;
 
 	public ProcessDefinition getProcessDefinition() throws IOException {
 
@@ -190,16 +188,6 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 		this.bundleResources = bundleResources;
 	}
 
-/*	public ViewToTask getViewToTaskBinder() {
-		return viewToTaskBinder;
-	}
-
-	@Autowired
-	@ViewToTaskType("xforms")
-	public void setViewToTaskBinder(ViewToTask viewToTaskBinder) {
-		this.viewToTaskBinder = viewToTaskBinder;
-	}*/
-
 	public DocumentManagerFactory getDocumentManagerFactory() {
 		return documentManagerFactory;
 	}
@@ -210,8 +198,4 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 		this.documentManagerFactory = documentManagerFactory;
 	}
 
-	public ViewToTask getViewToTaskBinder() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
