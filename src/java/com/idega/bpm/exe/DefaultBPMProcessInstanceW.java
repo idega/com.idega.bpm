@@ -50,9 +50,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  * 
- *          Last modified: $Date: 2008/12/04 10:13:14 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/08 08:10:01 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -73,6 +73,8 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	private static final String CASHED_TASK_NAMES = "defaultBPM_taskinstance_names";
 
 	public List<TaskInstanceW> getAllTaskInstances() {
+		
+//		TODO: hide tasks of ended subprocesses
 
 		return encapsulateInstances(getAllTaskInstancesPRVT());
 	}
@@ -144,56 +146,15 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	}
 
 	public List<TaskInstanceW> getAllUnfinishedTaskInstances() {
+		
+		Collection<TaskInstance> taskInstances = getAllTaskInstancesPRVT();
 
-		ProcessInstance processInstance = getProcessInstance();
-
-		@SuppressWarnings("unchecked")
-		Collection<TaskInstance> taskInstances = processInstance
-				.getTaskMgmtInstance().getUnfinishedTasks(
-						processInstance.getRootToken());
-
-		@SuppressWarnings("unchecked")
-		List<Token> tokens = processInstance.findAllTokens();
-
-		for (Token token : tokens) {
-
-			// root token task instances already in the list
-			if (!token.equals(processInstance.getRootToken())) {
-
-				@SuppressWarnings("unchecked")
-				Collection<TaskInstance> tis = processInstance
-						.getTaskMgmtInstance().getUnfinishedTasks(token);
-				taskInstances.addAll(tis);
-			}
-
-			ProcessInstance subProcessInstance = token.getSubProcessInstance();
-
-			if (subProcessInstance != null) {
-
-				// add unfinished task instances from subprocesses.
-				// HINT: if we need to have more than one level depth of finding
-				// those (i.e. process->subprocess->subprocess->task)
-				// then we need to do it recursively here
-
-				@SuppressWarnings("unchecked")
-				List<Token> subTokens = subProcessInstance.findAllTokens();
-
-				for (Token subToken : subTokens) {
-
-					@SuppressWarnings("unchecked")
-					Collection<TaskInstance> tis = subProcessInstance
-							.getTaskMgmtInstance().getUnfinishedTasks(subToken);
-					taskInstances.addAll(tis);
-				}
-			}
-		}
-
-		// removing hidden task instances
+		// removing hidden, ended task instances, and task insances of ended processes (i.e. subprocesses)
 		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator
 				.hasNext();) {
 			TaskInstance ti = iterator.next();
 
-			if (ti.getPriority() == DefaultBPMTaskInstanceW.PRIORITY_HIDDEN)
+			if (ti.hasEnded() || ti.getPriority() == DefaultBPMTaskInstanceW.PRIORITY_HIDDEN || ti.getProcessInstance().hasEnded())
 				iterator.remove();
 		}
 
