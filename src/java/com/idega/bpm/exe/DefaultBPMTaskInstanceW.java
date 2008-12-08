@@ -53,9 +53,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.21 $
+ * @version $Revision: 1.22 $
  * 
- *          Last modified: $Date: 2008/12/03 12:05:59 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/08 08:10:27 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -330,6 +330,10 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 						taskInstance = taskInstance.getTaskMgmtInstance()
 								.createTaskInstance(taskInstance.getTask(),
 										individualInstanceToken);
+						
+//						TODO: populate token with currentToken.getParent() variables
+						
+						
 
 						// setting hidden priority, so the task wouldn't appear
 						// in the tasks list
