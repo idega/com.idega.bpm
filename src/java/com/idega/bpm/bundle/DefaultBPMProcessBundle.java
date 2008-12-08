@@ -27,9 +27,9 @@ import com.idega.jbpm.view.ViewToTaskType;
  * Default implementation of ProcessBundle, uses XFormViewResource
  * 
  * @author <a href="civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  * 
- *          Last modified: $Date: 2008/11/14 10:50:47 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/08 10:15:19 $ by $Author: juozas $
  * 
  */
 @Scope("prototype")
@@ -45,6 +45,7 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 	private static final String taskNamePostfixProp = ".name";
 
 	private static final String XFFileNamePropertyPostfix = ".view.xforms.file_name";
+	private static final String JSFComponentNamePropertyPostfix = ".view.jsf.component_name";
 
 	private ProcessBundleResources bundleResources;
 	private IWBundle bundle;
@@ -92,17 +93,33 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 				String taskIdentifier = key.split(dotRegExp)[0];
 				String fileName = properties.getProperty(taskIdentifier
 						+ XFFileNamePropertyPostfix);
+				ArrayList<ViewResource> viewResources = new ArrayList<ViewResource>(1);
+				if (fileName != null){
+					XFormViewResource resource = new XFormViewResource();
+					resource.setTaskName(taskName);
+					resource.setDocumentManagerFactory(getDocumentManagerFactory());
+					String pathWithinBundle = formsPath + fileName;
+	
+					resource.setResourceLocation(resources, pathWithinBundle);
+	
+					
+					viewResources.add(resource);
+				}
+				
+				String componentName = properties.getProperty(taskIdentifier
+					+ JSFComponentNamePropertyPostfix);
+				if (componentName != null){
+					//TODO: finish him!
+					JSFComponentViewResource resource = new JSFComponentViewResource();
+					resource.setTaskName(taskName);
+					resource.setComponentName(componentName);
 
-				XFormViewResource resource = new XFormViewResource();
-				resource.setTaskName(taskName);
-				resource.setDocumentManagerFactory(getDocumentManagerFactory());
-				String pathWithinBundle = formsPath + fileName;
-
-				resource.setResourceLocation(resources, pathWithinBundle);
-
-				ArrayList<ViewResource> viewResources = new ArrayList<ViewResource>(
-						1);
-				viewResources.add(resource);
+					viewResources.add(resource);
+					
+					
+				}
+				
+				
 				return viewResources;
 			}
 		}
@@ -173,7 +190,7 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 		this.bundleResources = bundleResources;
 	}
 
-	public ViewToTask getViewToTaskBinder() {
+/*	public ViewToTask getViewToTaskBinder() {
 		return viewToTaskBinder;
 	}
 
@@ -181,7 +198,7 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 	@ViewToTaskType("xforms")
 	public void setViewToTaskBinder(ViewToTask viewToTaskBinder) {
 		this.viewToTaskBinder = viewToTaskBinder;
-	}
+	}*/
 
 	public DocumentManagerFactory getDocumentManagerFactory() {
 		return documentManagerFactory;
@@ -191,5 +208,10 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 	public void setDocumentManagerFactory(
 			DocumentManagerFactory documentManagerFactory) {
 		this.documentManagerFactory = documentManagerFactory;
+	}
+
+	public ViewToTask getViewToTaskBinder() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

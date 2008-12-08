@@ -14,13 +14,14 @@ import com.idega.jbpm.view.ViewToTaskType;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
+ * @version $Revision: 1.2 $
  *
- * Last modified: $Date: 2008/09/16 17:48:15 $ by $Author: civilis $
+ * Last modified: $Date: 2008/12/08 10:15:19 $ by $Author: juozas $
  */
-@ViewToTaskType("xforms")
+/*@ViewToTaskType("xforms")
 @Scope("singleton")
-@Service("process_xforms_viewToTask")
+@Service("process_xforms_viewToTask")*/
+@Deprecated
 public class XFormsToTask implements ViewToTask {
 	
 	private BPMDAO BPMDAO; 

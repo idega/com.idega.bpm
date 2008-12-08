@@ -45,6 +45,7 @@ import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.variables.impl.BinaryVariableImpl;
 import com.idega.jbpm.view.View;
+import com.idega.jbpm.view.ViewSubmition;
 import com.idega.presentation.IWContext;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
@@ -53,9 +54,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.22 $
+ * @version $Revision: 1.23 $
  * 
- *          Last modified: $Date: 2008/12/08 08:10:27 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/08 10:15:19 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -193,11 +194,11 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		}
 	}
 
-	public void submit(View view) {
+	public void submit(ViewSubmition view) {
 		submit(view, true);
 	}
 
-	public void submit(View view, boolean proceedProcess) {
+	public void submit(ViewSubmition view, boolean proceedProcess) {
 
 		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
 
@@ -363,7 +364,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			view.populateParameters(parameters);
 			view.populateVariables(getVariablesHandler().populateVariables(
 					taskInstanceId));
-
+			view.setTaskInstanceId(taskInstanceId);
+			
 			return view;
 
 		} catch (RuntimeException e) {

@@ -35,9 +35,9 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  *
- * Last modified: $Date: 2008/11/20 12:36:09 $ by $Author: civilis $
+ * Last modified: $Date: 2008/12/08 10:15:19 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultPDW")
@@ -121,6 +121,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			parameters.put(ProcessConstants.TASK_INSTANCE_ID, String.valueOf(taskInstance.getId()));
 			
 			view.populateParameters(parameters);
+			view.setTaskInstanceId(taskInstance.getId());
 			
 			return view;
 		

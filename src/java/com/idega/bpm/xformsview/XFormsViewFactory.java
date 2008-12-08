@@ -24,9 +24,9 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  *
- * Last modified: $Date: 2008/11/05 08:53:04 $ by $Author: civilis $
+ * Last modified: $Date: 2008/12/08 10:15:19 $ by $Author: juozas $
  */
 @Scope("singleton")
 @ViewFactoryType("xforms")
@@ -57,7 +57,7 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 		XFormsView view = new XFormsView();
 		view.setDocumentManagerFactory(getDocumentManagerFactory());
 		view.setConverter(getConverter());
-		view.setViewToTask(getViewToTask());
+		//view.setViewToTask(getViewToTask());
 		
 		return view;
 	}
@@ -129,8 +129,7 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 	}
 
 	@Autowired
-	@ViewToTaskType("xforms")
-	public void setViewToTask(ViewToTask viewToTask) {
+	public void setViewToTask(@ViewToTaskType("xforms") ViewToTask viewToTask) {
 		this.viewToTask = viewToTask;
 	}
 	
