@@ -15,21 +15,19 @@ import org.springframework.stereotype.Service;
 
 import com.idega.bpm.exe.DefaultBPMManagersCreator;
 import com.idega.bpm.graph.def.IdegaProcessDefinition;
-import com.idega.xformsmanager.business.DocumentManagerFactory;
 import com.idega.idegaweb.IWBundle;
 import com.idega.jbpm.bundle.ProcessBundle;
 import com.idega.jbpm.bundle.ProcessBundleResources;
 import com.idega.jbpm.view.ViewResource;
-import com.idega.jbpm.view.ViewToTask;
-import com.idega.jbpm.view.ViewToTaskType;
+import com.idega.xformsmanager.business.DocumentManagerFactory;
 
 /**
  * Default implementation of ProcessBundle, uses XFormViewResource
  * 
  * @author <a href="civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  * 
- *          Last modified: $Date: 2008/12/08 12:24:52 $ by $Author: juozas $
+ *          Last modified: $Date: 2008/12/08 12:25:18 $ by $Author: juozas $
  * 
  */
 @Scope("prototype")
