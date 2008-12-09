@@ -25,9 +25,9 @@ import com.idega.xformsmanager.business.DocumentManagerFactory;
  * Default implementation of ProcessBundle, uses XFormViewResource
  * 
  * @author <a href="civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  * 
- *          Last modified: $Date: 2008/12/08 12:25:18 $ by $Author: juozas $
+ *          Last modified: $Date: 2008/12/09 02:49:00 $ by $Author: civilis $
  * 
  */
 @Scope("prototype")
@@ -89,33 +89,32 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 				String taskIdentifier = key.split(dotRegExp)[0];
 				String fileName = properties.getProperty(taskIdentifier
 						+ XFFileNamePropertyPostfix);
-				ArrayList<ViewResource> viewResources = new ArrayList<ViewResource>(1);
-				if (fileName != null){
+				ArrayList<ViewResource> viewResources = new ArrayList<ViewResource>(
+						1);
+				if (fileName != null) {
 					XFormViewResource resource = new XFormViewResource();
 					resource.setTaskName(taskName);
-					resource.setDocumentManagerFactory(getDocumentManagerFactory());
+					resource
+							.setDocumentManagerFactory(getDocumentManagerFactory());
 					String pathWithinBundle = formsPath + fileName;
-	
+
 					resource.setResourceLocation(resources, pathWithinBundle);
-	
-					
+
 					viewResources.add(resource);
 				}
-				
+
 				String componentName = properties.getProperty(taskIdentifier
-					+ JSFComponentNamePropertyPostfix);
-				if (componentName != null){
-					//TODO: finish him!
+						+ JSFComponentNamePropertyPostfix);
+				if (componentName != null) {
+					// TODO: finish him!
 					JSFComponentViewResource resource = new JSFComponentViewResource();
 					resource.setTaskName(taskName);
 					resource.setComponentName(componentName);
 
 					viewResources.add(resource);
-					
-					
+
 				}
-				
-				
+
 				return viewResources;
 			}
 		}
@@ -195,5 +194,4 @@ public class DefaultBPMProcessBundle implements ProcessBundle {
 			DocumentManagerFactory documentManagerFactory) {
 		this.documentManagerFactory = documentManagerFactory;
 	}
-
 }

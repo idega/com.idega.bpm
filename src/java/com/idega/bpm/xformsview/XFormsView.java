@@ -10,18 +10,11 @@ import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 
-import org.chiba.xml.xforms.core.Submission;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 import com.idega.block.form.data.XForm;
 import com.idega.block.form.data.dao.XFormsDAO;
 import com.idega.block.form.presentation.FormViewer;
-import com.idega.xformsmanager.business.Document;
-import com.idega.xformsmanager.business.DocumentManager;
-import com.idega.xformsmanager.business.DocumentManagerFactory;
-import com.idega.xformsmanager.util.FormManagerUtil;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.variables.Converter;
 import com.idega.jbpm.view.View;
@@ -29,14 +22,16 @@ import com.idega.jbpm.view.ViewToTask;
 import com.idega.jbpm.view.ViewToTaskType;
 import com.idega.util.CoreConstants;
 import com.idega.util.StringUtil;
-import com.idega.util.URIUtil;
 import com.idega.util.expression.ELUtil;
+import com.idega.xformsmanager.business.Document;
+import com.idega.xformsmanager.business.DocumentManager;
+import com.idega.xformsmanager.business.DocumentManagerFactory;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  * 
- *          Last modified: $Date: 2008/12/08 10:15:19 $ by $Author: juozas $
+ *          Last modified: $Date: 2008/12/09 02:49:00 $ by $Author: civilis $
  */
 public class XFormsView implements View {
 
@@ -205,6 +200,7 @@ public class XFormsView implements View {
 				"Resolving variables from form not supported yet.");
 	}
 
+	/*
 	public void setSubmission(Submission submission, Node submissionInstance) {
 
 		// String action = submission.getElement().getAttribute(
@@ -219,6 +215,7 @@ public class XFormsView implements View {
 				: new URIUtil(paramsEl.getTextContent()).getParameters();
 		variables = getConverter().convert(submissionInstance);
 	}
+	*/
 
 	public String getDisplayName() {
 

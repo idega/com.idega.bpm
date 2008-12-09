@@ -31,13 +31,14 @@ import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessDefinitionW;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
+import com.idega.jbpm.view.ViewSubmission;
 import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  *
- * Last modified: $Date: 2008/12/08 10:15:19 $ by $Author: juozas $
+ * Last modified: $Date: 2008/12/09 02:49:00 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPDW")
@@ -74,9 +75,9 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		return variables;
 	}
 	
-	public void startProcess(View view) {
+	public void startProcess(ViewSubmission viewSubmission) {
 		
-		Long startTaskInstanceId = view.getTaskInstanceId();
+		Long startTaskInstanceId = viewSubmission.getTaskInstanceId();
 		
 		if(startTaskInstanceId == null)
 			throw new IllegalArgumentException("View without taskInstanceId provided");
@@ -89,7 +90,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			if(ti.getProcessInstance().getStart() == null)
 				ti.getProcessInstance().setStart(new Date());
 			
-			submitVariablesAndProceedProcess(ti, view.resolveVariables(), true);
+			submitVariablesAndProceedProcess(ti, viewSubmission.resolveVariables(), true);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);

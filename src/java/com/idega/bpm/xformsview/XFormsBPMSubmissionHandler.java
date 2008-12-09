@@ -26,9 +26,9 @@ import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  *
- * Last modified: $Date: 2008/11/05 08:53:04 $ by $Author: civilis $
+ * Last modified: $Date: 2008/12/09 02:49:00 $ by $Author: civilis $
  */
 public class XFormsBPMSubmissionHandler extends AbstractConnector implements SubmissionHandler {
 	
@@ -60,8 +60,8 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
     	
     	BPMFactory bpmFactory = getBpmFactory();
     	IXFormViewFactory xfvFact = getXfvFact();
-    	XFormsView xFormsView = xfvFact.getXFormsView();
-    	xFormsView.setSubmission(submission, submissionInstance);
+    	XFormsViewSubmission xformsViewSubmission = xfvFact.getViewSubmission();
+    	xformsViewSubmission.setSubmission(submission, submissionInstance);
     	
     	JbpmContext ctx = getBpmContext().createJbpmContext();
     	
@@ -79,15 +79,13 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
         		
         		long tskInstId = Long.parseLong(parameters.get(ProcessConstants.TASK_INSTANCE_ID));
         		processDefinition = ctx.getTaskInstance(tskInstId).getProcessInstance().getProcessDefinition();
-        		xFormsView.setTaskInstanceId(tskInstId);
-        		bpmFactory.getProcessManager(processDefinition.getId()).getProcessDefinition(processDefinition.getId()).startProcess(xFormsView);
+        		bpmFactory.getProcessManager(processDefinition.getId()).getProcessDefinition(processDefinition.getId()).startProcess(xformsViewSubmission);
         		
         	} else if(parameters.containsKey(ProcessConstants.TASK_INSTANCE_ID)) {
         		
         		long tskInstId = Long.parseLong(parameters.get(ProcessConstants.TASK_INSTANCE_ID));
         		processDefinition = ctx.getTaskInstance(tskInstId).getProcessInstance().getProcessDefinition();
-        		xFormsView.setTaskInstanceId(tskInstId);
-        		bpmFactory.getProcessManager(processDefinition.getId()).getTaskInstance(tskInstId).submit(xFormsView);
+        		bpmFactory.getProcessManager(processDefinition.getId()).getTaskInstance(tskInstId).submit(xformsViewSubmission);
 
         	} else {
             	

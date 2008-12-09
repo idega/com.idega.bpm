@@ -45,7 +45,7 @@ import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.variables.impl.BinaryVariableImpl;
 import com.idega.jbpm.view.View;
-import com.idega.jbpm.view.ViewSubmition;
+import com.idega.jbpm.view.ViewSubmission;
 import com.idega.presentation.IWContext;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
@@ -54,9 +54,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.23 $
+ * @version $Revision: 1.24 $
  * 
- *          Last modified: $Date: 2008/12/08 10:15:19 $ by $Author: juozas $
+ *          Last modified: $Date: 2008/12/09 02:49:00 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -194,11 +194,11 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		}
 	}
 
-	public void submit(ViewSubmition view) {
+	public void submit(ViewSubmission view) {
 		submit(view, true);
 	}
 
-	public void submit(ViewSubmition view, boolean proceedProcess) {
+	public void submit(ViewSubmission view, boolean proceedProcess) {
 
 		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
 

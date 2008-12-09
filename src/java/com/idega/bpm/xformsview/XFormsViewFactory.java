@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.idega.xformsmanager.business.DocumentManagerFactory;
 import com.idega.jbpm.data.dao.BPMDAO;
 import com.idega.jbpm.variables.Converter;
 import com.idega.jbpm.view.TaskView;
@@ -21,12 +20,13 @@ import com.idega.jbpm.view.ViewFactoryType;
 import com.idega.jbpm.view.ViewToTask;
 import com.idega.jbpm.view.ViewToTaskType;
 import com.idega.util.CoreConstants;
+import com.idega.xformsmanager.business.DocumentManagerFactory;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.3 $
- *
- * Last modified: $Date: 2008/12/08 10:15:19 $ by $Author: juozas $
+ * @version $Revision: 1.4 $
+ * 
+ *          Last modified: $Date: 2008/12/09 02:49:00 $ by $Author: civilis $
  */
 @Scope("singleton")
 @ViewFactoryType("xforms")
@@ -34,44 +34,53 @@ import com.idega.util.CoreConstants;
 public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 
 	private final String beanIdentifier = "process_xforms_viewFactory";
-	
+
 	private DocumentManagerFactory documentManagerFactory;
 	private Converter converter;
 	private ViewToTask viewToTask;
 	private BPMDAO BPMDAO;
-	
+
 	public View getView(String viewIdentifier, boolean submitable) {
 
-		if(viewIdentifier == null || CoreConstants.EMPTY.equals(viewIdentifier))
+		if (viewIdentifier == null
+				|| CoreConstants.EMPTY.equals(viewIdentifier))
 			throw new NullPointerException("View identifier not provided");
-		
+
 		XFormsView view = getXFormsView();
 		view.setViewId(viewIdentifier);
 		view.setSubmitable(submitable);
-		
+
 		return view;
 	}
-	
+
+	public XFormsViewSubmission getViewSubmission() {
+
+		XFormsViewSubmission view = new XFormsViewSubmission();
+		view.setConverter(getConverter());
+
+		return view;
+	}
+
 	public XFormsView getXFormsView() {
 
 		XFormsView view = new XFormsView();
 		view.setDocumentManagerFactory(getDocumentManagerFactory());
 		view.setConverter(getConverter());
-		//view.setViewToTask(getViewToTask());
-		
+		// view.setViewToTask(getViewToTask());
+
 		return view;
 	}
-	
+
 	public TaskView getTaskView(Task task) {
 
 		XFormsTaskView view = new XFormsTaskView(task);
 		view.setDocumentManagerFactory(getDocumentManagerFactory());
 		view.setConverter(getConverter());
 		view.setViewToTask(getViewToTask());
-		
+
 		return view;
 	}
-	
+
 	public String getViewType() {
 		return XFormsView.VIEW_TYPE;
 	}
@@ -100,25 +109,24 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 	}
 
 	/*
-	protected PersistenceManager getPersistenceManager() {
-		return persistenceManager;
-	}
+	 * protected PersistenceManager getPersistenceManager() { return
+	 * persistenceManager; }
+	 * 
+	 * @Autowired
+	 * 
+	 * @XFormPersistenceType("slide") public void
+	 * setPersistenceManager(PersistenceManager persistenceManager) {
+	 * this.persistenceManager = persistenceManager; }
+	 */
 
-	@Autowired
-	@XFormPersistenceType("slide")
-	public void setPersistenceManager(PersistenceManager persistenceManager) {
-		this.persistenceManager = persistenceManager;
-	}
-	*/
-	
 	class XFormsTaskView extends XFormsView implements TaskView {
 
 		private final Task task;
-		
+
 		XFormsTaskView(Task task) {
 			this.task = task;
 		}
-		
+
 		public Task getTask() {
 			return task;
 		}
@@ -132,21 +140,23 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 	public void setViewToTask(@ViewToTaskType("xforms") ViewToTask viewToTask) {
 		this.viewToTask = viewToTask;
 	}
-	
-	@Transactional(readOnly=true)
-	public Multimap<Long, TaskView> getAllViewsByProcessDefinitions(Collection<Long> processDefinitionsIds) {
-		
-		List<Object[]> procTaskViews = getBPMDAO().getProcessTasksViewsInfos(processDefinitionsIds, XFormsView.VIEW_TYPE);
+
+	@Transactional(readOnly = true)
+	public Multimap<Long, TaskView> getAllViewsByProcessDefinitions(
+			Collection<Long> processDefinitionsIds) {
+
+		List<Object[]> procTaskViews = getBPMDAO().getProcessTasksViewsInfos(
+				processDefinitionsIds, XFormsView.VIEW_TYPE);
 		HashMultimap<Long, TaskView> pdsViews = new HashMultimap<Long, TaskView>();
-		
+
 		for (Object[] objects : procTaskViews) {
-			
-			Task task = (Task)objects[0];
-			String viewIdentifier = (String)objects[1];
+
+			Task task = (Task) objects[0];
+			String viewIdentifier = (String) objects[1];
 
 			TaskView view = getTaskView(task);
 			view.setViewId(viewIdentifier);
-			
+
 			pdsViews.put(task.getProcessDefinition().getId(), view);
 		}
 
