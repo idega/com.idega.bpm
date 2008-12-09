@@ -10,4 +10,9 @@
         <lookup-method name="createTIW" bean="defaultTIW" />
     </bean>
     
+    <bean id="process_xforms_viewToTask" class="com.idega.jbpm.view.DefaultViewToTask">
+        <qualifier type="com.idega.jbpm.view.ViewToTaskType" value="xforms" />
+        <constructor-arg type="java.lang.String" value="xforms"/>
+    </bean>
+    
 </beans>
