@@ -1,6 +1,17 @@
 html, body {
 	margin: 0;
 	padding: 0;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	color: #000;
+}
+
+a {
+	color: #000;
+}
+
+h1 {
+	font-size: 18px !important;
 }
 
 div.legend {
@@ -20,15 +31,15 @@ div.input, div.select1 {
 div.input label, div.textarea label, div.select1 label {
 	display: block;
 	float: left !important;
-	font-size: 14px;
+	font-size: 12px;
 	width: 20% !important;
 }
 
-div.input div.replaceForInputStyle, div.textarea textarea, div.select1 div.replaceForSelectSingle {
+div.input div.replaceForInputStyle, div.textarea .textAreaReplacementForPDFDocument, div.select1 div.replaceForSelectSingle {
 	float: left;
 	width: auto;
 	clear: none;
-	font-size: 14px;
+	font-size: 12px;
 	color: #101010;
 	display: block !important;
 	width: 70%;
@@ -41,18 +52,22 @@ span.output {
 	overflow: hidden;
 }
 
-span.output label {
+span.output label, div.float label {
 	display: block;
 	float: left !important;
-	font-size: 14px;
+	font-size: 12px;
 	width: 200px !important;
 	padding: 0 !important;
+}
+
+span.helpBlock > label {
+	width: auto !important;
 }
 
 span.output span {
 	padding: 0 !important;
 	color: #101010;
-	font-size: 14px;
+	font-size: 12px;
 	font-weight: bold;
 }
 
@@ -70,9 +85,13 @@ div.fbc_simple_text {
 	margin-bottom: 8px !important;
 }
 
-div.fbc_header_text span.output, div.fbc_simple_text span {
+div.fbc_header_text label {
+	width: auto !important;
+}
+
+div.fbc_header_text span, div.fbc_simple_text span {
 	margin: 0;
-	font-size: 12px !important;
+	font-size: 14px !important;
 }
 
 div.fbc_simple_text label {
@@ -95,4 +114,43 @@ div.deselected-case span.output label {
 
 div.deselected-case span.output label span {
 	font-weight: normal !important;
+}
+
+div.label, .paragraphAlert, .fbc_simple_text, .noLabel {
+	display: none !important;
+}
+
+table th, table td {
+	border-bottom: 1px #ddd solid;
+	font-size: 12px;
+	padding: 2px 3px;
+	empty-cells: show;
+}
+
+span.total {
+	margin-bottom: 0;
+}
+
+span.total span {
+	width: auto !important;
+	clear: none !important;
+	text-align: left !important;
+}
+
+div.selected-case span.output span {
+	clear: none !important;
+}
+
+div.float div {
+	font-weight: bold;
+	width: auto !important;
+}
+
+.selector-item input {
+	display: none !important;
+}
+
+span.label {
+	top: 0 !important;
+	margin: 0 !important;
 }
