@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.httpclient.HttpException;
 import org.apache.webdav.lib.WebdavResource;
-import org.jbpm.JbpmContext;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.idega.bpm.BPMConstants;
@@ -22,7 +21,6 @@ import com.idega.business.IBOLookupException;
 import com.idega.core.file.util.MimeTypeUtil;
 import com.idega.io.DownloadWriter;
 import com.idega.io.MediaWritable;
-import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.artifacts.ProcessArtifactsProvider;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessManager;
@@ -40,8 +38,8 @@ import com.idega.xformsmanager.business.XFormPersistenceType;
  * Downloads PDF for provided XForm
  * @author <a href="mailto:valdas@idega.com>Valdas Žemaitis</a>
  * Created: 2008.05.10
- * @version $Revision: 1.4 $
- * Last modified: $Date: 2008/12/15 10:15:31 $ by $Author: valdas $
+ * @version $Revision: 1.5 $
+ * Last modified: $Date: 2008/12/15 12:45:47 $ by $Author: valdas $
  */
 @SuppressWarnings("deprecation")
 public class XFormToPDFWriter extends DownloadWriter implements MediaWritable { 
@@ -62,9 +60,6 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	
 	@Autowired(required = false)
 	private BPMFactory bpmFactory;
-	
-	@Autowired(required = false)
-	private BPMContext idegaJbpmContext;
 	
 	@Override
 	public void init(HttpServletRequest req, IWContext iwc) {
@@ -219,21 +214,6 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 		this.bpmFactory = bpmFactory;
 	}
 
-	public BPMContext getIdegaJbpmContext() {
-		if (idegaJbpmContext == null) {
-			try {
-				ELUtil.getInstance().autowire(this);
-			} catch(Exception e) {
-				e.printStackTrace();
-			}
-		}
-		return idegaJbpmContext;
-	}
-
-	public void setIdegaJbpmContext(BPMContext idegaJbpmContext) {
-		this.idegaJbpmContext = idegaJbpmContext;
-	}
-
 	private String getPDFName(String taskInstanceId, Locale locale) {
 		if (StringUtil.isEmpty(taskInstanceId)) {
 			return null;
@@ -243,10 +223,6 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 		if (bpmFactory == null) {
 			return null;
 		}
-		BPMContext bpmContext = getIdegaJbpmContext();
-		if (bpmContext == null) {
-			return null;
-		}
 		Long taskInstance = null;
 		try {
 			taskInstance = Long.valueOf(taskInstanceId);
@@ -254,19 +230,6 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			logger.log(Level.WARNING, "Error converting task instance ID from String to Long: " + taskInstanceId, e);
 		}
 		if (taskInstance == null) {
-			return null;
-		}
-		
-		Long processDefinitionId = null;
-		JbpmContext ctx = bpmContext.createJbpmContext();
-		try {
-			processDefinitionId = ctx.getTaskInstance(taskInstance).getProcessInstance().getProcessDefinition().getId();
-		} catch(Exception e) {
-			logger.log(Level.WARNING, "Error getting process definition by task instance ID: " + taskInstance, e);
-		} finally {
-			bpmContext.closeAndCommit(ctx);
-		}
-		if (processDefinitionId == null) {
 			return null;
 		}
 		
@@ -280,13 +243,13 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			return null;
 		}
 		
-		String processName = null;
+		String taskName = null;
 		try {
-			processName = processManager.getProcessDefinition(processDefinitionId).getProcessName(locale);
+			taskName = processManager.getTaskInstance(taskInstance).getName(locale);
 		} catch(Exception e) {
-			logger.log(Level.WARNING, "Error getting name for process definition by ID: " + processDefinitionId + " and locale: " + locale, e);
+			logger.log(Level.WARNING, "Error getting name for task instance by ID: " + taskInstance + " and locale: " + locale, e);
 		}
-		if (StringUtil.isEmpty(processName)) {
+		if (StringUtil.isEmpty(taskName)) {
 			return null;
 		}
 		
@@ -301,10 +264,10 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			logger.log(Level.WARNING, "Error getting case identifier for task instance: " + taskInstanceId, e);
 		}
 		if (StringUtil.isEmpty(caseIdentifier)) {
-			return processName;
+			return taskName;
 		}
 		
-		return new StringBuilder(processName).append(CoreConstants.MINUS).append(caseIdentifier).toString();
+		return new StringBuilder(taskName).append(CoreConstants.MINUS).append(caseIdentifier).toString();
 	}
 
 }
