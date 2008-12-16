@@ -12,7 +12,7 @@
             <handlerName>isCurrentUserLoggedInDecisionHandler</handlerName>
         </handler>
 		<transition to="locateAssignee" name="false"></transition>
-		<transition to="end-state1" name="true"></transition>
+		<transition to="end-complete-process" name="true"></transition>
 	</decision>
 
 	<node name="locateAssignee">
@@ -38,7 +38,7 @@
 			    </propertyMap>
 			</action>
 		</event>
-		<transition to="assignUserAsFirstTaskSubmitter" name="toAssignUserAsFirstTaskSubmitter"></transition>
+		<transition to="assignUserAsFirstTaskSubmitter"></transition>
 	</node>
 
 	<decision name="assigneeFound" expression="#{assigneeData.userId != null}">
@@ -55,25 +55,8 @@
 			    </propertyMap>
 			</action>
 		</event>
-		<transition to="assignToRole" name="toAssignRole"></transition>
+		<transition to="assignToRole"></transition>
 	</node>
-
-	<process-state name="sendInvitationToAssignee">
-		<sub-process name="participantInvitation" binding="late" />
-      
-	      <variable name="assignFromProcessInstanceId" access="read" mapped-name="sendFromProcessInstanceId" />
-	      <variable name="assigneeData" access="read" mapped-name="participantUserData" />
-	      <variable name="assigneeRoleExpression" access="read" mapped-name="participantRoleExpression" />
-	      
-		<event type="node-enter">
-			<script name="assignPropertiesToUserData">
-                <expression>
-                    upd.setHideInContacts(true);
-                </expression>
-                <variable name='assigneeData' access='read' mapped-name='upd' />
-			</script>
-		</event>
-	</process-state>
 
 	<node name="assignUserAsFirstTaskSubmitter">
 		<event type="node-enter">
@@ -85,8 +68,21 @@
 			    </propertyMap>
 			</action>
 		</event>
-		<transition to="end-state1" name="toEnd"></transition>
+		<transition to="assignNewCaseOwner"></transition>
 	</node>
-	<end-state name="end-state1"></end-state>
+
+	<node name="assignNewCaseOwner">
+	   <event type="node-enter">
+            <action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+                <handlerName>assignCaseOwnerHandler</handlerName>
+                <propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+                    <entry><key>ownerUserId</key><value>#{assigneeData.userId}</value></entry>
+                    <entry><key>processInstanceId</key><value>#{assignFromProcessInstanceId}</value></entry>
+                </propertyMap>
+            </action>
+        </event>
+		<transition to="end-complete-process"></transition>
+	</node>
+	<end-state name="end-complete-process" end-complete-process="true"></end-state>
 	
 </process-definition>

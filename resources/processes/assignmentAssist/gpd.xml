@@ -1,30 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<root-container name="AssignmentAssist" width="1054" height="654">
-  <node name="start-state1" x="278" y="39" width="21" height="22">
+<root-container name="AssignmentAssist" width="739" height="582">
+  <node name="start-state1" x="272" y="35" width="21" height="22">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="isCurrentUserAssistant" x="221" y="118" width="132" height="36">
+  <node name="isCurrentUserAssistant" x="218" y="105" width="132" height="36">
     <edge>
       <label x="5" y="-10"/>
+      <bendpoint w1="211" h1="11" w2="0" h2="-57"/>
     </edge>
+    <edge>
+      <label x="0" y="-21"/>
+      <bendpoint w1="-180" h1="10" w2="0" h2="-104"/>
+    </edge>
+  </node>
+  <node name="locateAssignee" x="429" y="173" width="132" height="36">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="locateAssignee" x="410" y="201" width="132" height="36">
-    <edge>
-      <label x="5" y="-10"/>
-    </edge>
-  </node>
-  <node name="assignToRole" x="312" y="350" width="132" height="36">
+  <node name="assignToRole" x="327" y="341" width="132" height="36">
     <edge>
       <label x="-35" y="-5"/>
     </edge>
   </node>
-  <node name="assigneeFound" x="424" y="273" width="103" height="32">
+  <node name="assigneeFound" x="449" y="257" width="103" height="32">
     <edge>
       <label x="5" y="-10"/>
     </edge>
@@ -37,20 +39,26 @@
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="sendInvitationToAssignee" x="166" y="423" width="132" height="36">
+  <node name="sendInvitationToAssignee" x="330" y="424" width="132" height="36">
     <edge>
       <label x="-39" y="6"/>
     </edge>
   </node>
-  <node name="setAssigned" x="67" y="341" width="83" height="34">
+  <node name="setAssigned" x="358" y="547" width="83" height="34">
+    <edge>
+      <label x="5" y="-10"/>
+      <bendpoint w1="-287" h1="0" w2="0" h2="244"/>
+    </edge>
+  </node>
+  <node name="setNotAssigned" x="52" y="219" width="105" height="36">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="setNotAssigned" x="45" y="116" width="105" height="36">
+  <node name="end-state1" x="97" y="316" width="21" height="22"/>
+  <node name="assignNewCaseOwner" x="331" y="487" width="132" height="36">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="end-state1" x="100" y="235" width="21" height="22"/>
 </root-container>
