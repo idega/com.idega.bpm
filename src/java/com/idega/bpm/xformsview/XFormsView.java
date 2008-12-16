@@ -29,9 +29,9 @@ import com.idega.xformsmanager.business.DocumentManagerFactory;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  * 
- *          Last modified: $Date: 2008/12/09 02:49:00 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/16 09:24:17 $ by $Author: juozas $
  */
 public class XFormsView implements View {
 
@@ -304,5 +304,9 @@ public class XFormsView implements View {
 	@Autowired
 	public void setXformsDAO(XFormsDAO xformsDAO) {
 		this.xformsDAO = xformsDAO;
+	}
+
+	public boolean isSignable() {
+		return true;
 	}
 }

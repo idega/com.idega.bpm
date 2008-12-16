@@ -145,4 +145,8 @@ public class JSFComponentView implements View, Serializable {
 
 	}
 
+	public boolean isSignable() {
+		return false;
+	}
+
 }
