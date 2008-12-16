@@ -54,9 +54,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.25 $
+ * @version $Revision: 1.26 $
  * 
- *          Last modified: $Date: 2008/12/16 16:58:44 $ by $Author: juozas $
+ *          Last modified: $Date: 2008/12/16 20:00:11 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -198,7 +198,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		submit(view, true);
 	}
 
-	public void submit(ViewSubmission view, boolean proceedProcess) {
+	public void submit(ViewSubmission viewSubmission, boolean proceedProcess) {
 
 		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
 
@@ -211,7 +211,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 						+ ") is already submitted",
 						"Task instance is already submitted");
 
-			submitVariablesAndProceedProcess(taskInstance, view
+			submitVariablesAndProceedProcess(taskInstance, viewSubmission
 					.resolveVariables(), proceedProcess);
 
 			// if priority was hidden, then setting to default priority after
