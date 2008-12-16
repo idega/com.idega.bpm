@@ -36,96 +36,127 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.10 $
- *
- * Last modified: $Date: 2008/12/09 02:49:00 $ by $Author: civilis $
+ * @version $Revision: 1.11 $
+ * 
+ *          Last modified: $Date: 2008/12/16 20:00:41 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPDW")
 public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
-	
+
 	private Long processDefinitionId;
 	private ProcessDefinition processDefinition;
-	
-	@Autowired private BPMFactory bpmFactory;
-	@Autowired private BPMContext bpmContext;
-	@Autowired private VariablesHandler variablesHandler;
-	
-	private static final Logger logger = Logger.getLogger(DefaultBPMProcessDefinitionW.class.getName());
-	
+
+	@Autowired
+	private BPMFactory bpmFactory;
+	@Autowired
+	private BPMContext bpmContext;
+	@Autowired
+	private VariablesHandler variablesHandler;
+
+	private static final Logger logger = Logger
+			.getLogger(DefaultBPMProcessDefinitionW.class.getName());
+
 	public List<Variable> getTaskVariableList(String taskName) {
-		
+
 		ProcessDefinition pdef = getProcessDefinition();
 		Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
 		TaskController tiController = task.getTaskController();
-		
-		if(tiController == null)
+
+		if (tiController == null)
 			return null;
-		
+
 		@SuppressWarnings("unchecked")
-		List<VariableAccess> variableAccesses = tiController.getVariableAccesses();
-		ArrayList<Variable> variables = new ArrayList<Variable>(variableAccesses.size());
-			
+		List<VariableAccess> variableAccesses = tiController
+				.getVariableAccesses();
+		ArrayList<Variable> variables = new ArrayList<Variable>(
+				variableAccesses.size());
+
 		for (VariableAccess variableAccess : variableAccesses) {
-			
-			Variable variable = Variable.parseDefaultStringRepresentation(variableAccess.getVariableName());
+
+			Variable variable = Variable
+					.parseDefaultStringRepresentation(variableAccess
+							.getVariableName());
 			variables.add(variable);
 		}
-				
+
 		return variables;
 	}
-	
+
 	public void startProcess(ViewSubmission viewSubmission) {
-		
-		Long startTaskInstanceId = viewSubmission.getTaskInstanceId();
-		
-		if(startTaskInstanceId == null)
-			throw new IllegalArgumentException("View without taskInstanceId provided");
-		
+
+		Long processDefinitionId = viewSubmission.getProcessDefinitionId();
+
+		logger.finer("Starting process for process definition id = "
+				+ processDefinitionId);
+
+		Map<String, String> parameters = viewSubmission.resolveParameters();
+
+		logger.finer("Params " + parameters);
+
 		JbpmContext ctx = getBpmContext().createJbpmContext();
-		
+
 		try {
-			TaskInstance ti = ctx.getTaskInstance(startTaskInstanceId);
-			
-			if(ti.getProcessInstance().getStart() == null)
-				ti.getProcessInstance().setStart(new Date());
-			
-			submitVariablesAndProceedProcess(ti, viewSubmission.resolveVariables(), true);
-			
+
+			ProcessDefinition pd = ctx.getGraphSession().getProcessDefinition(
+					processDefinitionId);
+			ProcessInstance pi = new ProcessInstance(pd);
+			TaskInstance ti = pi.getTaskMgmtInstance()
+					.createStartTaskInstance();
+
+			View view = getBpmFactory().getView(viewSubmission.getViewId(),
+					viewSubmission.getViewType(), false);
+
+			// binding view to task instance
+			view.getViewToTask().bind(view, ti);
+
+			logger.log(Level.INFO,
+					"New process instance created for the process "
+							+ pd.getName());
+
+			pi.setStart(new Date());
+
+			submitVariablesAndProceedProcess(ti, viewSubmission
+					.resolveVariables(), true);
+
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} finally {
 			getBpmContext().closeAndCommit(ctx);
 		}
 	}
-	
+
 	public View loadInitView(Integer initiatorId) {
-		
+
 		JbpmContext ctx = getBpmContext().createJbpmContext();
-		
+
 		try {
 			Long processDefinitionId = getProcessDefinitionId();
-			ProcessDefinition pd = ctx.getGraphSession().getProcessDefinition(processDefinitionId);
+			ProcessDefinition pd = ctx.getGraphSession().getProcessDefinition(
+					processDefinitionId);
 
-			ProcessInstance pi = new ProcessInstance(pd);
-			logger.log(Level.INFO, "New process instance created for the process "+pd.getName());
-			
-			TaskInstance taskInstance = pi.getTaskMgmtInstance().createStartTaskInstance();
-			
+			Long startTaskId = pd.getTaskMgmtDefinition().getStartTask()
+					.getId();
+
 			List<String> preferred = new ArrayList<String>(1);
 			preferred.add(XFormsView.VIEW_TYPE);
-			View view = getBpmFactory().takeView(taskInstance.getId(), true, preferred);
-			
-			Map<String, String> parameters = new HashMap<String, String>(6);
-			
-			parameters.put(ProcessConstants.START_PROCESS, ProcessConstants.START_PROCESS);
-			parameters.put(ProcessConstants.TASK_INSTANCE_ID, String.valueOf(taskInstance.getId()));
-			
+			View view = getBpmFactory().getViewByTask(startTaskId, true,
+					preferred);
+			view.takeView();
+
+			Map<String, String> parameters = new HashMap<String, String>(2);
+
+			parameters.put(ProcessConstants.START_PROCESS,
+					ProcessConstants.START_PROCESS);
+			parameters.put(ProcessConstants.PROCESS_DEFINITION_ID, String
+					.valueOf(processDefinitionId));
+			parameters.put(ProcessConstants.VIEW_ID, view.getViewId());
+			parameters.put(ProcessConstants.VIEW_TYPE, view.getViewType());
+
 			view.populateParameters(parameters);
-			view.setTaskInstanceId(taskInstance.getId());
-			
+
 			return view;
-		
+
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
@@ -134,71 +165,83 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			getBpmContext().closeAndCommit(ctx);
 		}
 	}
-	
+
 	public List<String> getRolesCanStartProcess(Object context) {
-		
+
 		return null;
 	}
-	
+
 	/**
 	 * sets roles, whose users can start process (and see application).
-	 * @param roles - idega roles keys (<b>not</b> process roles)
-	 * @param context - some context depending implementation, e.g., roles can start process using applications - then context will be application id
+	 * 
+	 * @param roles
+	 *            - idega roles keys (<b>not</b> process roles)
+	 * @param context
+	 *            - some context depending implementation, e.g., roles can start
+	 *            process using applications - then context will be application
+	 *            id
 	 */
 	public void setRolesCanStartProcess(List<String> roles, Object context) {
 	}
-	
-	protected void submitVariablesAndProceedProcess(TaskInstance ti, Map<String, Object> variables, boolean proceed) {
-		
+
+	protected void submitVariablesAndProceedProcess(TaskInstance ti,
+			Map<String, Object> variables, boolean proceed) {
+
 		getVariablesHandler().submitVariables(variables, ti.getId(), true);
-		
-		if(proceed) {
-		
-			String actionTaken = (String)ti.getVariable(ProcessConstants.actionTakenVariableName);
-	    	
-	    	if(actionTaken != null && !CoreConstants.EMPTY.equals(actionTaken) && false)
-	    		ti.end(actionTaken);
-	    	else
-	    		ti.end();
+
+		if (proceed) {
+
+			String actionTaken = (String) ti
+					.getVariable(ProcessConstants.actionTakenVariableName);
+
+			if (actionTaken != null && !CoreConstants.EMPTY.equals(actionTaken)
+					&& false)
+				ti.end(actionTaken);
+			else
+				ti.end();
 		} else {
 			ti.setEnd(new Date());
 		}
-    	
-		Integer usrId = getBpmFactory().getBpmUserFactory().getCurrentBPMUser().getIdToUse();
-		
-		if(usrId != null)
+
+		Integer usrId = getBpmFactory().getBpmUserFactory().getCurrentBPMUser()
+				.getIdToUse();
+
+		if (usrId != null)
 			ti.setActorId(usrId.toString());
 	}
-	
+
 	public String getStartTaskName() {
-		
+
 		List<String> preferred = new ArrayList<String>(1);
 		preferred.add(XFormsView.VIEW_TYPE);
-		
-		Long taskId = getProcessDefinition().getTaskMgmtDefinition().getStartTask().getId();
-		
+
+		Long taskId = getProcessDefinition().getTaskMgmtDefinition()
+				.getStartTask().getId();
+
 		View view = getBpmFactory().getViewByTask(taskId, false, preferred);
-		
-		return view.getDisplayName(new Locale("is","IS"));
+
+		return view.getDisplayName(new Locale("is", "IS"));
 	}
-	
+
 	public Collection<String> getTaskNodeTransitionsNames(String taskName) {
-		
+
 		ProcessDefinition pdef = getProcessDefinition();
 		Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
-		
+
 		TaskNode taskNode = task.getTaskNode();
-		
-		if(taskNode != null) {
-		
+
+		if (taskNode != null) {
+
 			@SuppressWarnings("unchecked")
-			Map<String, Transition> leavingTransitions = taskNode.getLeavingTransitionsMap();
-			return leavingTransitions != null ? leavingTransitions.keySet() : null;
+			Map<String, Transition> leavingTransitions = taskNode
+					.getLeavingTransitionsMap();
+			return leavingTransitions != null ? leavingTransitions.keySet()
+					: null;
 		} else
-//			task node is null, when task in start node
+			// task node is null, when task in start node
 			return null;
 	}
-	
+
 	public Long getProcessDefinitionId() {
 		return processDefinitionId;
 	}
@@ -206,7 +249,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	public void setProcessDefinitionId(Long processDefinitionId) {
 		this.processDefinitionId = processDefinitionId;
 	}
-	
+
 	public BPMFactory getBpmFactory() {
 		return bpmFactory;
 	}
@@ -232,24 +275,25 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	}
 
 	public ProcessDefinition getProcessDefinition() {
-		
-		if(processDefinition == null && getProcessDefinitionId() != null) {
-		
+
+		if (processDefinition == null && getProcessDefinitionId() != null) {
+
 			JbpmContext ctx = getBpmContext().createJbpmContext();
-			
+
 			try {
-				processDefinition = ctx.getGraphSession().getProcessDefinition(getProcessDefinitionId());
-				
+				processDefinition = ctx.getGraphSession().getProcessDefinition(
+						getProcessDefinitionId());
+
 			} finally {
 				getBpmContext().closeAndCommit(ctx);
 			}
 		}
-		
+
 		return processDefinition;
 	}
 
 	public String getProcessName(Locale locale) {
-		
+
 		return getProcessDefinition().getName();
 	}
 }
