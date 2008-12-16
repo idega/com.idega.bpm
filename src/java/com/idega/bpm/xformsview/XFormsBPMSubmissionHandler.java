@@ -26,82 +26,109 @@ import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.5 $
- *
- * Last modified: $Date: 2008/12/09 14:27:58 $ by $Author: civilis $
+ * @version $Revision: 1.6 $
+ * 
+ *          Last modified: $Date: 2008/12/16 19:59:20 $ by $Author: civilis $
  */
-public class XFormsBPMSubmissionHandler extends AbstractConnector implements SubmissionHandler {
-	
+public class XFormsBPMSubmissionHandler extends AbstractConnector implements
+		SubmissionHandler {
+
 	private BPMFactory bpmFactory;
 	private IXFormViewFactory xfvFact;
 	private BPMContext bpmContext;
 	private TmpFilesManager fileUploadManager;
 	private TmpFileResolver uploadedResourceResolver;
-    
-    public Map<String, Object> submit(Submission submission, Node submissionInstance) throws XFormsException {
-		
-    	//method - post, replace - none
-    	if (!submission.getReplace().equalsIgnoreCase("none"))
-            throw new XFormsException("Submission mode '" + submission.getReplace() + "' not supported");
-    	
-    	if(!submission.getMethod().equalsIgnoreCase("put") && !submission.getMethod().equalsIgnoreCase("post"))
-    		throw new XFormsException("Submission method '" + submission.getMethod() + "' not supported");
-    	
-    	if(submission.getMethod().equalsIgnoreCase("put")) {
-    		//update (put)
-    		//currently unsupported
-    		throw new XFormsException("Submission method '" + submission.getMethod() + "' not yet supported");
-    		
-    	} else {
-    		//insert (post)
-    	}
-    	
-    	ELUtil.getInstance().autowire(this);
-    	
-    	BPMFactory bpmFactory = getBpmFactory();
-    	IXFormViewFactory xfvFact = getXfvFact();
-    	XFormsViewSubmission xformsViewSubmission = xfvFact.getViewSubmission();
-    	xformsViewSubmission.setSubmission(submission, submissionInstance);
-    	
-    	JbpmContext ctx = getBpmContext().createJbpmContext();
-    	
-    	try {
-//    	TODO: unify. see parameters manager and xformview setsubmission
-    		Element paramsEl = FormManagerUtil.getFormParamsElement(submissionInstance);
-    		
-    		//String action = submission.getElement().getAttribute(FormManagerUtil.action_att);
-    		String params = paramsEl != null ? paramsEl.getTextContent() : null;
-        	Map<String, String> parameters = new URIUtil(params).getParameters();
-        	
-        	ProcessDefinition processDefinition;
-        	
-        	if(parameters.containsKey(ProcessConstants.START_PROCESS)) {
-        		
-        		long tskInstId = Long.parseLong(parameters.get(ProcessConstants.TASK_INSTANCE_ID));
-        		processDefinition = ctx.getTaskInstance(tskInstId).getProcessInstance().getProcessDefinition();
-        		xformsViewSubmission.setTaskInstanceId(tskInstId);
-        		bpmFactory.getProcessManager(processDefinition.getId()).getProcessDefinition(processDefinition.getId()).startProcess(xformsViewSubmission);
-        		
-        	} else if(parameters.containsKey(ProcessConstants.TASK_INSTANCE_ID)) {
-        		
-        		long tskInstId = Long.parseLong(parameters.get(ProcessConstants.TASK_INSTANCE_ID));
-        		processDefinition = ctx.getTaskInstance(tskInstId).getProcessInstance().getProcessDefinition();
-        		xformsViewSubmission.setTaskInstanceId(tskInstId);
-        		bpmFactory.getProcessManager(processDefinition.getId()).getTaskInstance(tskInstId).submit(xformsViewSubmission);
 
-        	} else {
-            	
-        		Logger.getLogger(getClass().getName()).log(Level.SEVERE, "Couldn't handle submission. No action associated with the submission action: "+params);
-        	}
-			
+	public Map<String, Object> submit(Submission submission,
+			Node submissionInstance) throws XFormsException {
+
+		// method - post, replace - none
+		if (!submission.getReplace().equalsIgnoreCase("none"))
+			throw new XFormsException("Submission mode '"
+					+ submission.getReplace() + "' not supported");
+
+		if (!submission.getMethod().equalsIgnoreCase("put")
+				&& !submission.getMethod().equalsIgnoreCase("post"))
+			throw new XFormsException("Submission method '"
+					+ submission.getMethod() + "' not supported");
+
+		if (submission.getMethod().equalsIgnoreCase("put")) {
+			// update (put)
+			// currently unsupported
+			throw new XFormsException("Submission method '"
+					+ submission.getMethod() + "' not yet supported");
+
+		} else {
+			// insert (post)
+		}
+
+		ELUtil.getInstance().autowire(this);
+
+		BPMFactory bpmFactory = getBpmFactory();
+		IXFormViewFactory xfvFact = getXfvFact();
+		XFormsViewSubmission xformsViewSubmission = xfvFact.getViewSubmission();
+		xformsViewSubmission.setSubmission(submission, submissionInstance);
+
+		JbpmContext ctx = getBpmContext().createJbpmContext();
+
+		try {
+			// TODO: unify. see parameters manager and xformview setsubmission
+			Element paramsEl = FormManagerUtil
+					.getFormParamsElement(submissionInstance);
+
+			// String action =
+			// submission.getElement().getAttribute(FormManagerUtil.action_att);
+			String params = paramsEl != null ? paramsEl.getTextContent() : null;
+			Map<String, String> parameters = new URIUtil(params)
+					.getParameters();
+
+			ProcessDefinition processDefinition;
+
+			if (parameters.containsKey(ProcessConstants.START_PROCESS)) {
+
+				long processDefinitionId = Long.parseLong(parameters
+						.get(ProcessConstants.PROCESS_DEFINITION_ID));
+				String viewId = parameters.get(ProcessConstants.VIEW_ID);
+				String viewType = parameters.get(ProcessConstants.VIEW_TYPE);
+
+				xformsViewSubmission
+						.setProcessDefinitionId(processDefinitionId);
+				xformsViewSubmission.setViewId(viewId);
+				xformsViewSubmission.setViewType(viewType);
+				
+				bpmFactory.getProcessManager(processDefinitionId)
+						.getProcessDefinition(processDefinitionId)
+						.startProcess(xformsViewSubmission);
+
+			} else if (parameters
+					.containsKey(ProcessConstants.TASK_INSTANCE_ID)) {
+
+				long tskInstId = Long.parseLong(parameters
+						.get(ProcessConstants.TASK_INSTANCE_ID));
+				processDefinition = ctx.getTaskInstance(tskInstId)
+						.getProcessInstance().getProcessDefinition();
+				xformsViewSubmission.setTaskInstanceId(tskInstId);
+				bpmFactory.getProcessManager(processDefinition.getId())
+						.getTaskInstance(tskInstId)
+						.submit(xformsViewSubmission);
+
+			} else {
+
+				Logger.getLogger(getClass().getName()).log(
+						Level.SEVERE,
+						"Couldn't handle submission. No action associated with the submission action: "
+								+ params);
+			}
+
 		} finally {
 			getBpmContext().closeAndCommit(ctx);
 		}
-		
-		getFileUploadManager().cleanup(null, submissionInstance, getUploadedResourceResolver());
-		
+
+		getFileUploadManager().cleanup(null, submissionInstance,
+				getUploadedResourceResolver());
+
 		return null;
-    }
+	}
 
 	public BPMFactory getBpmFactory() {
 		return bpmFactory;
@@ -144,7 +171,8 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 	}
 
 	@Autowired
-	public void setUploadedResourceResolver(@TmpFileResolverType("xformVariables") TmpFileResolver uploadedResourceResolver) {
+	public void setUploadedResourceResolver(
+			@TmpFileResolverType("xformVariables") TmpFileResolver uploadedResourceResolver) {
 		this.uploadedResourceResolver = uploadedResourceResolver;
 	}
 }
