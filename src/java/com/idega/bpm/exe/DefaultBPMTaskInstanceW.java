@@ -54,9 +54,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.24 $
+ * @version $Revision: 1.25 $
  * 
- *          Last modified: $Date: 2008/12/09 02:49:00 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/16 16:58:44 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -540,5 +540,20 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	TmpFileResolver getUploadedResourceResolver() {
 		return uploadedResourceResolver;
+	}
+
+	public List<BinaryVariable> getAttachemnts() {
+		
+		return getVariablesHandler().resolveBinaryVariables(taskInstanceId);
+	}
+	
+	public BinaryVariable getAttachement(String variableName){
+		for(BinaryVariable binaryVariable: getAttachemnts()){
+			if(binaryVariable.getVariable().getName().equals(variableName)){
+				return binaryVariable;
+			}
+		}
+		//TODO: maybe not faund exception needed here???
+		return null;
 	}
 }
