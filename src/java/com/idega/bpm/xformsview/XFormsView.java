@@ -20,7 +20,6 @@ import com.idega.jbpm.variables.Converter;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewToTask;
 import com.idega.jbpm.view.ViewToTaskType;
-import com.idega.util.CoreConstants;
 import com.idega.util.StringUtil;
 import com.idega.util.expression.ELUtil;
 import com.idega.xformsmanager.business.Document;
@@ -29,9 +28,9 @@ import com.idega.xformsmanager.business.DocumentManagerFactory;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  * 
- *          Last modified: $Date: 2008/12/16 09:24:17 $ by $Author: juozas $
+ *          Last modified: $Date: 2008/12/16 19:58:24 $ by $Author: civilis $
  */
 public class XFormsView implements View {
 
@@ -48,18 +47,17 @@ public class XFormsView implements View {
 	private Map<String, String> parameters;
 	private Map<String, Object> variables;
 
-	
 	private ViewToTask viewToTask;
-	
+	@Autowired
 	private XFormsDAO xformsDAO;
 
 	public ViewToTask getViewToTask() {
-		if(viewToTask == null){
+		if (viewToTask == null) {
 			ELUtil.getInstance().autowire(this);
 		}
 		return viewToTask;
 	}
-	
+
 	@Autowired
 	public void setViewToTask(@ViewToTaskType("xforms") ViewToTask viewToTask) {
 		this.viewToTask = viewToTask;
@@ -75,6 +73,8 @@ public class XFormsView implements View {
 
 	public void setViewId(String viewId) {
 		form = null;
+		parameters = null;
+		variables = null;
 		this.viewId = viewId;
 	}
 
@@ -123,41 +123,49 @@ public class XFormsView implements View {
 		if (!isSubmitable())
 			form.setReadonly(true);
 
+		populateParameters(getParameters());
+		populateVariables(getVariables());
+
 		viewId = form.getFormId().toString();
+	}
+
+	protected boolean isFormDocumentLoaded() {
+
+		return form != null;
 	}
 
 	protected Document getFormDocument() {
 
-		if (form != null)
-			return form;
+		if (form == null) {
+			
+			if (getViewId() == null || getViewId().length() == 0)
+				throw new IllegalStateException(
+						"Tried to get form document, but no view id not set");
 
-		if (getViewId() == null || CoreConstants.EMPTY.equals(getViewId()))
-			throw new NullPointerException("View id not set");
+			final Long formId = new Long(getViewId());
+			
+			Logger.getLogger(getClass().getName()).finer("Opening form in xforms view by form id = "+formId);
 
-		Long formId = new Long(getViewId());
+			try {
+				FacesContext fctx = FacesContext.getCurrentInstance();
+				IWMainApplication iwma = fctx == null ? IWMainApplication
+						.getDefaultIWMainApplication() : IWMainApplication
+						.getIWMainApplication(fctx);
 
-		try {
-			FacesContext fctx = FacesContext.getCurrentInstance();
-			IWMainApplication iwma = fctx == null ? IWMainApplication
-					.getDefaultIWMainApplication() : IWMainApplication
-					.getIWMainApplication(fctx);
-
-			DocumentManager documentManager = getDocumentManagerFactory()
-					.newDocumentManager(iwma);
-			Document form = documentManager.openForm(formId);
-
-			if (form != null) {
+				DocumentManager documentManager = getDocumentManagerFactory()
+						.newDocumentManager(iwma);
+				form = documentManager.openForm(formId);
 
 				setFormDocument(form);
+
+			} catch (RuntimeException e) {
+				throw e;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
 			}
-
-			return form;
-
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
 		}
+
+		return form;
 	}
 
 	public boolean isSubmitable() {
@@ -167,19 +175,30 @@ public class XFormsView implements View {
 	public void setSubmitable(boolean submitable) {
 
 		this.submitable = submitable;
-		getFormDocument().setReadonly(!submitable);
+
+		if (isFormDocumentLoaded()) {
+
+			getFormDocument().setReadonly(!submitable);
+		}
 	}
 
 	public void populateParameters(Map<String, String> parameters) {
-		getFormDocument().getParametersManager().cleanUpdate(parameters);
+
+		this.parameters = parameters;
+
+		if (parameters != null && isFormDocumentLoaded()) {
+			getFormDocument().getParametersManager().cleanUpdate(parameters);
+		}
 	}
 
 	public void populateVariables(Map<String, Object> variables) {
 
-		getConverter().revert(variables,
-				getFormDocument().getSubmissionInstanceElement());
-
 		this.variables = variables;
+
+		if (variables != null && isFormDocumentLoaded()) {
+			getConverter().revert(variables,
+					getFormDocument().getSubmissionInstanceElement());
+		}
 	}
 
 	public Map<String, String> resolveParameters() {
@@ -200,37 +219,8 @@ public class XFormsView implements View {
 				"Resolving variables from form not supported yet.");
 	}
 
-	/*
-	public void setSubmission(Submission submission, Node submissionInstance) {
-
-		// String action = submission.getElement().getAttribute(
-		// FormManagerUtil.action_att);
-
-		// TODO: use ParametersManager or smth (unify god damnit)
-
-		Element paramsEl = FormManagerUtil
-				.getFormParamsElement(submissionInstance);
-
-		parameters = paramsEl == null ? new URIUtil(null).getParameters()
-				: new URIUtil(paramsEl.getTextContent()).getParameters();
-		variables = getConverter().convert(submissionInstance);
-	}
-	*/
-
 	public String getDisplayName() {
-
-		if (displayName == null) {
-			try {
-				Document document = getFormDocument();
-				displayName = document.getFormTitle().getString(
-						new Locale("en"));
-
-			} catch (Exception e) {
-				displayName = null;
-			}
-		}
-
-		return displayName;
+		return getDisplayName(new Locale("is", "IS"));
 	}
 
 	public Date getDateCreated() {
@@ -264,6 +254,10 @@ public class XFormsView implements View {
 	}
 
 	public String getDisplayName(Locale locale) {
+
+		// TODO: get rid of displayName, which is not for any locale! and cache
+		// here
+
 		if (displayName == null) {
 
 			try {
@@ -293,7 +287,7 @@ public class XFormsView implements View {
 		return xform.getDisplayName();
 	}
 
-	public XFormsDAO getXformsDAO() {
+	XFormsDAO getXformsDAO() {
 
 		if (xformsDAO == null)
 			ELUtil.getInstance().autowire(this);
@@ -301,9 +295,12 @@ public class XFormsView implements View {
 		return xformsDAO;
 	}
 
-	@Autowired
-	public void setXformsDAO(XFormsDAO xformsDAO) {
-		this.xformsDAO = xformsDAO;
+	protected Map<String, String> getParameters() {
+		return parameters;
+	}
+
+	protected Map<String, Object> getVariables() {
+		return variables;
 	}
 
 	public boolean isSignable() {
