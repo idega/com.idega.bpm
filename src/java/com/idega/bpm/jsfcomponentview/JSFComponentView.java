@@ -55,7 +55,7 @@ public class JSFComponentView implements View, Serializable {
 
 	public String getDisplayName(Locale locale) {
 		
-		return IWMainApplication.getDefaultIWMainApplication().getLocalisedStringMessage("sign_document", "Sign document", "com.idega.ascertia", locale);
+		return "Sign Document";//IWMainApplication.getDefaultIWMainApplication().getLocalisedStringMessage("sign_document", "Sign document", "com.idega.ascertia", locale);
 	}
 
 	public Long getTaskInstanceId() {
