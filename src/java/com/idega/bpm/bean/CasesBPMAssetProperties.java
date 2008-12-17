@@ -7,6 +7,7 @@ public class CasesBPMAssetProperties {
 	
 	private boolean usePDFDownloadColumn = true;
 	private boolean allowPDFSigning = true;
+	private boolean hideEmptySection;
 	
 	public String getCaseId() {
 		return caseId;
@@ -31,6 +32,12 @@ public class CasesBPMAssetProperties {
 	}
 	public void setAllowPDFSigning(boolean allowPDFSigning) {
 		this.allowPDFSigning = allowPDFSigning;
+	}
+	public boolean isHideEmptySection() {
+		return hideEmptySection;
+	}
+	public void setHideEmptySection(boolean hideEmptySection) {
+		this.hideEmptySection = hideEmptySection;
 	}
 
 }
