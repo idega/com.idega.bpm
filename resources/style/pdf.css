@@ -35,7 +35,7 @@ div.input label, div.textarea label, div.select1 label {
 	width: 20% !important;
 }
 
-div.input div.replaceForInputStyle, div.textarea .textAreaReplacementForPDFDocument, div.select1 div.replaceForSelectSingle {
+div.select1 div.selectDropdownReplacementForPDFDocument, div.input div.replaceForInputStyle, div.textarea .textAreaReplacementForPDFDocument, div.select1 div.replaceForSelectSingle {
 	float: left;
 	width: auto;
 	clear: none;
@@ -43,6 +43,12 @@ div.input div.replaceForInputStyle, div.textarea .textAreaReplacementForPDFDocum
 	color: #101010;
 	display: block !important;
 	width: 70%;
+}
+
+div.selectDropdownReplacementForPDFDocument ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
 }
 
 span.output {
