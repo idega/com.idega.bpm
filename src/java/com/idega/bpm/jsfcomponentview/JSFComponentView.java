@@ -10,7 +10,6 @@ import javax.faces.context.FacesContext;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewToTask;
 import com.idega.jbpm.view.ViewToTaskType;
@@ -28,7 +27,6 @@ public class JSFComponentView implements View, Serializable {
 	private String viewId;
 	private Long taskInstanceId;
 	private boolean submitable = true;
-	private String displayName;
 	private Map<String, String> parameters;
 	private Map<String, Object> variables;
 	
@@ -43,19 +41,24 @@ public class JSFComponentView implements View, Serializable {
 		return new Date();
 	}
 
-	//TODO: fix this!!!!
 	public String getDefaultDisplayName() {
+		FacesContext context = FacesContext.getCurrentInstance();
+		UIComponent component = context.getApplication().createComponent(getViewId());
+		BPMCapableJSFComponent jsfComponent = (BPMCapableJSFComponent) component;
 		
-		return "Sign Document";
+		return jsfComponent.getDefaultDisplayName();
 	}
 
 	public String getDisplayName() {
-		return "Sign Document";
+		return getDefaultDisplayName();
 	}
 
 	public String getDisplayName(Locale locale) {
-		System.out.println("getDisplayName(Locale locale)");
-		return "Sign Document";//IWMainApplication.getDefaultIWMainApplication().getLocalisedStringMessage("sign_document", "Sign document", "com.idega.ascertia", locale);
+		FacesContext context = FacesContext.getCurrentInstance();
+		UIComponent component = context.getApplication().createComponent(getViewId());
+		BPMCapableJSFComponent jsfComponent = (BPMCapableJSFComponent) component;
+		
+		return jsfComponent.getDisplayName(locale);
 	}
 
 	public Long getTaskInstanceId() {
@@ -145,8 +148,5 @@ public class JSFComponentView implements View, Serializable {
 
 	}
 
-	public boolean isSignable() {
-		return false;
-	}
 
 }

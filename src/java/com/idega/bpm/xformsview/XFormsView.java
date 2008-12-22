@@ -28,9 +28,9 @@ import com.idega.xformsmanager.business.DocumentManagerFactory;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.8 $
+ * @version $Revision: 1.9 $
  * 
- *          Last modified: $Date: 2008/12/16 19:58:24 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/22 08:58:42 $ by $Author: juozas $
  */
 public class XFormsView implements View {
 
@@ -303,7 +303,4 @@ public class XFormsView implements View {
 		return variables;
 	}
 
-	public boolean isSignable() {
-		return true;
-	}
 }

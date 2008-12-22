@@ -54,9 +54,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.26 $
+ * @version $Revision: 1.27 $
  * 
- *          Last modified: $Date: 2008/12/16 20:00:11 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/22 08:58:42 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -283,6 +283,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		try {
 			TaskInstance taskInstance = getTaskInstance();
 
+			if(taskInstanceId == 378){
+				System.out.println("378");
+			}
 			List<String> preferred = new ArrayList<String>(1);
 			preferred.add(XFormsView.VIEW_TYPE);
 
@@ -357,13 +360,14 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 							preferred);
 				}
 			}
-
-			Map<String, String> parameters = new HashMap<String, String>(1);
-			parameters.put(ProcessConstants.TASK_INSTANCE_ID, String
-					.valueOf(taskInstanceId));
-			view.populateParameters(parameters);
-			view.populateVariables(getVariablesHandler().populateVariables(
-					taskInstanceId));
+			if(loadForDisplay){
+				Map<String, String> parameters = new HashMap<String, String>(1);
+				parameters.put(ProcessConstants.TASK_INSTANCE_ID, String
+						.valueOf(taskInstanceId));
+				view.populateParameters(parameters);
+				view.populateVariables(getVariablesHandler().populateVariables(
+						taskInstanceId));
+			}
 			view.setTaskInstanceId(taskInstanceId);
 			
 			return view;
@@ -555,5 +559,15 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		}
 		//TODO: maybe not faund exception needed here???
 		return null;
+	}
+	
+	public boolean isSignable(){
+		//TODO: for now if variable allow signing exists, we DO NOT allow signing. Should be changed the other way in future.
+		
+		Map<String, Object> variablesMap = getVariablesHandler().populateVariables(taskInstanceId);
+		if(!variablesMap.keySet().contains("system_allowSigning")){
+			return true;
+		}
+		return false;
 	}
 }
