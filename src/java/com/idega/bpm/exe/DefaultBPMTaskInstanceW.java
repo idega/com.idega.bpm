@@ -54,9 +54,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.27 $
+ * @version $Revision: 1.28 $
  * 
- *          Last modified: $Date: 2008/12/22 08:58:42 $ by $Author: juozas $
+ *          Last modified: $Date: 2008/12/22 10:38:49 $ by $Author: arunas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -546,13 +546,13 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		return uploadedResourceResolver;
 	}
 
-	public List<BinaryVariable> getAttachemnts() {
+	public List<BinaryVariable> getAttachments() {
 		
 		return getVariablesHandler().resolveBinaryVariables(taskInstanceId);
 	}
 	
 	public BinaryVariable getAttachement(String variableName){
-		for(BinaryVariable binaryVariable: getAttachemnts()){
+		for(BinaryVariable binaryVariable: getAttachments()){
 			if(binaryVariable.getVariable().getName().equals(variableName)){
 				return binaryVariable;
 			}
