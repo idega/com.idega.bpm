@@ -21,9 +21,9 @@ import com.idega.business.IBOLookupException;
 import com.idega.core.file.util.MimeTypeUtil;
 import com.idega.io.DownloadWriter;
 import com.idega.io.MediaWritable;
-import com.idega.jbpm.artifacts.ProcessArtifactsProvider;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessManager;
+import com.idega.jbpm.exe.TaskInstanceW;
 import com.idega.presentation.IWContext;
 import com.idega.slide.business.IWSlideService;
 import com.idega.util.CoreConstants;
@@ -38,10 +38,9 @@ import com.idega.xformsmanager.business.XFormPersistenceType;
  * Downloads PDF for provided XForm
  * @author <a href="mailto:valdas@idega.com>Valdas Žemaitis</a>
  * Created: 2008.05.10
- * @version $Revision: 1.5 $
- * Last modified: $Date: 2008/12/15 12:45:47 $ by $Author: valdas $
+ * @version $Revision: 1.6 $
+ * Last modified: $Date: 2008/12/28 11:46:42 $ by $Author: civilis $
  */
-@SuppressWarnings("deprecation")
 public class XFormToPDFWriter extends DownloadWriter implements MediaWritable { 
 	
 	public static final String XFORM_ID_PARAMETER = "XFormIdToDownload";
@@ -233,33 +232,25 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			return null;
 		}
 		
-		ProcessManager processManager = null;
-		try {
-			processManager = bpmFactory.getProcessManagerByTaskInstanceId(taskInstance);
-		} catch(Exception e) {
-			logger.log(Level.WARNING, "Error getting process manager by task instance ID: " + taskInstanceId, e);
-		}
-		if (processManager == null) {
-			return null;
-		}
+		ProcessManager processManager = bpmFactory.getProcessManagerByTaskInstanceId(taskInstance);
 		
+		TaskInstanceW tiw = processManager.getTaskInstance(taskInstance);
 		String taskName = null;
+		
 		try {
-			taskName = processManager.getTaskInstance(taskInstance).getName(locale);
+			taskName = tiw.getName(locale);
+			
+			if(StringUtil.isEmpty(taskName))
+				return null;
+			
 		} catch(Exception e) {
 			logger.log(Level.WARNING, "Error getting name for task instance by ID: " + taskInstance + " and locale: " + locale, e);
-		}
-		if (StringUtil.isEmpty(taskName)) {
 			return null;
 		}
 		
 		String caseIdentifier = null;
 		try {
-			Object o = processManager.getTaskInstance(taskInstance).getTaskInstance().getProcessInstance().getContextInstance()
-																											.getVariable(ProcessArtifactsProvider.CASE_IDENTIFIER);
-			if (o instanceof String) {
-				caseIdentifier = o.toString();
-			}
+			caseIdentifier = tiw.getProcessInstanceW().getProcessIdentifier();
 		} catch(Exception e) {
 			logger.log(Level.WARNING, "Error getting case identifier for task instance: " + taskInstanceId, e);
 		}
