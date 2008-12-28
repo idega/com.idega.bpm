@@ -3,12 +3,15 @@ package com.idega.bpm.exe;
 import java.util.ArrayList;
 import java.util.List;
 import org.jbpm.JbpmContext;
+import org.jbpm.JbpmException;
 import org.jbpm.graph.def.ProcessDefinition;
+import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.idega.block.process.business.CaseManager;
 import com.idega.block.process.business.CaseManagersProvider;
 import com.idega.jbpm.BPMContext;
+import com.idega.jbpm.JbpmCallback;
 import com.idega.jbpm.exe.ProcessDefinitionW;
 import com.idega.jbpm.exe.ProcessInstanceW;
 import com.idega.jbpm.exe.ProcessManager;
@@ -21,15 +24,15 @@ import com.idega.util.ListUtil;
  * which create wanted bpm wrapper instances
  * 
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  * 
- *          Last modified: $Date: 2008/11/20 07:30:42 $ by $Author: valdas $
+ *          Last modified: $Date: 2008/12/28 11:45:47 $ by $Author: civilis $
  */
 public abstract class DefaultBPMProcessManager implements ProcessManager {
 
 	@Autowired
 	private BPMContext bpmContext;
-	
+
 	@Autowired
 	private CaseManagersProvider caseManagersProvider;
 
@@ -38,18 +41,16 @@ public abstract class DefaultBPMProcessManager implements ProcessManager {
 		return createProcessDefinition(pdId);
 	}
 
-	public ProcessDefinitionW getProcessDefinition(String processName) {
+	public ProcessDefinitionW getProcessDefinition(final String processName) {
 
-		JbpmContext jctx = getBpmContext().createJbpmContext();
+		return getBpmContext().execute(new JbpmCallback() {
 
-		try {
-			ProcessDefinition pd = jctx.getGraphSession()
-					.findLatestProcessDefinition(processName);
-			return getProcessDefinition(pd.getId());
-
-		} finally {
-			getBpmContext().closeAndCommit(jctx);
-		}
+			public Object doInJbpm(JbpmContext context) throws JbpmException {
+				ProcessDefinition pd = context.getGraphSession()
+						.findLatestProcessDefinition(processName);
+				return getProcessDefinition(pd.getId());
+			}
+		});
 	}
 
 	public ProcessInstanceW getProcessInstance(long piId) {
@@ -60,6 +61,13 @@ public abstract class DefaultBPMProcessManager implements ProcessManager {
 	public TaskInstanceW getTaskInstance(long tiId) {
 
 		return createTaskInstance(tiId);
+	}
+
+	public TaskInstanceW getTaskInstance(TaskInstance ti) {
+
+		TaskInstanceW tiw = createTaskInstance(ti.getId());
+		tiw.setTaskInstance(ti);
+		return tiw;
 	}
 
 	/**
@@ -106,6 +114,7 @@ public abstract class DefaultBPMProcessManager implements ProcessManager {
 
 		TaskInstanceW tiw = createTIW();
 		tiw.setTaskInstanceId(tiId);
+		tiw.setProcessManager(this);
 
 		return tiw;
 	}
@@ -117,32 +126,35 @@ public abstract class DefaultBPMProcessManager implements ProcessManager {
 	public void setBpmContext(BPMContext bpmContext) {
 		this.bpmContext = bpmContext;
 	}
-	
+
 	public CaseManagersProvider getCaseManagersProvider() {
 		return caseManagersProvider;
 	}
 
-	public void setCaseManagersProvider(CaseManagersProvider caseManagersProvider) {
+	public void setCaseManagersProvider(
+			CaseManagersProvider caseManagersProvider) {
 		this.caseManagersProvider = caseManagersProvider;
 	}
 
 	public List<ProcessDefinitionW> getAllProcesses() {
-		List<CaseManager> caseManagers = getCaseManagersProvider().getCaseManagers();
+		List<CaseManager> caseManagers = getCaseManagersProvider()
+				.getCaseManagers();
 		if (ListUtil.isEmpty(caseManagers)) {
 			return null;
 		}
-		
+
 		List<ProcessDefinitionW> allProcesses = new ArrayList<ProcessDefinitionW>();
-		for (CaseManager caseManager: caseManagers) {
-			List<Long> caseProcesses = caseManager.getAllCaseProcessDefinitions();
-			
+		for (CaseManager caseManager : caseManagers) {
+			List<Long> caseProcesses = caseManager
+					.getAllCaseProcessDefinitions();
+
 			if (!ListUtil.isEmpty(caseProcesses)) {
-				for (Long id: caseProcesses) {
+				for (Long id : caseProcesses) {
 					allProcesses.add(getProcessDefinition(id));
 				}
 			}
 		}
-		
+
 		return allProcesses;
 	}
 }

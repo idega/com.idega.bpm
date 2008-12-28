@@ -2,6 +2,7 @@ package com.idega.bpm.exe;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -13,14 +14,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jbpm.JbpmContext;
+import org.jbpm.JbpmException;
 import org.jbpm.graph.def.Transition;
 import org.jbpm.graph.exe.Token;
 import org.jbpm.taskmgmt.def.Task;
 import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.block.process.variables.Variable;
 import com.idega.bpm.xformsview.XFormsView;
@@ -33,9 +35,12 @@ import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
+import com.idega.jbpm.JbpmCallback;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessException;
+import com.idega.jbpm.exe.ProcessInstanceW;
+import com.idega.jbpm.exe.ProcessManager;
 import com.idega.jbpm.exe.TaskInstanceW;
 import com.idega.jbpm.identity.BPMAccessControlException;
 import com.idega.jbpm.identity.BPMUser;
@@ -54,13 +59,17 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.29 $
+ * @version $Revision: 1.30 $
  * 
- *          Last modified: $Date: 2008/12/22 10:51:14 $ by $Author: arunas $
+ *          Last modified: $Date: 2008/12/28 11:45:47 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
+@Transactional(readOnly = false, noRollbackFor = { AccessControlException.class,
+		BPMAccessControlException.class })
 public class DefaultBPMTaskInstanceW implements TaskInstanceW {
+
+	private static final String allowSigningVariableRepresentation = "system_allowSigning";
 
 	public static final int PRIORITY_HIDDEN = -21;
 
@@ -69,6 +78,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	 * New tokens and task instances will be created for each user
 	 */
 	public static final int PRIORITY_SHARED_TASK = -1;
+	
+	private ProcessManager processManager;
 
 	@Autowired
 	private TmpFilesManager fileUploadManager;
@@ -79,26 +90,45 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	private Long taskInstanceId;
 	private TaskInstance taskInstance;
 
+	@Autowired
 	private BPMFactory bpmFactory;
-	private BPMContext idegaJbpmContext;
+	@Autowired
+	private BPMContext bpmContext;
+	@Autowired
 	private VariablesHandler variablesHandler;
 
 	private static final String CASHED_TASK_NAMES = "defaultBPM_taskinstance_names";
 
 	public TaskInstance getTaskInstance() {
+		
+		if (true || (taskInstance == null && getTaskInstanceId() != null)) {
 
-		if (taskInstance == null && getTaskInstanceId() != null) {
+			taskInstance = getBpmContext().execute(new JbpmCallback() {
+				
+				public Object doInJbpm(JbpmContext context)
+						throws JbpmException {
+					return context.getTaskInstance(getTaskInstanceId());
+				}
 
-			JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
+			});
+		} else if (taskInstance != null) {
 
-			try {
-				taskInstance = ctx.getTaskInstance(getTaskInstanceId());
+			taskInstance = getBpmContext().execute(new JbpmCallback() {
 
-			} finally {
-				getIdegaJbpmContext().closeAndCommit(ctx);
-			}
+				public Object doInJbpm(JbpmContext context)
+						throws JbpmException {
+					
+//					USE CONTAINS IN THE ENTITY MANAGER
+
+					return getBpmContext().mergeProcessEntity(taskInstance);
+				}
+			});
 		}
 		return taskInstance;
+	}
+	
+	public void setTaskInstance(TaskInstance taskInstance) {
+		this.taskInstance = taskInstance;
 	}
 
 	public void assign(User usr) {
@@ -114,83 +144,91 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		assign(userId);
 	}
 
-	public void assign(int userId) {
-
-		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
+	public void assign(final int userId) {
 
 		try {
-			Long taskInstanceId = getTaskInstanceId();
-			RolesManager rolesManager = getBpmFactory().getRolesManager();
-			rolesManager.hasRightsToAssignTask(taskInstanceId, userId);
+			getBpmContext().execute(new JbpmCallback() {
 
-			getTaskInstance().setActorId(String.valueOf(userId));
-			ctx.save(getTaskInstance());
+				public Object doInJbpm(JbpmContext context)
+						throws JbpmException {
+
+					Long taskInstanceId = getTaskInstanceId();
+					RolesManager rolesManager = getBpmFactory()
+							.getRolesManager();
+					rolesManager.hasRightsToAssignTask(taskInstanceId, userId);
+
+					getTaskInstance().setActorId(String.valueOf(userId));
+					context.save(getTaskInstance());
+					return null;
+				}
+			});
 
 		} catch (BPMAccessControlException e) {
 			throw new ProcessException(e, e.getUserFriendlyMessage());
-
-		} finally {
-			getIdegaJbpmContext().closeAndCommit(ctx);
 		}
 	}
 
 	public User getAssignedTo() {
 
-		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
-
 		try {
-			Long taskInstanceId = getTaskInstanceId();
+			return getBpmContext().execute(new JbpmCallback() {
 
-			TaskInstance taskInstance = ctx.getTaskInstance(taskInstanceId);
+				public Object doInJbpm(JbpmContext context)
+						throws JbpmException {
 
-			String actorId = taskInstance.getActorId();
+					TaskInstance taskInstance = getTaskInstance();
+					String actorId = taskInstance.getActorId();
 
-			User usr;
+					User usr;
 
-			if (actorId != null) {
+					if (actorId != null) {
 
-				try {
-					int assignedTo = Integer.parseInt(actorId);
-					usr = getUserBusiness().getUser(assignedTo);
+						try {
+							int assignedTo = Integer.parseInt(actorId);
+							usr = getUserBusiness().getUser(assignedTo);
 
-				} catch (Exception e) {
-					Logger.getLogger(getClass().getName()).log(
-							Level.SEVERE,
-							"Exception while resolving assigned user name for actor id: "
-									+ actorId, e);
-					usr = null;
+						} catch (Exception e) {
+							Logger.getLogger(getClass().getName()).log(
+									Level.SEVERE,
+									"Exception while resolving assigned user name for actor id: "
+											+ actorId, e);
+							usr = null;
+						}
+					} else
+						usr = null;
+
+					return usr;
 				}
-			} else
-				usr = null;
-
-			return usr;
+			});
 
 		} catch (BPMAccessControlException e) {
 			throw new ProcessException(e, e.getUserFriendlyMessage());
 
-		} finally {
-			getIdegaJbpmContext().closeAndCommit(ctx);
 		}
 	}
 
-	public void start(int userId) {
-		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
+	public void start(final int userId) {
 
 		try {
-			Long taskInstanceId = getTaskInstanceId();
-			RolesManager rolesManager = getBpmFactory().getRolesManager();
-			rolesManager.hasRightsToStartTask(taskInstanceId, userId);
+			getBpmContext().execute(new JbpmCallback() {
 
-			TaskInstance taskInstance = ctx.getTaskInstance(taskInstanceId);
-			taskInstance.start();
+				public Object doInJbpm(JbpmContext context)
+						throws JbpmException {
+					Long taskInstanceId = getTaskInstanceId();
+					RolesManager rolesManager = getBpmFactory()
+							.getRolesManager();
+					rolesManager.hasRightsToStartTask(taskInstanceId, userId);
 
-			ctx.save(taskInstance);
+					TaskInstance taskInstance = getTaskInstance();
+					taskInstance.start();
+
+					context.save(taskInstance);
+					return null;
+				}
+			});
 
 		} catch (BPMAccessControlException e) {
 			throw new ProcessException(e, e.getUserFriendlyMessage());
-
-		} finally {
-			getIdegaJbpmContext().closeAndCommit(ctx);
 		}
 	}
 
@@ -198,33 +236,33 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		submit(view, true);
 	}
 
-	public void submit(ViewSubmission viewSubmission, boolean proceedProcess) {
+	public void submit(final ViewSubmission viewSubmission,
+			final boolean proceedProcess) {
 
-		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
+		getBpmContext().execute(new JbpmCallback() {
 
-		try {
-			Long taskInstanceId = getTaskInstanceId();
-			TaskInstance taskInstance = ctx.getTaskInstance(taskInstanceId);
+			public Object doInJbpm(JbpmContext context) throws JbpmException {
+				TaskInstance taskInstance = getTaskInstance();
 
-			if (taskInstance.hasEnded())
-				throw new ProcessException("Task instance (" + taskInstanceId
-						+ ") is already submitted",
-						"Task instance is already submitted");
+				if (taskInstance.hasEnded())
+					throw new ProcessException("Task instance ("
+							+ taskInstance.getId() + ") is already submitted",
+							"Task instance is already submitted");
 
-			submitVariablesAndProceedProcess(taskInstance, viewSubmission
-					.resolveVariables(), proceedProcess);
+				submitVariablesAndProceedProcess(taskInstance, viewSubmission
+						.resolveVariables(), proceedProcess);
 
-			// if priority was hidden, then setting to default priority after
-			// submission
-			if (taskInstance.getPriority() == PRIORITY_HIDDEN) {
-				taskInstance.setPriority(Task.PRIORITY_NORMAL);
+				// if priority was hidden, then setting to default priority
+				// after
+				// submission
+				if (taskInstance.getPriority() == PRIORITY_HIDDEN) {
+					taskInstance.setPriority(Task.PRIORITY_NORMAL);
+				}
+
+				context.save(taskInstance);
+				return null;
 			}
-
-			ctx.save(taskInstance);
-
-		} finally {
-			getIdegaJbpmContext().closeAndCommit(ctx);
-		}
+		});
 	}
 
 	protected void submitVariablesAndProceedProcess(TaskInstance ti,
@@ -275,110 +313,183 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		return loadView(true);
 	}
 
-	protected View loadView(boolean loadForDisplay) {
-
-		Long taskInstanceId = getTaskInstanceId();
-		JbpmContext ctx = getIdegaJbpmContext().createJbpmContext();
+	protected View loadView(final boolean loadForDisplay) {
 
 		try {
-			TaskInstance taskInstance = getTaskInstance();
+			return getBpmContext().execute(new JbpmCallback() {
 
-			if(taskInstanceId == 378){
-				System.out.println("378");
-			}
-			List<String> preferred = new ArrayList<String>(1);
-			preferred.add(XFormsView.VIEW_TYPE);
+				public Object doInJbpm(JbpmContext context)
+						throws JbpmException {
 
-			View view;
+					Long taskInstanceId = getTaskInstanceId();
+					TaskInstance taskInstance = getTaskInstance();
 
-			if (taskInstance.hasEnded()) {
+					List<String> preferred = new ArrayList<String>(1);
+					preferred.add(XFormsView.VIEW_TYPE);
 
-				view = getBpmFactory().getViewByTaskInstance(taskInstanceId,
-						false, preferred);
+					View view;
 
-			} else {
+					if (taskInstance.hasEnded()) {
 
-				if (loadForDisplay) {
+						view = getBpmFactory().getViewByTaskInstance(
+								taskInstanceId, false, preferred);
 
-					if (taskInstance.getPriority() == PRIORITY_SHARED_TASK) {
+					} else {
 
-						// forever task. The original task instance is kept
-						// intact, while new token and task instances
-						// are created
+						if (loadForDisplay) {
 
-						Token currentToken = taskInstance.getToken();
+							if (taskInstance.getPriority() == PRIORITY_SHARED_TASK) {
+								
+								if(true) {
+									taskInstanceId = createSharedTask(context, taskInstance);
+								} else {
+									
+									// forever task. The original task instance is
+									// kept
+									// intact, while new token and task instances
+									// are created
 
-						String keepMeAliveTknName = "KeepMeAlive";
-						Token keepMeAliveTkn = currentToken
-								.getChild(keepMeAliveTknName);
+									Token currentToken = taskInstance.getToken();
 
-						if (keepMeAliveTkn == null) {
+									String keepMeAliveTknName = "KeepMeAlive";
+									Token keepMeAliveTkn = currentToken
+											.getChild(keepMeAliveTknName);
 
-							keepMeAliveTkn = new Token(currentToken,
-									keepMeAliveTknName);
+									if (keepMeAliveTkn == null) {
 
-							ctx.save(keepMeAliveTkn);
+										keepMeAliveTkn = new Token(currentToken,
+												keepMeAliveTknName);
+
+										context.save(keepMeAliveTkn);
+									}
+
+									// providing millis as token unique identifier
+									// for
+									// parent.
+									// This is needed, because parent holds children
+									// tokens
+									// in the map where key is token name
+									Token individualInstanceToken = new Token(
+											currentToken, "sharedTask_"
+//													+ taskInstance.getTask()
+//															.getName()
+													+ System.currentTimeMillis());
+
+									context.save(individualInstanceToken);
+
+									taskInstance = taskInstance
+											.getTaskMgmtInstance()
+											.createTaskInstance(
+													taskInstance.getTask(),
+													individualInstanceToken);
+
+									// TODO: populate token with
+									// currentToken.getParent()
+									// variables
+
+									// setting hidden priority, so the task wouldn't
+									// appear
+									// in the tasks list
+									taskInstance.setPriority(PRIORITY_HIDDEN);
+									
+									System.out.println("__saving in asdasd");
+//									context.save(taskInstance);
+
+									taskInstanceId = taskInstance.getId();
+								}
+							}
 						}
 
-						// providing millis as token unique identifier for
-						// parent.
-						// This is needed, because parent holds children tokens
-						// in the map where key is token name
-						Token individualInstanceToken = new Token(currentToken,
-								"sharedTask_"
-										+ taskInstance.getTask().getName()
-										+ System.currentTimeMillis());
+						if (loadForDisplay) {
 
-						ctx.save(individualInstanceToken);
+							// if full load, then we take view before displaying
+							// it
+							view = getBpmFactory().takeView(taskInstanceId,
+									true, preferred);
+						} else {
 
-						taskInstance = taskInstance.getTaskMgmtInstance()
-								.createTaskInstance(taskInstance.getTask(),
-										individualInstanceToken);
-						
-//						TODO: populate token with currentToken.getParent() variables
-						
-						
-
-						// setting hidden priority, so the task wouldn't appear
-						// in the tasks list
-						taskInstance.setPriority(PRIORITY_HIDDEN);
-
-						taskInstanceId = taskInstance.getId();
+							// if not full load, then we just get view by task
+							view = getBpmFactory().getViewByTask(
+									getTaskInstance().getTask().getId(), true,
+									preferred);
+						}
 					}
+					if (loadForDisplay) {
+						Map<String, String> parameters = new HashMap<String, String>(
+								1);
+						parameters.put(ProcessConstants.TASK_INSTANCE_ID,
+								String.valueOf(taskInstanceId));
+						view.populateParameters(parameters);
+						view.populateVariables(getVariablesHandler()
+								.populateVariables(taskInstanceId));
+					}
+					view.setTaskInstanceId(taskInstanceId);
+
+					return view;
 				}
-
-				if (loadForDisplay) {
-
-					// if full load, then we take view before displaying it
-					view = getBpmFactory().takeView(taskInstanceId, true,
-							preferred);
-				} else {
-
-					// if not full load, then we just get view by task
-					view = getBpmFactory().getViewByTask(
-							getTaskInstance().getTask().getId(), true,
-							preferred);
-				}
-			}
-			if(loadForDisplay){
-				Map<String, String> parameters = new HashMap<String, String>(1);
-				parameters.put(ProcessConstants.TASK_INSTANCE_ID, String
-						.valueOf(taskInstanceId));
-				view.populateParameters(parameters);
-				view.populateVariables(getVariablesHandler().populateVariables(
-						taskInstanceId));
-			}
-			view.setTaskInstanceId(taskInstanceId);
-			
-			return view;
+			});
 
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
-		} finally {
-			getIdegaJbpmContext().closeAndCommit(ctx);
 		}
+	}
+	
+	private Long createSharedTask(JbpmContext context, TaskInstance taskInstance) {
+		
+		// forever task. The original task instance is
+		// kept
+		// intact, while new token and task instances
+		// are created
+
+		Token currentToken = taskInstance.getToken();
+
+		String keepMeAliveTknName = "KeepMeAlive";
+		Token keepMeAliveTkn = currentToken
+				.getChild(keepMeAliveTknName);
+
+		if (keepMeAliveTkn == null) {
+
+			keepMeAliveTkn = new Token(currentToken,
+					keepMeAliveTknName);
+
+			context.save(keepMeAliveTkn);
+		}
+
+		// providing millis as token unique identifier
+		// for
+		// parent.
+		// This is needed, because parent holds children
+		// tokens
+		// in the map where key is token name
+		Token individualInstanceToken = new Token(
+				currentToken, "sharedTask_"
+//						+ taskInstance.getTask()
+//								.getName()
+						+ System.currentTimeMillis());
+
+		context.save(individualInstanceToken);
+
+		taskInstance = taskInstance
+				.getTaskMgmtInstance()
+				.createTaskInstance(
+						taskInstance.getTask(),
+						individualInstanceToken);
+
+		// TODO: populate token with
+		// currentToken.getParent()
+		// variables
+
+		// setting hidden priority, so the task wouldn't
+		// appear
+		// in the tasks list
+		taskInstance.setPriority(PRIORITY_HIDDEN);
+		
+		System.out.println("__saving in asdasd");
+//		context.save(taskInstance);
+
+		return taskInstance.getId();
 	}
 
 	public View getView() {
@@ -398,8 +509,6 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		return bpmFactory;
 	}
 
-	@Required
-	@Autowired
 	public void setBpmFactory(BPMFactory bpmFactory) {
 		this.bpmFactory = bpmFactory;
 	}
@@ -456,11 +565,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	public void setTaskRolePermissions(Role role,
 			boolean setSameForAttachments, String variableIdentifier) {
 
-		Long processInstanceId = getTaskInstance().getProcessInstance().getId();
-
 		getBpmFactory().getRolesManager().setTaskRolePermissionsTIScope(role,
-				processInstanceId, getTaskInstanceId(), setSameForAttachments,
-				variableIdentifier);
+				getTaskInstanceId(), setSameForAttachments, variableIdentifier);
 	}
 
 	private IWMainApplication getIWMA() {
@@ -481,22 +587,18 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		return iwma;
 	}
 
-	public BPMContext getIdegaJbpmContext() {
-		return idegaJbpmContext;
+	public BPMContext getBpmContext() {
+		return bpmContext;
 	}
 
-	@Required
-	@Autowired
-	public void setIdegaJbpmContext(BPMContext idegaJbpmContext) {
-		this.idegaJbpmContext = idegaJbpmContext;
+	public void setBpmContext(BPMContext bpmContext) {
+		this.bpmContext = bpmContext;
 	}
 
 	public VariablesHandler getVariablesHandler() {
 		return variablesHandler;
 	}
 
-	@Required
-	@Autowired
 	public void setVariablesHandler(VariablesHandler variablesHandler) {
 		this.variablesHandler = variablesHandler;
 	}
@@ -547,27 +649,43 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 
 	public List<BinaryVariable> getAttachments() {
-		
-		return getVariablesHandler().resolveBinaryVariables(taskInstanceId);
+
+		return getVariablesHandler()
+				.resolveBinaryVariables(getTaskInstanceId());
 	}
-	
-	public BinaryVariable getAttachment(String variableName){
-		for(BinaryVariable binaryVariable: getAttachments()){
-			if(binaryVariable.getVariable().getName().equals(variableName)){
+
+	public BinaryVariable getAttachment(String variableName) {
+		for (BinaryVariable binaryVariable : getAttachments()) {
+			if (binaryVariable.getVariable().getName().equals(variableName)) {
 				return binaryVariable;
 			}
 		}
-		//TODO: maybe not faund exception needed here???
+		// TODO: maybe not faund exception needed here???
 		return null;
 	}
-	
-	public boolean isSignable(){
-		//TODO: for now if variable allow signing exists, we DO NOT allow signing. Should be changed the other way in future.
-		
-		Map<String, Object> variablesMap = getVariablesHandler().populateVariables(taskInstanceId);
-		if(!variablesMap.keySet().contains("system_allowSigning")){
+
+	public boolean isSignable() {
+		// TODO: for now if variable allow signing exists, we DO NOT allow
+		// signing. Should be changed the other way in future.
+
+		Map<String, Object> variablesMap = getVariablesHandler()
+				.populateVariables(getTaskInstanceId());
+		if (!variablesMap.keySet().contains(allowSigningVariableRepresentation)) {
 			return true;
 		}
 		return false;
+	}
+
+	public ProcessManager getProcessManager() {
+		return processManager;
+	}
+
+	public void setProcessManager(ProcessManager processManager) {
+		this.processManager = processManager;
+	}
+	
+	public ProcessInstanceW getProcessInstanceW() {
+		
+		return getProcessManager().getProcessInstance(getTaskInstance().getProcessInstance().getId());
 	}
 }

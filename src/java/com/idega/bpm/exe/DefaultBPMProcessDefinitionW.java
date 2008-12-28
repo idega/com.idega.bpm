@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jbpm.JbpmContext;
+import org.jbpm.JbpmException;
 import org.jbpm.context.def.VariableAccess;
 import org.jbpm.graph.def.ProcessDefinition;
 import org.jbpm.graph.def.Transition;
@@ -22,10 +23,12 @@ import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.block.process.variables.Variable;
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.jbpm.BPMContext;
+import com.idega.jbpm.JbpmCallback;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessDefinitionW;
@@ -36,16 +39,20 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.11 $
+ * @version $Revision: 1.12 $
  * 
- *          Last modified: $Date: 2008/12/16 20:00:41 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/28 11:45:47 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPDW")
+@Transactional(readOnly = true)
 public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 
 	private Long processDefinitionId;
 	private ProcessDefinition processDefinition;
+
+	protected static final Logger logger = Logger
+			.getLogger(ProcessDefinitionW.class.getName());
 
 	@Autowired
 	private BPMFactory bpmFactory;
@@ -54,38 +61,45 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	@Autowired
 	private VariablesHandler variablesHandler;
 
-	private static final Logger logger = Logger
-			.getLogger(DefaultBPMProcessDefinitionW.class.getName());
+	public List<Variable> getTaskVariableList(final String taskName) {
 
-	public List<Variable> getTaskVariableList(String taskName) {
+		return getBpmContext().execute(new JbpmCallback() {
 
-		ProcessDefinition pdef = getProcessDefinition();
-		Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
-		TaskController tiController = task.getTaskController();
+			public Object doInJbpm(JbpmContext context) throws JbpmException {
+				ProcessDefinition pdef = getProcessDefinition();
+				Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
+				TaskController tiController = task.getTaskController();
 
-		if (tiController == null)
-			return null;
+				if (tiController == null)
+					return null;
 
-		@SuppressWarnings("unchecked")
-		List<VariableAccess> variableAccesses = tiController
-				.getVariableAccesses();
-		ArrayList<Variable> variables = new ArrayList<Variable>(
-				variableAccesses.size());
+				@SuppressWarnings("unchecked")
+				List<VariableAccess> variableAccesses = tiController
+						.getVariableAccesses();
+				ArrayList<Variable> variables = new ArrayList<Variable>(
+						variableAccesses.size());
 
-		for (VariableAccess variableAccess : variableAccesses) {
+				for (VariableAccess variableAccess : variableAccesses) {
 
-			Variable variable = Variable
-					.parseDefaultStringRepresentation(variableAccess
-							.getVariableName());
-			variables.add(variable);
-		}
+					Variable variable = Variable
+							.parseDefaultStringRepresentation(variableAccess
+									.getVariableName());
+					variables.add(variable);
+				}
 
-		return variables;
+				return variables;
+			}
+		});
 	}
 
-	public void startProcess(ViewSubmission viewSubmission) {
+	public void startProcess(final ViewSubmission viewSubmission) {
 
 		Long processDefinitionId = viewSubmission.getProcessDefinitionId();
+
+		if (!processDefinitionId.equals(getProcessDefinitionId())) {
+			throw new IllegalArgumentException(
+					"View submission was for different process definition id than tried to submit to");
+		}
 
 		logger.finer("Starting process for process definition id = "
 				+ processDefinitionId);
@@ -94,75 +108,79 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 
 		logger.finer("Params " + parameters);
 
-		JbpmContext ctx = getBpmContext().createJbpmContext();
-
 		try {
+			getBpmContext().execute(new JbpmCallback() {
 
-			ProcessDefinition pd = ctx.getGraphSession().getProcessDefinition(
-					processDefinitionId);
-			ProcessInstance pi = new ProcessInstance(pd);
-			TaskInstance ti = pi.getTaskMgmtInstance()
-					.createStartTaskInstance();
+				public Object doInJbpm(JbpmContext context)
+						throws JbpmException {
+					ProcessDefinition pd = getProcessDefinition();
+					ProcessInstance pi = new ProcessInstance(pd);
+					TaskInstance ti = pi.getTaskMgmtInstance()
+							.createStartTaskInstance();
 
-			View view = getBpmFactory().getView(viewSubmission.getViewId(),
-					viewSubmission.getViewType(), false);
+					View view = getBpmFactory().getView(
+							viewSubmission.getViewId(),
+							viewSubmission.getViewType(), false);
 
-			// binding view to task instance
-			view.getViewToTask().bind(view, ti);
+					// binding view to task instance
+					view.getViewToTask().bind(view, ti);
 
-			logger.log(Level.INFO,
-					"New process instance created for the process "
-							+ pd.getName());
+					logger.log(Level.INFO,
+							"New process instance created for the process "
+									+ pd.getName());
 
-			pi.setStart(new Date());
+					pi.setStart(new Date());
 
-			submitVariablesAndProceedProcess(ti, viewSubmission
-					.resolveVariables(), true);
+					submitVariablesAndProceedProcess(ti, viewSubmission
+							.resolveVariables(), true);
+
+					return null;
+				}
+
+			});
 
 		} catch (Exception e) {
 			throw new RuntimeException(e);
-		} finally {
-			getBpmContext().closeAndCommit(ctx);
 		}
 	}
 
 	public View loadInitView(Integer initiatorId) {
 
-		JbpmContext ctx = getBpmContext().createJbpmContext();
-
 		try {
-			Long processDefinitionId = getProcessDefinitionId();
-			ProcessDefinition pd = ctx.getGraphSession().getProcessDefinition(
-					processDefinitionId);
+			return getBpmContext().execute(new JbpmCallback() {
 
-			Long startTaskId = pd.getTaskMgmtDefinition().getStartTask()
-					.getId();
+				public Object doInJbpm(JbpmContext context) throws JbpmException {
+					Long processDefinitionId = getProcessDefinitionId();
+					ProcessDefinition pd = getProcessDefinition();
 
-			List<String> preferred = new ArrayList<String>(1);
-			preferred.add(XFormsView.VIEW_TYPE);
-			View view = getBpmFactory().getViewByTask(startTaskId, true,
-					preferred);
-			view.takeView();
+					Long startTaskId = pd.getTaskMgmtDefinition().getStartTask()
+							.getId();
 
-			Map<String, String> parameters = new HashMap<String, String>(2);
+					List<String> preferred = new ArrayList<String>(1);
+					preferred.add(XFormsView.VIEW_TYPE);
+					View view = getBpmFactory().getViewByTask(startTaskId, true,
+							preferred);
+					view.takeView();
 
-			parameters.put(ProcessConstants.START_PROCESS,
-					ProcessConstants.START_PROCESS);
-			parameters.put(ProcessConstants.PROCESS_DEFINITION_ID, String
-					.valueOf(processDefinitionId));
-			parameters.put(ProcessConstants.VIEW_ID, view.getViewId());
-			parameters.put(ProcessConstants.VIEW_TYPE, view.getViewType());
+					Map<String, String> parameters = new HashMap<String, String>(2);
 
-			view.populateParameters(parameters);
+					parameters.put(ProcessConstants.START_PROCESS,
+							ProcessConstants.START_PROCESS);
+					parameters.put(ProcessConstants.PROCESS_DEFINITION_ID, String
+							.valueOf(processDefinitionId));
+					parameters.put(ProcessConstants.VIEW_ID, view.getViewId());
+					parameters.put(ProcessConstants.VIEW_TYPE, view.getViewType());
 
-			return view;
+					view.populateParameters(parameters);
+
+					return view;
+				}
+			});
 
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
-		} finally {
-			getBpmContext().closeAndCommit(ctx);
 		}
 	}
 
@@ -276,17 +294,27 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 
 	public ProcessDefinition getProcessDefinition() {
 
-		if (processDefinition == null && getProcessDefinitionId() != null) {
+		if (true || (processDefinition == null && getProcessDefinitionId() != null)) {
 
-			JbpmContext ctx = getBpmContext().createJbpmContext();
+			processDefinition = getBpmContext().execute(new JbpmCallback() {
 
-			try {
-				processDefinition = ctx.getGraphSession().getProcessDefinition(
-						getProcessDefinitionId());
+				public Object doInJbpm(JbpmContext context)
+						throws JbpmException {
+					return context.getGraphSession().getProcessDefinition(
+							getProcessDefinitionId());
+				}
+			});
+		} else if (processDefinition != null) {
 
-			} finally {
-				getBpmContext().closeAndCommit(ctx);
-			}
+			processDefinition = getBpmContext().execute(new JbpmCallback() {
+
+				public Object doInJbpm(JbpmContext context)
+						throws JbpmException {
+
+					return getBpmContext()
+							.mergeProcessEntity(processDefinition);
+				}
+			});
 		}
 
 		return processDefinition;
