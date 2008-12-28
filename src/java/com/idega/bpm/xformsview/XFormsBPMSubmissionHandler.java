@@ -8,8 +8,6 @@ import org.chiba.xml.xforms.connector.AbstractConnector;
 import org.chiba.xml.xforms.connector.SubmissionHandler;
 import org.chiba.xml.xforms.core.Submission;
 import org.chiba.xml.xforms.exception.XFormsException;
-import org.jbpm.JbpmContext;
-import org.jbpm.graph.def.ProcessDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -17,18 +15,18 @@ import org.w3c.dom.Node;
 import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
-import com.idega.xformsmanager.util.FormManagerUtil;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.util.URIUtil;
 import com.idega.util.expression.ELUtil;
+import com.idega.xformsmanager.util.FormManagerUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  * 
- *          Last modified: $Date: 2008/12/16 19:59:20 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/28 11:47:20 $ by $Author: civilis $
  */
 public class XFormsBPMSubmissionHandler extends AbstractConnector implements
 		SubmissionHandler {
@@ -69,59 +67,44 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements
 		XFormsViewSubmission xformsViewSubmission = xfvFact.getViewSubmission();
 		xformsViewSubmission.setSubmission(submission, submissionInstance);
 
-		JbpmContext ctx = getBpmContext().createJbpmContext();
+		// TODO: unify. see parameters manager and xformview setsubmission
+		Element paramsEl = FormManagerUtil
+				.getFormParamsElement(submissionInstance);
 
-		try {
-			// TODO: unify. see parameters manager and xformview setsubmission
-			Element paramsEl = FormManagerUtil
-					.getFormParamsElement(submissionInstance);
+		// String action =
+		// submission.getElement().getAttribute(FormManagerUtil.action_att);
+		String params = paramsEl != null ? paramsEl.getTextContent() : null;
+		Map<String, String> parameters = new URIUtil(params).getParameters();
 
-			// String action =
-			// submission.getElement().getAttribute(FormManagerUtil.action_att);
-			String params = paramsEl != null ? paramsEl.getTextContent() : null;
-			Map<String, String> parameters = new URIUtil(params)
-					.getParameters();
+		if (parameters.containsKey(ProcessConstants.START_PROCESS)) {
 
-			ProcessDefinition processDefinition;
+			long processDefinitionId = Long.parseLong(parameters
+					.get(ProcessConstants.PROCESS_DEFINITION_ID));
+			String viewId = parameters.get(ProcessConstants.VIEW_ID);
+			String viewType = parameters.get(ProcessConstants.VIEW_TYPE);
 
-			if (parameters.containsKey(ProcessConstants.START_PROCESS)) {
+			xformsViewSubmission.setProcessDefinitionId(processDefinitionId);
+			xformsViewSubmission.setViewId(viewId);
+			xformsViewSubmission.setViewType(viewType);
 
-				long processDefinitionId = Long.parseLong(parameters
-						.get(ProcessConstants.PROCESS_DEFINITION_ID));
-				String viewId = parameters.get(ProcessConstants.VIEW_ID);
-				String viewType = parameters.get(ProcessConstants.VIEW_TYPE);
+			bpmFactory.getProcessManager(processDefinitionId)
+					.getProcessDefinition(processDefinitionId).startProcess(
+							xformsViewSubmission);
 
-				xformsViewSubmission
-						.setProcessDefinitionId(processDefinitionId);
-				xformsViewSubmission.setViewId(viewId);
-				xformsViewSubmission.setViewType(viewType);
-				
-				bpmFactory.getProcessManager(processDefinitionId)
-						.getProcessDefinition(processDefinitionId)
-						.startProcess(xformsViewSubmission);
+		} else if (parameters.containsKey(ProcessConstants.TASK_INSTANCE_ID)) {
 
-			} else if (parameters
-					.containsKey(ProcessConstants.TASK_INSTANCE_ID)) {
+			long tskInstId = Long.parseLong(parameters
+					.get(ProcessConstants.TASK_INSTANCE_ID));
+			xformsViewSubmission.setTaskInstanceId(tskInstId);
+			bpmFactory.getProcessManagerByTaskInstanceId(tskInstId)
+					.getTaskInstance(tskInstId).submit(xformsViewSubmission);
 
-				long tskInstId = Long.parseLong(parameters
-						.get(ProcessConstants.TASK_INSTANCE_ID));
-				processDefinition = ctx.getTaskInstance(tskInstId)
-						.getProcessInstance().getProcessDefinition();
-				xformsViewSubmission.setTaskInstanceId(tskInstId);
-				bpmFactory.getProcessManager(processDefinition.getId())
-						.getTaskInstance(tskInstId)
-						.submit(xformsViewSubmission);
+		} else {
 
-			} else {
-
-				Logger.getLogger(getClass().getName()).log(
-						Level.SEVERE,
-						"Couldn't handle submission. No action associated with the submission action: "
-								+ params);
-			}
-
-		} finally {
-			getBpmContext().closeAndCommit(ctx);
+			Logger.getLogger(getClass().getName()).log(
+					Level.SEVERE,
+					"Couldn't handle submission. No action associated with the submission action: "
+							+ params);
 		}
 
 		getFileUploadManager().cleanup(null, submissionInstance,
