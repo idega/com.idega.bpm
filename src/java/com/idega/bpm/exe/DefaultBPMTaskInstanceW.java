@@ -59,9 +59,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.30 $
+ * @version $Revision: 1.31 $
  * 
- *          Last modified: $Date: 2008/12/28 11:45:47 $ by $Author: civilis $
+ *          Last modified: $Date: 2008/12/31 08:29:24 $ by $Author: arunas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -392,7 +392,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 									// in the tasks list
 									taskInstance.setPriority(PRIORITY_HIDDEN);
 									
-									System.out.println("__saving in asdasd");
+//									System.out.println("__saving in asdasd");
 //									context.save(taskInstance);
 
 									taskInstanceId = taskInstance.getId();
@@ -486,7 +486,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		// in the tasks list
 		taskInstance.setPriority(PRIORITY_HIDDEN);
 		
-		System.out.println("__saving in asdasd");
+//		System.out.println("__saving in asdasd");
 //		context.save(taskInstance);
 
 		return taskInstance.getId();
