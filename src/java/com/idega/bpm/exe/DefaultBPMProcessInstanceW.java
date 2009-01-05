@@ -3,11 +3,13 @@ package com.idega.bpm.exe;
 import java.security.AccessControlException;
 import java.security.Permission;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,13 +34,16 @@ import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
 import com.idega.jbpm.data.dao.BPMDAO;
-import com.idega.jbpm.exe.BPMDocumentImpl;
+import com.idega.jbpm.exe.BPMDocument;
+import com.idega.jbpm.exe.BPMEmailDocument;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessDefinitionW;
 import com.idega.jbpm.exe.ProcessInstanceW;
 import com.idega.jbpm.exe.ProcessManager;
 import com.idega.jbpm.exe.ProcessWatch;
 import com.idega.jbpm.exe.TaskInstanceW;
+import com.idega.jbpm.exe.impl.BPMDocumentImpl;
+import com.idega.jbpm.exe.impl.BPMEmailDocumentImpl;
 import com.idega.jbpm.identity.BPMAccessControlException;
 import com.idega.jbpm.identity.BPMUser;
 import com.idega.jbpm.identity.Role;
@@ -47,6 +52,7 @@ import com.idega.jbpm.identity.permission.Access;
 import com.idega.jbpm.identity.permission.BPMTypedPermission;
 import com.idega.jbpm.identity.permission.PermissionsFactory;
 import com.idega.jbpm.rights.Right;
+import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.user.util.UserComparator;
@@ -55,9 +61,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  * 
- *          Last modified: $Date: 2008/12/28 11:45:47 $ by $Author: civilis $
+ *          Last modified: $Date: 2009/01/05 04:06:08 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -72,10 +78,15 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	private ProcessManager processManager;
 	@Autowired
 	private BPMFactory bpmFactory;
-	// @Autowired
-	// private PermissionsFactory permissionsFactory;
+	
+	@Autowired
+	private PermissionsFactory permissionsFactory;
+	
 	@Autowired
 	private BPMDAO bpmDAO;
+	
+	@Autowired 
+	private VariablesHandler variablesHandler;
 
 	public static final String email_fetch_process_name = "fetchEmails";
 
@@ -89,7 +100,11 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return encapsulateInstances(getAllTaskInstancesPRVT());
 	}
 
-	Collection<TaskInstance> getAllTaskInstancesPRVT() {
+	Collection<TaskInstance> getAllTaskInstancesPRVT(){
+		return getAllTaskInstancesPRVT(null);
+	}
+	
+	Collection<TaskInstance> getAllTaskInstancesPRVT(final List<String> excludedSubProcessesNames) {
 
 		return getBpmContext().execute(new JbpmCallback() {
 
@@ -108,6 +123,16 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 
 					for (ProcessInstance subProcessInstance : subProcessInstances) {
 
+						
+						if(excludedSubProcessesNames != null && subProcessInstance.getProcessDefinition() != null 
+								&& subProcessInstance.getProcessDefinition().getName() != null
+								//Actual check if this subprocess should be excluded or not 
+								&& excludedSubProcessesNames.contains(subProcessInstance.getProcessDefinition().getName())){
+								
+							continue;
+						}
+					
+						
 						// TODO: is this fixed already?
 						// hopefully temporal solution. The entity should be in
 						// transaction and persistent (not transient)
@@ -118,6 +143,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 						Collection<TaskInstance> subTaskInstances = subProcessInstance
 								.getTaskMgmtInstance().getTaskInstances();
 						taskInstances.addAll(subTaskInstances);
+						
 					}
 				}
 
@@ -125,10 +151,12 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			}
 		});
 	}
+	
+	
 
-	public List<TaskInstanceW> getSubmittedTaskInstances() {
+	public List<TaskInstanceW> getSubmittedTaskInstances(List<String> excludedSubProcessesNames) {
 
-		Collection<TaskInstance> taskInstances = getAllTaskInstancesPRVT();
+		Collection<TaskInstance> taskInstances = getAllTaskInstancesPRVT(excludedSubProcessesNames);
 
 		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator
 				.hasNext();) {
@@ -140,8 +168,12 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 
 		return encapsulateInstances(taskInstances);
 	}
+	
+	public List<TaskInstanceW> getSubmittedTaskInstances() {
+		return getSubmittedTaskInstances(null);
+	}
 
-	public List<BPMDocumentImpl> getTaskDocumentsForUser(User user,
+	public List<BPMDocument> getTaskDocumentsForUser(User user,
 			Locale locale) {
 
 		List<TaskInstanceW> unfinishedTaskInstances = getAllUnfinishedTaskInstances();
@@ -179,10 +211,11 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return getBPMDocuments(unfinishedTaskInstances, locale);
 	}
 
-	public List<BPMDocumentImpl> getSubmittedDocumentsForUser(User user,
+	public List<BPMDocument> getSubmittedDocumentsForUser(User user,
 			Locale locale) {
 
-		List<TaskInstanceW> submittedTaskInstances = getSubmittedTaskInstances();
+		List<TaskInstanceW> submittedTaskInstances = getSubmittedTaskInstances(Arrays.asList(email_fetch_process_name));
+		
 		PermissionsFactory permissionsFactory = getBpmFactory()
 				.getPermissionsFactory();
 		RolesManager rolesManager = getBpmFactory().getRolesManager();
@@ -191,7 +224,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 				.iterator(); iterator.hasNext();) {
 			TaskInstanceW tiw = iterator.next();
 			TaskInstance ti = tiw.getTaskInstance();
-
+			
 			try {
 				// check if task instance is eligible for viewing for user
 				// provided
@@ -209,10 +242,10 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return getBPMDocuments(submittedTaskInstances, locale);
 	}
 
-	private List<BPMDocumentImpl> getBPMDocuments(List<TaskInstanceW> tiws,
+	private List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiws,
 			Locale locale) {
 
-		ArrayList<BPMDocumentImpl> documents = new ArrayList<BPMDocumentImpl>(
+		ArrayList<BPMDocument> documents = new ArrayList<BPMDocument>(
 				tiws.size());
 
 		UserBusiness userBusiness = getUserBusiness();
@@ -604,6 +637,76 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			}
 		});
 	}
+	
+	public List<BPMEmailDocument> getAttachedEmails(){
+		return getBpmContext().execute(new JbpmCallback() {
+
+			public Object doInJbpm(JbpmContext context) throws JbpmException {
+				ProcessInstance processInstance = getProcessInstance();
+
+				@SuppressWarnings("unchecked")
+				List<Token> tkns = processInstance.findAllTokens();
+
+				for (Token tkn : tkns) {
+
+					ProcessInstance subPI = tkn.getSubProcessInstance();
+
+					if (subPI != null
+							&& email_fetch_process_name.equals(subPI
+									.getProcessDefinition().getName())) {
+
+						@SuppressWarnings("unchecked")
+						Collection<TaskInstance> taskInstances = subPI
+								.getTaskMgmtInstance().getTaskInstances();
+						
+						List<BPMEmailDocument> bpmEmailDocs = new ArrayList<BPMEmailDocument>();
+						
+						for (Iterator<TaskInstance> iterator = taskInstances
+								.iterator(); iterator.hasNext();) {
+							TaskInstance taskInstance = iterator.next();
+
+							if (taskInstance.hasEnded()){
+								
+								try {
+									
+									Permission permission = getPermissionsFactory().getTaskViewPermission(true, taskInstance);
+									getBpmFactory().getRolesManager().checkPermission(permission);
+									
+								} catch (BPMAccessControlException e) {
+									continue;
+								}
+								
+								Map<String, Object> vars = getVariablesHandler().populateVariables(taskInstance.getId());
+								
+								String subject = (String)vars.get("string_subject");
+								String fromPersonal = (String)vars.get("string_fromPersonal");
+								String fromAddress = (String)vars.get("string_fromAddress");
+								
+								BPMEmailDocument bpmEmailDocument = new BPMEmailDocumentImpl();
+								bpmEmailDocument.setTaskInstanceId(taskInstance.getId());
+								bpmEmailDocument.setSubject(subject);
+								bpmEmailDocument.setFromAddress(fromAddress);
+								bpmEmailDocument.setFromPersonal(fromPersonal);
+								bpmEmailDocument.setEndDate(taskInstance.getEnd());
+								bpmEmailDocument.setDocumentName(taskInstance.getName());
+								bpmEmailDocument.setCreateDate(taskInstance.getCreate());
+								bpmEmailDocs.add(bpmEmailDocument);
+
+							}
+						}
+
+						return bpmEmailDocs;
+					}
+				}
+
+				return null;
+			}
+		});
+	}
+	
+	public VariablesHandler getVariablesHandler() {
+		return variablesHandler;
+	}
 
 	private UserBusiness getUserBusiness() {
 		try {
@@ -614,5 +717,9 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		} catch (IBOLookupException ile) {
 			throw new IBORuntimeException(ile);
 		}
+	}
+
+	public PermissionsFactory getPermissionsFactory() {
+		return permissionsFactory;
 	}
 }

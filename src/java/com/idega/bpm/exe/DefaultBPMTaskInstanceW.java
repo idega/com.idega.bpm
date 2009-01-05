@@ -3,6 +3,7 @@ package com.idega.bpm.exe;
 import java.io.InputStream;
 import java.net.URI;
 import java.security.AccessControlException;
+import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -46,6 +47,7 @@ import com.idega.jbpm.identity.BPMAccessControlException;
 import com.idega.jbpm.identity.BPMUser;
 import com.idega.jbpm.identity.Role;
 import com.idega.jbpm.identity.RolesManager;
+import com.idega.jbpm.identity.permission.PermissionsFactory;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.variables.impl.BinaryVariableImpl;
@@ -59,9 +61,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.31 $
+ * @version $Revision: 1.32 $
  * 
- *          Last modified: $Date: 2008/12/31 08:29:24 $ by $Author: arunas $
+ *          Last modified: $Date: 2009/01/05 04:06:08 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -97,6 +99,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Autowired
 	private VariablesHandler variablesHandler;
 
+	@Autowired 
+	private PermissionsFactory permissionsFactory;
+	
 	private static final String CASHED_TASK_NAMES = "defaultBPM_taskinstance_names";
 
 	public TaskInstance getTaskInstance() {
@@ -649,9 +654,27 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 
 	public List<BinaryVariable> getAttachments() {
-
-		return getVariablesHandler()
-				.resolveBinaryVariables(getTaskInstanceId());
+		
+		List<BinaryVariable> variableList = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId());
+		
+		if(variableList == null || variableList.size() == 0 ) 
+			return null;
+		
+		RolesManager rolesManager = getBpmFactory().getRolesManager();
+		List<BinaryVariable> returnList = new ArrayList<BinaryVariable>();
+		
+		for(BinaryVariable variable: variableList){
+			try{
+				Permission permission = getPermissionsFactory()
+					.getTaskVariableViewPermission(true, getTaskInstance(), variable.getHash().toString());
+				rolesManager.checkPermission(permission);
+				returnList.add(variable);
+			}catch (BPMAccessControlException e) {
+				continue;
+			}
+		}
+		
+		return returnList;
 	}
 
 	public BinaryVariable getAttachment(String variableName) {
@@ -687,5 +710,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	public ProcessInstanceW getProcessInstanceW() {
 		
 		return getProcessManager().getProcessInstance(getTaskInstance().getProcessInstance().getId());
+	}
+
+	public PermissionsFactory getPermissionsFactory() {
+		return permissionsFactory;
 	}
 }
