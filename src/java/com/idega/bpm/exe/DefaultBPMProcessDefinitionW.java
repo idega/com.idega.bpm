@@ -39,9 +39,9 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.12 $
+ * @version $Revision: 1.13 $
  * 
- *          Last modified: $Date: 2008/12/28 11:45:47 $ by $Author: civilis $
+ *          Last modified: $Date: 2009/01/07 15:55:04 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPDW")
@@ -150,6 +150,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			return getBpmContext().execute(new JbpmCallback() {
 
 				public Object doInJbpm(JbpmContext context) throws JbpmException {
+					
 					Long processDefinitionId = getProcessDefinitionId();
 					ProcessDefinition pd = getProcessDefinition();
 
