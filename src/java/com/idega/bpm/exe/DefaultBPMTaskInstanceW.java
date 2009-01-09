@@ -61,9 +61,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.32 $
+ * @version $Revision: 1.33 $
  * 
- *          Last modified: $Date: 2009/01/05 04:06:08 $ by $Author: juozas $
+ *          Last modified: $Date: 2009/01/09 10:31:17 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -656,12 +656,12 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	public List<BinaryVariable> getAttachments() {
 		
 		List<BinaryVariable> variableList = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId());
-		
+		List<BinaryVariable> returnList = new ArrayList<BinaryVariable>();
 		if(variableList == null || variableList.size() == 0 ) 
-			return null;
+			return returnList;
 		
 		RolesManager rolesManager = getBpmFactory().getRolesManager();
-		List<BinaryVariable> returnList = new ArrayList<BinaryVariable>();
+		
 		
 		for(BinaryVariable variable: variableList){
 			try{
@@ -688,12 +688,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 
 	public boolean isSignable() {
-		// TODO: for now if variable allow signing exists, we DO NOT allow
-		// signing. Should be changed the other way in future.
-
 		Map<String, Object> variablesMap = getVariablesHandler()
 				.populateVariables(getTaskInstanceId());
-		if (!variablesMap.keySet().contains(allowSigningVariableRepresentation)) {
+		if (variablesMap.keySet().contains(allowSigningVariableRepresentation)) {
 			return true;
 		}
 		return false;
