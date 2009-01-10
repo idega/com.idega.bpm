@@ -28,9 +28,9 @@ import com.idega.xformsmanager.business.DocumentManagerFactory;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.9 $
+ * @version $Revision: 1.10 $
  * 
- *          Last modified: $Date: 2008/12/22 08:58:42 $ by $Author: juozas $
+ *          Last modified: $Date: 2009/01/10 12:36:09 $ by $Author: civilis $
  */
 public class XFormsView implements View {
 
@@ -40,7 +40,6 @@ public class XFormsView implements View {
 	private String viewId;
 	private Long taskInstanceId;
 	private boolean submitable = true;
-	private String displayName;
 	private DocumentManagerFactory documentManagerFactory;
 	private Document form;
 	private Converter converter;
@@ -110,7 +109,8 @@ public class XFormsView implements View {
 
 		FormViewer formviewer = (FormViewer) application
 				.createComponent(FormViewer.COMPONENT_TYPE);
-		formviewer.setXFormsDocument(getFormDocument().getXformsDocument());
+		formviewer.setXFormsDocument(getFormDocumentWithData()
+				.getXformsDocument());
 		formviewer.setPdfViewer(pdfViewer);
 
 		return formviewer;
@@ -119,13 +119,6 @@ public class XFormsView implements View {
 	public void setFormDocument(Document formDocument) {
 
 		form = formDocument;
-
-		if (!isSubmitable())
-			form.setReadonly(true);
-
-		populateParameters(getParameters());
-		populateVariables(getVariables());
-
 		viewId = form.getFormId().toString();
 	}
 
@@ -134,27 +127,37 @@ public class XFormsView implements View {
 		return form != null;
 	}
 
+	protected Document getFormDocumentWithData() {
+
+		Document doc = getFormDocument();
+
+		if (!isSubmitable())
+			form.setReadonly(true);
+
+		populateParameters(getParameters());
+		populateVariables(getVariables());
+
+		return doc;
+	}
+
 	protected Document getFormDocument() {
 
 		if (form == null) {
-			
+
 			if (getViewId() == null || getViewId().length() == 0)
 				throw new IllegalStateException(
 						"Tried to get form document, but no view id not set");
 
 			final Long formId = new Long(getViewId());
-			
-			Logger.getLogger(getClass().getName()).finer("Opening form in xforms view by form id = "+formId);
+
+			Logger.getLogger(getClass().getName()).finer(
+					"Opening form in xforms view by form id = " + formId);
 
 			try {
-				FacesContext fctx = FacesContext.getCurrentInstance();
-				IWMainApplication iwma = fctx == null ? IWMainApplication
-						.getDefaultIWMainApplication() : IWMainApplication
-						.getIWMainApplication(fctx);
-
 				DocumentManager documentManager = getDocumentManagerFactory()
-						.newDocumentManager(iwma);
-				form = documentManager.openForm(formId);
+						.newDocumentManager(
+								IWMainApplication.getDefaultIWMainApplication());
+				form = documentManager.openFormLazy(formId);
 
 				setFormDocument(form);
 
@@ -231,7 +234,11 @@ public class XFormsView implements View {
 
 	public void takeView() {
 
-		Document formDocument = getFormDocument();
+		if (StringUtil.isEmpty(getViewId()))
+			throw new IllegalStateException(
+					"Tried to take view, but no viewId not set");
+
+		final Long formId = new Long(getViewId());
 
 		FacesContext fctx = FacesContext.getCurrentInstance();
 		IWMainApplication iwma = fctx == null ? IWMainApplication
@@ -240,7 +247,7 @@ public class XFormsView implements View {
 
 		DocumentManager docMan = getDocumentManagerFactory()
 				.newDocumentManager(iwma);
-		formDocument = docMan.takeForm(formDocument.getFormId());
+		Document formDocument = docMan.takeForm(formId);
 
 		setFormDocument(formDocument);
 	}
@@ -255,22 +262,19 @@ public class XFormsView implements View {
 
 	public String getDisplayName(Locale locale) {
 
-		// TODO: get rid of displayName, which is not for any locale! and cache
-		// here
+		// TODO: cache here by viewid
 
-		if (displayName == null) {
+		String displayName;
 
-			try {
-				Document document = getFormDocument();
-				displayName = document.getFormTitle().getString(locale);
+		try {
+			Document document = getFormDocument();
+			displayName = document.getFormTitle().getString(locale);
 
-			} catch (Exception e) {
-				Logger.getLogger(getClass().getName()).log(
-						Level.WARNING,
-						"Exception while resolving form title by locale="
-								+ locale, e);
-				displayName = null;
-			}
+		} catch (Exception e) {
+			Logger.getLogger(getClass().getName()).log(Level.WARNING,
+					"Exception while resolving form title by locale=" + locale,
+					e);
+			displayName = null;
 		}
 
 		return displayName;
