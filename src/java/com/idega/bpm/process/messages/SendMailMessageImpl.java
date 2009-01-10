@@ -2,6 +2,7 @@ package com.idega.bpm.process.messages;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,177 +36,206 @@ import com.idega.util.CoreConstants;
 import com.idega.util.SendMail;
 import com.idega.util.SendMailMessageValue;
 
-
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.6 $
- *
- * Last modified: $Date: 2008/10/23 09:35:20 $ by $Author: civilis $
+ * @version $Revision: 1.7 $
+ * 
+ *          Last modified: $Date: 2009/01/10 12:34:20 $ by $Author: civilis $
  */
 @Scope("singleton")
 @SendMessageType("email")
 @Service
 public class SendMailMessageImpl implements SendMessage {
-	
+
 	@Autowired
 	private BPMFactory bpmFactory;
 	@Autowired
 	private MessageValueHandler messageValueHandler;
 
-	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
-		
-		final UserPersonalData upd = (UserPersonalData)context;
-	
+	public void send(MessageValueContext mvCtx, final Object context,
+			final ProcessInstance pi, final LocalizedMessages msgs,
+			final Token tkn) {
+
+		final UserPersonalData upd = (UserPersonalData) context;
+
 		final IWContext iwc = IWContext.getCurrentInstance();
 		final IWApplicationContext iwac;
 		final IWMainApplication iwma;
 
-		if(iwc != null)
+		if (iwc != null)
 			iwma = IWMainApplication.getIWMainApplication(iwc);
 		else
 			iwma = IWMainApplication.getDefaultIWMainApplication();
-		
+
 		iwac = iwma.getIWApplicationContext();
-		
+
 		List<String> sendToEmails = msgs.getSendToEmails();
 		final ArrayList<String> emailAddresses;
-		
-		if(sendToEmails != null)
+
+		if (sendToEmails != null)
 			emailAddresses = new ArrayList<String>(sendToEmails);
 		else
 			emailAddresses = new ArrayList<String>(1);
-		
-		if(upd != null && upd.getUserEmail() != null)
+
+		if (upd != null && upd.getUserEmail() != null)
 			emailAddresses.add(upd.getUserEmail());
-		
+
 		final Locale defaultLocale = iwma.getDefaultLocale();
-		
+
 		long pid = pi.getId();
-		ProcessInstanceW piw = getBpmFactory().getProcessManagerByProcessInstanceId(pid).getProcessInstance(pid);
-		
-		HashMap<Locale, String[]> unformattedForLocales = new HashMap<Locale, String[]>(5);
-		
-//		TODO: get default email
+		ProcessInstanceW piw = getBpmFactory()
+				.getProcessManagerByProcessInstanceId(pid).getProcessInstance(
+						pid);
+
+		HashMap<Locale, String[]> unformattedForLocales = new HashMap<Locale, String[]>(
+				5);
+
+		// TODO: get default email
 		String from = msgs.getFrom();
-		
-		if(from == null || from.length() == 0 || !EmailValidator.getInstance().isValid(from)) {
-			from = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_SYSTEM_MAIL_FROM_ADDRESS, "staff@idega.is");
+
+		if (from == null || from.length() == 0
+				|| !EmailValidator.getInstance().isValid(from)) {
+			from = iwac.getApplicationSettings().getProperty(
+					CoreConstants.PROP_SYSTEM_MAIL_FROM_ADDRESS,
+					"staff@idega.is");
 		}
-		
-		String host = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_SYSTEM_SMTP_MAILSERVER, "mail.idega.is");
-		
-//		TODO: if upd contains userId, we can get User here and add to message value context
-		
-		Locale preferredLocale = iwc != null ? iwc.getCurrentLocale() : defaultLocale;
-		final ArrayList<SendMailMessageValue> messageValuesToSend = new ArrayList<SendMailMessageValue>(emailAddresses.size());
-		
-		if(mvCtx == null)
+
+		String host = iwac.getApplicationSettings().getProperty(
+				CoreConstants.PROP_SYSTEM_SMTP_MAILSERVER, "mail.idega.is");
+
+		// TODO: if upd contains userId, we can get User here and add to message
+		// value context
+
+		Locale preferredLocale = iwc != null ? iwc.getCurrentLocale()
+				: defaultLocale;
+		final ArrayList<SendMailMessageValue> messageValuesToSend = new ArrayList<SendMailMessageValue>(
+				emailAddresses.size());
+
+		if (mvCtx == null)
 			mvCtx = new MessageValueContext(3);
-		
+
 		mvCtx.setValue(MessageValueContext.updBean, upd);
 		mvCtx.setValue(MessageValueContext.piwBean, piw);
 		mvCtx.setValue(MessageValueContext.iwcBean, iwc);
-		
+
 		for (String email : emailAddresses) {
-			
-			String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
+
+			String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale,
+					msgs, unformattedForLocales, tkn);
 			String subject = subjAndMsg[0];
 			String text = subjAndMsg[1];
-			
-			messageValuesToSend.add(new SendMailMessageValue(
-					null, null, null, from, host, subject, text, email, null
-					)
-			);
+
+			messageValuesToSend.add(new SendMailMessageValue(null, null, null,
+					from, host, subject, text, email, null));
 		}
-		
-		if(messageValuesToSend != null && !messageValuesToSend.isEmpty()) {
-		
+
+		if (messageValuesToSend != null && !messageValuesToSend.isEmpty()) {
+
 			new Thread(new Runnable() {
 
 				public void run() {
-					
+
 					for (SendMailMessageValue mv : messageValuesToSend) {
-					
+
 						try {
 							SendMail.send(mv);
 						} catch (javax.mail.MessagingException me) {
-							Logger.getLogger(getClass().getName()).log(Level.SEVERE, "Exception while sending email message", me);
+							Logger
+									.getLogger(getClass().getName())
+									.log(
+											Level.SEVERE,
+											"Exception while sending email message",
+											me);
 						}
 					}
 				}
-				
+
 			}).start();
 		}
 	}
-	
-	protected String[] getFormattedMessage(MessageValueContext mvCtx, Locale preferredLocale, LocalizedMessages msgs, Map<Locale, String[]> unformattedForLocales, Token tkn) {
-		
+
+	protected String[] getFormattedMessage(MessageValueContext mvCtx,
+			Locale preferredLocale, LocalizedMessages msgs,
+			Map<Locale, String[]> unformattedForLocales, Token tkn) {
+
 		String unformattedSubject;
 		String unformattedMsg;
-		
-		if(!unformattedForLocales.containsKey(preferredLocale)) {
-		
+
+		if (!unformattedForLocales.containsKey(preferredLocale)) {
+
 			unformattedSubject = msgs.getLocalizedSubject(preferredLocale);
 			unformattedMsg = msgs.getLocalizedMessage(preferredLocale);
-			
-			unformattedForLocales.put(preferredLocale, new String[] {unformattedSubject, unformattedMsg});
+
+			unformattedForLocales.put(preferredLocale, new String[] {
+					unformattedSubject, unformattedMsg });
 		} else {
-			
+
 			String[] unf = unformattedForLocales.get(preferredLocale);
-			
+
 			unformattedSubject = unf[0];
 			unformattedMsg = unf[1];
 		}
-	
+
 		String formattedMsg;
 		String formattedSubject;
-		
-		if(unformattedMsg == null)
+
+		if (unformattedMsg == null)
 			formattedMsg = unformattedMsg;
 		else
-			formattedMsg = getFormattedMessage(unformattedMsg, msgs.getMessageValuesExp(), tkn, mvCtx);
-		
-		if(unformattedSubject == null)
+			formattedMsg = getFormattedMessage(unformattedMsg, msgs
+					.getMessageValuesExp(), tkn, mvCtx);
+
+		if (unformattedSubject == null)
 			formattedSubject = unformattedSubject;
 		else
-			formattedSubject = getFormattedMessage(unformattedSubject, msgs.getSubjectValuesExp(), tkn, mvCtx);
-		
+			formattedSubject = getFormattedMessage(unformattedSubject, msgs
+					.getSubjectValuesExp(), tkn, mvCtx);
+
 		formattedMsg = StringConverterUtility.loadConvert(formattedMsg);
 		formattedSubject = StringConverterUtility.loadConvert(formattedSubject);
-		
-		return new String[] {formattedSubject, formattedMsg};
+
+		return new String[] { formattedSubject, formattedMsg };
 	}
-	
+
 	protected UserBusiness getUserBusiness(IWApplicationContext iwac) {
 		try {
-			return (UserBusiness)IBOLookup.getServiceInstance(iwac, UserBusiness.class);
+			return (UserBusiness) IBOLookup.getServiceInstance(iwac,
+					UserBusiness.class);
 		} catch (IBOLookupException ile) {
 			throw new IBORuntimeException(ile);
 		}
 	}
-	
-	public String getFormattedMessage(String unformattedMessage, String messageValues, Token tkn, MessageValueContext mvCtx) {
-		
-		return getMessageValueHandler().getFormattedMessage(unformattedMessage, messageValues, tkn, mvCtx);
+
+	public String getFormattedMessage(String unformattedMessage,
+			String messageValues, Token tkn, MessageValueContext mvCtx) {
+
+		return getMessageValueHandler().getFormattedMessage(unformattedMessage,
+				messageValues, tkn, mvCtx);
 	}
-	
-	public Collection<User> getUsersToSendMessageTo(String rolesNamesAggr, ProcessInstance pi) {
-		
+
+	public Collection<User> getUsersToSendMessageTo(String rolesNamesAggr,
+			ProcessInstance pi) {
+
 		Collection<User> allUsers;
-		
-		if(rolesNamesAggr != null) {
-		
-			String[] rolesNames = rolesNamesAggr.trim().split(CoreConstants.SPACE);
-			
-			HashSet<String> rolesNamesSet = new HashSet<String>(rolesNames.length);
-			
+
+		if (rolesNamesAggr != null) {
+
+			String[] rolesNames = rolesNamesAggr.trim().split(
+					CoreConstants.SPACE);
+
+			HashSet<String> rolesNamesSet = new HashSet<String>(
+					rolesNames.length);
+
 			for (int i = 0; i < rolesNames.length; i++)
 				rolesNamesSet.add(rolesNames[i]);
-			
-			allUsers = getBpmFactory().getRolesManager().getAllUsersForRoles(rolesNamesSet, pi.getId());
-		} else
-			allUsers = new ArrayList<User>(0);
-		
+
+			allUsers = getBpmFactory().getRolesManager().getAllUsersForRoles(
+					rolesNamesSet, pi.getId());
+		} else {
+
+			allUsers = Collections.emptyList();
+		}
+
 		return allUsers;
 	}
 
