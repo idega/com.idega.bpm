@@ -62,7 +62,7 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.14 $ Last modified: $Date: 2009/01/09 10:31:17 $ by $Author: juozas $
+ * @version $Revision: 1.15 $ Last modified: $Date: 2009/01/12 12:37:05 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -752,6 +752,10 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			}
 		});
 		
+	}
+	
+	public boolean hasEnded(){
+		return getProcessInstance().hasEnded();
 	}
 	
 	public VariablesHandler getVariablesHandler() {
