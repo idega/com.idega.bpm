@@ -1,37 +1,22 @@
 package com.idega.bpm.pdf.presentation;
 
-import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
-import org.apache.webdav.lib.WebdavResource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.idega.block.process.variables.Variable;
-import com.idega.block.process.variables.VariableDataType;
 import com.idega.bpm.jsfcomponentview.BPMCapableJSFComponent;
 import com.idega.bpm.jsfcomponentview.JSFComponentView;
 import com.idega.bpm.pdf.servlet.BPMTaskPDFPrinter;
-import com.idega.business.IBOLookup;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.io.MediaWritable;
 import com.idega.jbpm.exe.BPMFactory;
-import com.idega.jbpm.exe.ProcessManager;
-import com.idega.jbpm.exe.TaskInstanceW;
-import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
-import com.idega.jbpm.view.ViewSubmission;
-import com.idega.jbpm.view.ViewSubmissionImpl;
 import com.idega.presentation.IWBaseComponent;
 import com.idega.presentation.IWContext;
 import com.idega.presentation.Layer;
-import com.idega.presentation.text.Heading1;
 import com.idega.presentation.ui.IFrame;
-import com.idega.slide.business.IWSlideService;
-import com.idega.util.CoreConstants;
 import com.idega.util.URLUtil;
 import com.idega.util.expression.ELUtil;
 
@@ -39,7 +24,7 @@ import com.idega.util.expression.ELUtil;
  * Default class that show task view from attached pdf document.
  * 
  * @author <a href="mailto:juozas@idega.com>Juozapas Zabukas</a> Created:
- * @version $Revision: 1.2 $ Last modified: $Date: 2009/01/12 11:38:28 $ by $Author: juozas $
+ * @version $Revision: 1.3 $ Last modified: $Date: 2009/01/12 11:38:41 $ by $Author: juozas $
  */
 public class BPMTaskPDFViewer extends IWBaseComponent implements
         BPMCapableJSFComponent {
