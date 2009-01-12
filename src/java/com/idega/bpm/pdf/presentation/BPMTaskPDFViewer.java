@@ -39,7 +39,7 @@ import com.idega.util.expression.ELUtil;
  * Default class that show task view from attached pdf document.
  * 
  * @author <a href="mailto:juozas@idega.com>Juozapas Zabukas</a> Created:
- * @version $Revision: 1.1 $ Last modified: $Date: 2009/01/12 11:38:00 $ by $Author: juozas $
+ * @version $Revision: 1.2 $ Last modified: $Date: 2009/01/12 11:38:28 $ by $Author: juozas $
  */
 public class BPMTaskPDFViewer extends IWBaseComponent implements
         BPMCapableJSFComponent {
@@ -72,70 +72,7 @@ public class BPMTaskPDFViewer extends IWBaseComponent implements
 		div.setHeight("800");
 		
 		IWContext iwc = IWContext.getIWContext(context);
-		
-		/* ------------------------------------------------ */
-		// THIS WILL BE REMOVED LATTER
-		/*BinaryVariable variable = null;
-		try {
-			TaskInstanceW taskInstanceW = getBpmFactory()
-			        .getProcessManagerByTaskInstanceId(view.getTaskInstanceId())
-			        .getTaskInstance(view.getTaskInstanceId());
-			variable = taskInstanceW.getAttachment("files_pdfTaskView");
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-		if (variable == null) {
-			// we need somehow to create a process...
-			ViewSubmission viewSubmission = new ViewSubmissionImpl();
-			
-			ProcessManager processManager = getBpmFactory().getProcessManager(
-			    "TicketIssuing");
-			viewSubmission.setProcessDefinitionId(processManager
-			        .getProcessDefinition("TicketIssuing")
-			        .getProcessDefinitionId());
-			viewSubmission.setTaskInstanceId(view.getTaskInstanceId());
-			viewSubmission.setViewId(view.getViewId());
-			viewSubmission.setViewType(view.getViewType());
-			
-			Map<String, String> parameters = new HashMap<String, String>();
-			parameters.put("caseIdentifierNumber", "217281");
-			parameters.put("string_caseIdentifier", "sdhfsdhfhfsdfhjsdh");
-			
-			viewSubmission.populateParameters(parameters);
-			viewSubmission.populateVariables(new HashMap<String, Object>());
-			
-			// Adding empty page at the end of document to be signed
-			WebdavResource pdfdocumentsomekindof;
-			InputStream is = null;
-			try {
-				pdfdocumentsomekindof = ((IWSlideService) IBOLookup
-				        .getServiceInstance(iwc, IWSlideService.class))
-				        .getWebdavResourceAuthenticatedAsRoot(CoreConstants.PATH_FILES_ROOT
-				                + "/public/somePDF.pdf");
-				is = pdfdocumentsomekindof.getMethodData();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			if (is != null) {
-				
-				processManager.getProcessDefinition("TicketIssuing")
-				        .startProcess(viewSubmission);
-				
-				Variable variable2 = new Variable("files_pdfTaskView",
-				        VariableDataType.FILE);
-				
-				processManager.getTaskInstance(this.view.getTaskInstanceId())
-				        .addAttachment(variable2, "fileName", "fileName", is);
-				div.add(new Heading1("Congrats task submited!"));
-			} else
-				div.add(new Heading1("UPSY ERROR!!!"));
-			
-		}*/
-		
-		/* ----------------------------------------------------------------- */
-		/* ----------------------------------------------------------------- */
-
+	
 		URLUtil uriToPDFPrinter = new URLUtil(iwc.getIWMainApplication()
 		        .getMediaServletURI());
 		uriToPDFPrinter.addParameter(MediaWritable.PRM_WRITABLE_CLASS,
