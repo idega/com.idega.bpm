@@ -38,7 +38,7 @@
          </assignment>
          <controller>
             <variable name="string_additionalInformationRequestText" access="read,write,required"></variable>
-            <variable name="files_additionalAttachments"></variable>
+            <variable name="files_additionalInformationRequestAttachments"></variable>
          </controller>
       </task>
 		<transition to="sendMessage"></transition>
