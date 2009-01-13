@@ -61,14 +61,14 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.33 $
+ * @version $Revision: 1.34 $
  * 
- *          Last modified: $Date: 2009/01/09 10:31:17 $ by $Author: juozas $
+ *          Last modified: $Date: 2009/01/13 15:58:36 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
-@Transactional(readOnly = false, noRollbackFor = { AccessControlException.class,
-		BPMAccessControlException.class })
+@Transactional(readOnly = false, noRollbackFor = {
+		AccessControlException.class, BPMAccessControlException.class })
 public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	private static final String allowSigningVariableRepresentation = "system_allowSigning";
@@ -80,7 +80,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	 * New tokens and task instances will be created for each user
 	 */
 	public static final int PRIORITY_SHARED_TASK = -1;
-	
+
 	private ProcessManager processManager;
 
 	@Autowired
@@ -99,17 +99,17 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Autowired
 	private VariablesHandler variablesHandler;
 
-	@Autowired 
+	@Autowired
 	private PermissionsFactory permissionsFactory;
-	
+
 	private static final String CASHED_TASK_NAMES = "defaultBPM_taskinstance_names";
 
 	public TaskInstance getTaskInstance() {
-		
+
 		if (true || (taskInstance == null && getTaskInstanceId() != null)) {
 
 			taskInstance = getBpmContext().execute(new JbpmCallback() {
-				
+
 				public Object doInJbpm(JbpmContext context)
 						throws JbpmException {
 					return context.getTaskInstance(getTaskInstanceId());
@@ -122,8 +122,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 				public Object doInJbpm(JbpmContext context)
 						throws JbpmException {
-					
-//					USE CONTAINS IN THE ENTITY MANAGER
+
+					// USE CONTAINS IN THE ENTITY MANAGER
 
 					return getBpmContext().mergeProcessEntity(taskInstance);
 				}
@@ -131,7 +131,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		}
 		return taskInstance;
 	}
-	
+
 	public void setTaskInstance(TaskInstance taskInstance) {
 		this.taskInstance = taskInstance;
 	}
@@ -344,17 +344,21 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 						if (loadForDisplay) {
 
 							if (taskInstance.getPriority() == PRIORITY_SHARED_TASK) {
-								
-								if(true) {
-									taskInstanceId = createSharedTask(context, taskInstance);
+
+								if (true) {
+									taskInstanceId = createSharedTask(context,
+											taskInstance);
 								} else {
-									
-									// forever task. The original task instance is
+
+									// forever task. The original task instance
+									// is
 									// kept
-									// intact, while new token and task instances
+									// intact, while new token and task
+									// instances
 									// are created
 
-									Token currentToken = taskInstance.getToken();
+									Token currentToken = taskInstance
+											.getToken();
 
 									String keepMeAliveTknName = "KeepMeAlive";
 									Token keepMeAliveTkn = currentToken
@@ -362,23 +366,28 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 									if (keepMeAliveTkn == null) {
 
-										keepMeAliveTkn = new Token(currentToken,
+										keepMeAliveTkn = new Token(
+												currentToken,
 												keepMeAliveTknName);
 
 										context.save(keepMeAliveTkn);
 									}
 
-									// providing millis as token unique identifier
+									// providing millis as token unique
+									// identifier
 									// for
 									// parent.
-									// This is needed, because parent holds children
+									// This is needed, because parent holds
+									// children
 									// tokens
 									// in the map where key is token name
 									Token individualInstanceToken = new Token(
-											currentToken, "sharedTask_"
-//													+ taskInstance.getTask()
-//															.getName()
-													+ System.currentTimeMillis());
+											currentToken,
+											"sharedTask_"
+											// + taskInstance.getTask()
+													// .getName()
+													+ System
+															.currentTimeMillis());
 
 									context.save(individualInstanceToken);
 
@@ -392,13 +401,14 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 									// currentToken.getParent()
 									// variables
 
-									// setting hidden priority, so the task wouldn't
+									// setting hidden priority, so the task
+									// wouldn't
 									// appear
 									// in the tasks list
 									taskInstance.setPriority(PRIORITY_HIDDEN);
-									
-//									System.out.println("__saving in asdasd");
-//									context.save(taskInstance);
+
+									// System.out.println("__saving in asdasd");
+									// context.save(taskInstance);
 
 									taskInstanceId = taskInstance.getId();
 								}
@@ -440,9 +450,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	private Long createSharedTask(JbpmContext context, TaskInstance taskInstance) {
-		
+
 		// forever task. The original task instance is
 		// kept
 		// intact, while new token and task instances
@@ -451,13 +461,11 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		Token currentToken = taskInstance.getToken();
 
 		String keepMeAliveTknName = "KeepMeAlive";
-		Token keepMeAliveTkn = currentToken
-				.getChild(keepMeAliveTknName);
+		Token keepMeAliveTkn = currentToken.getChild(keepMeAliveTknName);
 
 		if (keepMeAliveTkn == null) {
 
-			keepMeAliveTkn = new Token(currentToken,
-					keepMeAliveTknName);
+			keepMeAliveTkn = new Token(currentToken, keepMeAliveTknName);
 
 			context.save(keepMeAliveTkn);
 		}
@@ -468,19 +476,15 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		// This is needed, because parent holds children
 		// tokens
 		// in the map where key is token name
-		Token individualInstanceToken = new Token(
-				currentToken, "sharedTask_"
-//						+ taskInstance.getTask()
-//								.getName()
-						+ System.currentTimeMillis());
+		Token individualInstanceToken = new Token(currentToken, "sharedTask_"
+		// + taskInstance.getTask()
+				// .getName()
+				+ System.currentTimeMillis());
 
 		context.save(individualInstanceToken);
 
-		taskInstance = taskInstance
-				.getTaskMgmtInstance()
-				.createTaskInstance(
-						taskInstance.getTask(),
-						individualInstanceToken);
+		taskInstance = taskInstance.getTaskMgmtInstance().createTaskInstance(
+				taskInstance.getTask(), individualInstanceToken);
 
 		// TODO: populate token with
 		// currentToken.getParent()
@@ -490,9 +494,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		// appear
 		// in the tasks list
 		taskInstance.setPriority(PRIORITY_HIDDEN);
-		
-//		System.out.println("__saving in asdasd");
-//		context.save(taskInstance);
+
+		// System.out.println("__saving in asdasd");
+		// context.save(taskInstance);
 
 		return taskInstance.getId();
 	}
@@ -654,36 +658,39 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 
 	public List<BinaryVariable> getAttachments() {
-		
-		List<BinaryVariable> variableList = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId());
+
+		List<BinaryVariable> variableList = getVariablesHandler()
+				.resolveBinaryVariables(getTaskInstanceId());
 		List<BinaryVariable> returnList = new ArrayList<BinaryVariable>();
-		if(variableList == null || variableList.size() == 0 ) 
+		if (variableList == null || variableList.size() == 0)
 			return returnList;
-		
+
 		RolesManager rolesManager = getBpmFactory().getRolesManager();
-		
-		
-		for(BinaryVariable variable: variableList){
-			try{
+
+		for (BinaryVariable variable : variableList) {
+			try {
 				Permission permission = getPermissionsFactory()
-					.getTaskVariableViewPermission(true, getTaskInstance(), variable.getHash().toString());
+						.getTaskVariableViewPermission(true, getTaskInstance(),
+								variable.getHash().toString());
 				rolesManager.checkPermission(permission);
 				returnList.add(variable);
-			}catch (BPMAccessControlException e) {
+			} catch (BPMAccessControlException e) {
 				continue;
 			}
 		}
-		
+
 		return returnList;
 	}
 
-	public BinaryVariable getAttachment(String variableName) {
+	public BinaryVariable getAttachment(Variable variable) {
+
 		for (BinaryVariable binaryVariable : getAttachments()) {
-			if (binaryVariable.getVariable().getName().equals(variableName)) {
+
+			if (binaryVariable.getVariable().equals(variable)) {
 				return binaryVariable;
 			}
 		}
-		// TODO: maybe not faund exception needed here???
+
 		return null;
 	}
 
@@ -703,10 +710,11 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	public void setProcessManager(ProcessManager processManager) {
 		this.processManager = processManager;
 	}
-	
+
 	public ProcessInstanceW getProcessInstanceW() {
-		
-		return getProcessManager().getProcessInstance(getTaskInstance().getProcessInstance().getId());
+
+		return getProcessManager().getProcessInstance(
+				getTaskInstance().getProcessInstance().getId());
 	}
 
 	public PermissionsFactory getPermissionsFactory() {
