@@ -148,7 +148,6 @@
                                     <xf:input ref="./description" id="fbc_description">
                                     <xf:label model="data_model" ref="instance('localized_strings')/fbc_8-text[@lang=instance('localized_strings')/current_language]"/>
                                            <idega:dispatch ev:event="xforms-value-changed" name="idega-validate" target="//*[@id='fbc_8']//xf:upload" stopOnError="true"/>
-                                           <xf:alert ref="instance('error-instance')/error[@fbc_8]"/>
                                     </xf:input>
                                      <xf:group ref=".[. !='' and ./description ='']" appearance="minimal" class="error">
                                     	<xf:output model="data_model" value="instance('localized_strings')/fbc_8-info[@lang=instance('localized_strings')/current_language]"/>
