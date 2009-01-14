@@ -53,6 +53,6 @@ public class JSFComponentViewResource implements ViewResource {
 		this.view = view;
 	}
 
-	
-	
+	public void setProcessName(String processName) {
+    }
 }

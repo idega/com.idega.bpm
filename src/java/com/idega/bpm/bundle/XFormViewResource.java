@@ -17,68 +17,69 @@ import com.idega.jbpm.view.ViewResource;
 import com.idega.util.xml.XmlUtil;
 
 /**
- * 
  * @author <a href="civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
- * 
- * Last modified: $Date: 2008/11/05 08:53:04 $ by $Author: civilis $
- * 
+ * @version $Revision: 1.3 $ Last modified: $Date: 2009/01/14 14:21:02 $ by $Author: civilis $
  */
 public class XFormViewResource implements ViewResource {
-
+	
+	private String processName;
 	private String taskName;
 	private View view;
 	private String pathWithinBundle;
 	private DocumentManagerFactory documentManagerFactory;
 	private ProcessBundleResources bundleResources;
-
+	
 	public View store(IWMainApplication iwma) throws IOException {
-
+		
 		if (view == null) {
-
+			
 			InputStream is = null;
 			
 			try {
 				is = getBundleResources().getResourceIS(getPathWithinBundle());
 				DocumentManager documentManager = getDocumentManagerFactory()
-						.newDocumentManager(iwma);
+				        .newDocumentManager(iwma);
 				DocumentBuilder builder = XmlUtil.getDocumentBuilder();
-
+				
 				Document xformXml = builder.parse(is);
 				com.idega.xformsmanager.business.Document form = documentManager
-					.openForm(xformXml);
+				        .openForm(xformXml);
 				
 				form.setFormType(XFormsView.FORM_TYPE);
-				form.save();
+				
+				String basePath = "/bpm/" + getProcessName() + "/forms/";
+				
+				form.save(basePath);
 				
 				XFormsView view = new XFormsView();
 				view.setFormDocument(form);
 				this.view = view;
-
+				
 			} catch (IOException e) {
 				throw e;
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			} finally {
 				
-				if(is != null)
+				if (is != null)
 					is.close();
 			}
 		}
-
+		
 		return view;
 	}
 	
 	public String getTaskName() {
 		return taskName;
 	}
-
+	
 	public void setTaskName(String taskName) {
 		this.taskName = taskName;
 	}
-
-	public void setResourceLocation(ProcessBundleResources bundleResources, String pathWithinBundle) {
-
+	
+	public void setResourceLocation(ProcessBundleResources bundleResources,
+	        String pathWithinBundle) {
+		
 		this.bundleResources = bundleResources;
 		this.pathWithinBundle = pathWithinBundle;
 	}
@@ -86,17 +87,25 @@ public class XFormViewResource implements ViewResource {
 	public DocumentManagerFactory getDocumentManagerFactory() {
 		return documentManagerFactory;
 	}
-
+	
 	public void setDocumentManagerFactory(
-			DocumentManagerFactory documentManagerFactory) {
+	        DocumentManagerFactory documentManagerFactory) {
 		this.documentManagerFactory = documentManagerFactory;
 	}
-
+	
 	public String getPathWithinBundle() {
 		return pathWithinBundle;
 	}
-
+	
 	public ProcessBundleResources getBundleResources() {
 		return bundleResources;
+	}
+	
+	public String getProcessName() {
+		return processName;
+	}
+	
+	public void setProcessName(String processName) {
+		this.processName = processName;
 	}
 }
