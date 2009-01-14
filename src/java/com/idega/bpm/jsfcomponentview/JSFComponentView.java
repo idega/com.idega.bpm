@@ -17,35 +17,29 @@ import com.idega.util.expression.ELUtil;
 
 public class JSFComponentView implements View, Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -5876615718277520488L;
 
 	public static final String VIEW_TYPE = "jsf";
-	
+
 	private String viewId;
 	private Long taskInstanceId;
 	private boolean submitable = true;
-	private Map<String, String> parameters;
 	private Map<String, Object> variables;
-	
+
 	@Autowired
 	@ViewToTaskType("jsf")
 	private transient ViewToTask viewToTask;
-	
-	
-	
+
 	public Date getDateCreated() {
-		// TODO Auto-generated method stub
 		return new Date();
 	}
 
 	public String getDefaultDisplayName() {
 		FacesContext context = FacesContext.getCurrentInstance();
-		UIComponent component = context.getApplication().createComponent(getViewId());
+		UIComponent component = context.getApplication().createComponent(
+				getViewId());
 		BPMCapableJSFComponent jsfComponent = (BPMCapableJSFComponent) component;
-		
+
 		return jsfComponent.getDefaultDisplayName();
 	}
 
@@ -55,9 +49,10 @@ public class JSFComponentView implements View, Serializable {
 
 	public String getDisplayName(Locale locale) {
 		FacesContext context = FacesContext.getCurrentInstance();
-		UIComponent component = context.getApplication().createComponent(getViewId());
+		UIComponent component = context.getApplication().createComponent(
+				getViewId());
 		BPMCapableJSFComponent jsfComponent = (BPMCapableJSFComponent) component;
-		
+
 		return jsfComponent.getDisplayName(locale);
 	}
 
@@ -70,13 +65,14 @@ public class JSFComponentView implements View, Serializable {
 	}
 
 	public UIComponent getViewForDisplay(boolean pdfViewer) {
-		//TODO: finish him
+		// TODO: finish him
 		FacesContext context = FacesContext.getCurrentInstance();
-		UIComponent component = context.getApplication().createComponent(getViewId());
-		
+		UIComponent component = context.getApplication().createComponent(
+				getViewId());
+
 		BPMCapableJSFComponent jsfComponent = (BPMCapableJSFComponent) component;
 		jsfComponent.setView(this);
-		
+
 		return component;
 	}
 
@@ -85,7 +81,7 @@ public class JSFComponentView implements View, Serializable {
 	}
 
 	public ViewToTask getViewToTask() {
-		if (viewToTask == null){ 
+		if (viewToTask == null) {
 			ELUtil.getInstance().autowire(this);
 		}
 		return viewToTask;
@@ -100,18 +96,16 @@ public class JSFComponentView implements View, Serializable {
 	}
 
 	public void populateParameters(Map<String, String> parameters) {
-		// TODO Auto-generated method stub
-
 	}
 
 	public void populateVariables(Map<String, Object> variables) {
 		this.variables = variables;
-
 	}
 
 	public Map<String, String> resolveParameters() {
 		throw new UnsupportedOperationException(
-		"Resolving parameters not supported by: " + this.getClass().getName());
+				"Resolving parameters not supported by: "
+						+ this.getClass().getName());
 	}
 
 	public Map<String, Object> resolveVariables() {
@@ -124,29 +118,22 @@ public class JSFComponentView implements View, Serializable {
 
 	public void setSubmitable(boolean submitable) {
 		this.submitable = submitable;
-
 	}
 
 	public void setTaskInstanceId(Long taskInstanceId) {
 		this.taskInstanceId = taskInstanceId;
-
 	}
 
 	public void setViewId(String viewId) {
 		this.viewId = viewId;
-
 	}
 
 	public void setViewType(String viewType) {
 		throw new UnsupportedOperationException(
-		"JSFComponentView view type cannot be changed");
-
+				"JSFComponentView view type cannot be changed");
 	}
 
 	public void takeView() {
 		// Not needed atm.
-
 	}
-
-
 }

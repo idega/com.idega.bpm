@@ -15,47 +15,45 @@ import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewFactory;
 import com.idega.jbpm.view.ViewFactoryType;
 
-
 @Scope("singleton")
-@ViewFactoryType("jsf")
-@Repository("process_jsfComponent_viewFactory")
-public class JSFComponentViewFactory implements ViewFactory{
+@ViewFactoryType(JSFComponentView.VIEW_TYPE)
+@Repository(JSFComponentViewFactory.beanIdentifier)
+public class JSFComponentViewFactory implements ViewFactory {
 
-	
-	private final String beanIdentifier = "process_jsfComponent_viewFactory";
-	
+	private static final String beanIdentifier = "process_jsfComponent_viewFactory";
+
+	@Autowired
 	private BPMDAO BPMDAO;
-	
-	
-	public Multimap<Long, TaskView> getAllViewsByProcessDefinitions(Collection<Long> processDefinitionsIds) {
-		throw new NotImplementedException("Method getAllViewsByProcessDefinitions is not implemented yet");
-		//return null;
+
+	public Multimap<Long, TaskView> getAllViewsByProcessDefinitions(
+			Collection<Long> processDefinitionsIds) {
+		throw new NotImplementedException(
+				"Method getAllViewsByProcessDefinitions is not implemented yet");
 	}
 
 	public String getBeanIdentifier() {
 		return beanIdentifier;
 	}
 
-	
-
 	public View getView(String viewIdentifier, boolean submitable) {
-		if(viewIdentifier == null || viewIdentifier.trim().equals("")){
+
+		if (viewIdentifier == null || viewIdentifier.trim().length() == 0)
 			throw new NullPointerException("View identifier not provided");
-		}
+
 		View view = getJSFComponentView();
 		view.setSubmitable(submitable);
 		view.setViewId(viewIdentifier);
 		return view;
 	}
-	
-	public JSFComponentView getJSFComponentView(){
+
+	public JSFComponentView getJSFComponentView() {
 		JSFComponentView view = new JSFComponentView();
-	
+
 		return view;
 	}
 
 	public String getViewType() {
-		
+
 		return JSFComponentView.VIEW_TYPE;
 	}
 
@@ -63,16 +61,11 @@ public class JSFComponentViewFactory implements ViewFactory{
 		return BPMDAO;
 	}
 
-
-
-	@Autowired
 	public void setBPMDAO(BPMDAO bpmdao) {
 		BPMDAO = bpmdao;
 	}
 
 	public TaskView getTaskView(Task task) {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 }
