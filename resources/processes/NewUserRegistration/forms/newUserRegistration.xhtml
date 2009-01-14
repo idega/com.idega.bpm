@@ -134,8 +134,8 @@
                     <fbc_15.validation lang="en">Email is incorrect</fbc_15.validation>
                     <fbc_16.validation lang="is_IS">Netfang stenst ekki prófun</fbc_16.validation>
                     <fbc_16.validation lang="en">Email is incorrect</fbc_16.validation>
-                    <fbc_16.custom lang="en">Emails must match</fbc_16.custom>
-                    <fbc_16.custom lang="is_IS">Netföngin þurfa að vera eins</fbc_16.custom>
+                    <fbc_15.custom lang="en">Emails must match</fbc_15.custom>
+                    <fbc_15.custom lang="is_IS">Netföngin þurfa að vera eins</fbc_15.custom>
                     <fbc_19.title lang="is_IS">Kyn</fbc_19.title>
                     <fbc_19.title lang="en">Gender</fbc_19.title>
                     <fbc_19.required lang="is_IS">Kyn, verður að vera valið</fbc_19.required>
@@ -258,12 +258,10 @@
                                 <xf:dispatch ev:event="idega-xforms-ready" name="idega-validate" target="fbc_16"/>
                                 <xf:action ev:event="xforms-value-changed">
                                     <xf:dispatch name="idega-validate" target="fbc_16"/>
-                                    <xf:dispatch name="idega-validate" target="fbc_15"/>
                                 </xf:action>
-                                <idega:validator ev:event="idega-validate" validateif="instance('data-instance')/Matching_emails_2_fbc_15 = instance('data-instance')/Matching_emails_1_fbc_16">
+                              <idega:validator ev:event="idega-validate">
                                     <idega:message errorType="required" model="data_model" value="instance('localized_strings')/fbc_16.required[@lang=instance('localized_strings')/current_language]"/>
                                     <idega:message errorType="validation" model="data_model" value="instance('localized_strings')/fbc_16.validation[@lang=instance('localized_strings')/current_language]"/>
-                                    <idega:message errorType="custom" model="data_model" value="instance('localized_strings')/fbc_16.custom[@lang=instance('localized_strings')/current_language]"/>
                                 </idega:validator>
                             </xf:input>
                             <xf:input bind="bind.fbc_15" id="fbc_15">
@@ -274,9 +272,10 @@
                                     <xf:dispatch name="idega-validate" target="fbc_16"/>
                                     <xf:dispatch name="idega-validate" target="fbc_15"/>
                                 </xf:action>
-                                <idega:validator ev:event="idega-validate">
+                                   <idega:validator ev:event="idega-validate" validateif="instance('data-instance')/Matching_emails_2_fbc_15 = instance('data-instance')/Matching_emails_1_fbc_16">
                                     <idega:message errorType="required" model="data_model" value="instance('localized_strings')/fbc_15.required[@lang=instance('localized_strings')/current_language]"/>
                                     <idega:message errorType="validation" model="data_model" value="instance('localized_strings')/fbc_15.validation[@lang=instance('localized_strings')/current_language]"/>
+                                    <idega:message errorType="custom" model="data_model" value="instance('localized_strings')/fbc_15.custom[@lang=instance('localized_strings')/current_language]"/>
                                 </idega:validator>
                             </xf:input>
                         </xf:group>
