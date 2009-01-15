@@ -62,7 +62,7 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.15 $ Last modified: $Date: 2009/01/12 12:37:05 $ by $Author: juozas $
+ * @version $Revision: 1.16 $ Last modified: $Date: 2009/01/15 14:36:16 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -179,8 +179,6 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		
 		List<TaskInstanceW> unfinishedTaskInstances = getAllUnfinishedTaskInstances();
 		
-		System.out.println("unfinished=" + unfinishedTaskInstances);
-		
 		PermissionsFactory permissionsFactory = getBpmFactory()
 		        .getPermissionsFactory();
 		RolesManager rolesManager = getBpmFactory().getRolesManager();
@@ -190,8 +188,6 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			
 			TaskInstanceW tiw = iterator.next();
 			TaskInstance ti = tiw.getTaskInstance();
-			
-			System.out.println("try tiw again=" + tiw.getTaskInstance());
 			
 			try {
 				// check if task instance is eligible for viewing for user
@@ -203,9 +199,6 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 				rolesManager.checkPermission(permission);
 				
 			} catch (BPMAccessControlException e) {
-				
-				System.out.println("no access for task instance="
-				        + ti.getTask().getName());
 				iterator.remove();
 			}
 		}
