@@ -20,7 +20,7 @@ import com.idega.jbpm.view.ViewFactoryType;
 @Repository(JSFComponentViewFactory.beanIdentifier)
 public class JSFComponentViewFactory implements ViewFactory {
 
-	private static final String beanIdentifier = "process_jsfComponent_viewFactory";
+	static final String beanIdentifier = "process_jsfComponent_viewFactory";
 
 	@Autowired
 	private BPMDAO BPMDAO;
