@@ -20,9 +20,9 @@ import com.idega.presentation.IWContext;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.6 $
+ * @version $Revision: 1.7 $
  *
- * Last modified: $Date: 2009/01/15 19:13:28 $ by $Author: arunas $
+ * Last modified: $Date: 2009/01/15 19:36:45 $ by $Author: arunas $
  */
 @Service("sendMessagesHandler")
 @Scope("prototype")
@@ -50,12 +50,12 @@ public class SendMessagesHandler implements ActionHandler {
 		
 		final Token tkn = ectx.getToken();
 		
-	//	LocalizedMessages msg = getLocalizedMessages();
+		LocalizedMessages msg = getLocalizedMessages();
 		
-		getLocalizedMessages().setSendToRoles(sendToRoles);
-		getLocalizedMessages().setSendToEmails(sendToEmails);
+		msg.setSendToRoles(sendToRoles);
+		msg.setSendToEmails(sendToEmails);
 		
-		getSendMessage().send(null, upd, ectx.getProcessInstance(), getLocalizedMessages(), tkn);
+		getSendMessage().send(null, upd, ectx.getProcessInstance(), msg, tkn);
 	}
 	
 	protected LocalizedMessages getLocalizedMessages() {
