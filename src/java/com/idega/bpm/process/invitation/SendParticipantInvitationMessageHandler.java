@@ -28,9 +28,9 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.3 $
+ * @version $Revision: 1.4 $
  * 
- *          Last modified: $Date: 2008/11/30 08:19:04 $ by $Author: civilis $
+ *          Last modified: $Date: 2009/01/16 12:18:51 $ by $Author: juozas $
  */
 @Service("sendParticipantInvitationMessageHandler")
 @Scope("prototype")
@@ -95,7 +95,7 @@ public class SendParticipantInvitationMessageHandler extends
 
 				PrependToMessageStartTransformatorImpl msgTransformator = new PrependToMessageStartTransformatorImpl();
 				msgTransformator.setPrependText(text + "\n");
-				msgs.setSubjectTransformator(msgTransformator);
+				msgs.setMessageTransformator(msgTransformator);
 			}
 
 			if (subject != null && subject.length() != 0) {
