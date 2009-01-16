@@ -20,8 +20,8 @@
 			        	<value>
 			        		${
 			        		Map subjectMap = new HashMap();
-			        		subjectMap.put("en", "You've been invited to participate in case");
-			        		subjectMap.put("is_IS", "\u00DE\u00E9r hefur veri\u00F0 bo\u00F0i\u00F0 a\u00F0 taka \u00FE\u00E1tt e\u00F0a gefa \u00E1lit \u00E1 m\u00E1li");
+			        		subjectMap.put("en", "You have been invited to participate in case {0}");
+			        		subjectMap.put("is_IS", "Þér hefur verið boðið að taka þátt í eða gefa álit á máli {0}");
 			        		return subjectMap;
 			        		}
 			        		
@@ -42,6 +42,12 @@
 			        	<key>messageValues</key>
 			        	<value>
 			        		{list: {mv: [{type: "bean", value: "bpmUser.urlToTheProcess"}]}}
+                		</value>
+                	</entry>
+                	<entry>
+			        	<key>subjectValues</key>
+			        	<value>
+			        		{list: {mv: [{type: "bean", value: "piw.processIdentifier"}]}}
                 		</value>
                 	</entry>
 			    </propertyMap>
