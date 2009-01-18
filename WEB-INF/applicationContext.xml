@@ -15,4 +15,9 @@
         <constructor-arg type="java.lang.String" value="xforms"/>
     </bean>
     
+    <bean id="process_jsf_viewToTask" class="com.idega.jbpm.view.DefaultViewToTask">
+        <qualifier type="com.idega.jbpm.view.ViewToTaskType" value="jsf" />
+        <constructor-arg type="java.lang.String" value="jsf"/>
+    </bean>
+    
 </beans>
