@@ -62,7 +62,7 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.17 $ Last modified: $Date: 2009/01/19 15:41:01 $ by $Author: civilis $
+ * @version $Revision: 1.18 $ Last modified: $Date: 2009/01/21 10:29:25 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -689,6 +689,19 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			}
 		});
 		
+	}
+	
+	public TaskInstanceW getStartTaskInstance() {
+		
+		long id = getProcessDefinitionW().getProcessDefinition()
+		        .getTaskMgmtDefinition().getStartTask().getId();
+		for (TaskInstanceW taskInstanceW : getAllTaskInstances()) {
+			if (taskInstanceW.getTaskInstance().getTask().getId() == id) {
+				
+				return taskInstanceW;
+			}
+		}
+		return null;
 	}
 	
 	public boolean hasEnded() {
