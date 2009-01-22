@@ -28,9 +28,9 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  * 
- *          Last modified: $Date: 2009/01/16 12:18:51 $ by $Author: juozas $
+ *          Last modified: $Date: 2009/01/22 11:33:33 $ by $Author: civilis $
  */
 @Service("sendParticipantInvitationMessageHandler")
 @Scope("prototype")
@@ -105,8 +105,8 @@ public class SendParticipantInvitationMessageHandler extends
 
 			if (!msgs.hasMessage() || !msgs.hasSubject()) {
 
-				IWMainApplication app = iwc.getIWMainApplication();
-				IWBundle bundle = app.getBundle(BPMConstants.IW_BUNDLE_STARTER);
+				IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
+				IWBundle bundle = iwma.getBundle(BPMConstants.IW_BUNDLE_STARTER);
 				msgs.setIwb(bundle);
 
 				if (!msgs.hasSubject()) {
@@ -122,7 +122,7 @@ public class SendParticipantInvitationMessageHandler extends
 				}
 			}
 
-			BPMUser bpmUser = getBpmUserFactory().getBPMUser(iwc, bpmUserId);
+			BPMUser bpmUser = getBpmUserFactory().getBPMUser(bpmUserId);
 
 			MessageValueContext mvCtx = new MessageValueContext();
 			mvCtx.setValue(MessageValueContext.bpmUserBean, bpmUser);

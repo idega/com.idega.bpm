@@ -14,28 +14,27 @@ import com.idega.user.data.User;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $
- *
- * Last modified: $Date: 2008/10/22 14:51:54 $ by $Author: civilis $
+ * @version $Revision: 1.2 $ Last modified: $Date: 2009/01/22 11:33:33 $ by $Author: civilis $
  */
 @Scope("singleton")
 @Service
 public class BindParticipantOnLogon implements ApplicationListener {
 	
 	private BPMFactory bpmFactory;
-
+	
 	public void onApplicationEvent(ApplicationEvent ae) {
-
-		if(ae instanceof UserLoggedInEvent) {
+		
+		if (ae instanceof UserLoggedInEvent) {
 			
-			UserLoggedInEvent ule = (UserLoggedInEvent)ae;
+			UserLoggedInEvent ule = (UserLoggedInEvent) ae;
 			IWContext iwc = ule.getIWC();
 			User usr = ule.getLoggedInUsr();
-
-			BPMUser bpmUser = getBpmFactory().getBpmUserFactory().getLoggedInBPMUser(iwc, null, usr);
 			
-			if(bpmUser != null)
-//				would associate automatically if not associated
+			BPMUser bpmUser = getBpmFactory().getBpmUserFactory()
+			        .getLoggedInBPMUser(iwc, null, usr);
+			
+			if (bpmUser != null)
+				// would associate automatically if not associated
 				bpmUser.getIsAssociated(true);
 		}
 	}
@@ -43,7 +42,7 @@ public class BindParticipantOnLogon implements ApplicationListener {
 	public BPMFactory getBpmFactory() {
 		return bpmFactory;
 	}
-
+	
 	@Autowired
 	public void setBpmFactory(BPMFactory bpmFactory) {
 		this.bpmFactory = bpmFactory;
