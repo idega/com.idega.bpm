@@ -87,10 +87,10 @@
                     <fbc_8-remove lang="en">Remove</fbc_8-remove> 
                     <fbc_8-custom lang="is_IS">Það þarf að setja lýsandi nafn á skjalið</fbc_8-custom>
                     <fbc_8-custom lang="en">Uploaded file description can not be empty</fbc_8-custom>
-					<fbc_9-label lang="is_IS"/>
-               		<fbc_9-label lang="en"/>
-                    <fbc_9-text lang="is_IS">Mögulegt er að senda viðbótarupplýsingar í viðhengi</fbc_9-text>
-                	<fbc_9-text lang="en">Additional information can be sent with the form as attachments</fbc_9-text>   
+					<fbc_8-paragraph-text lang="is_IS">Mögulegt er að senda viðbótarupplýsingar í viðhengi</fbc_8-paragraph-text>
+                	<fbc_8-paragraph-text lang="en">Additional information can be sent with the form as attachments</fbc_8-paragraph-text>   
+                  	<fbc_8-filename-label lang="is_IS">Skráarnafn</fbc_8-filename-label>
+					<fbc_8-filename-label lang="en">Uploaded file name</fbc_8-filename-label>
 </localized_strings>
 	        </xf:instance>
 	  
@@ -132,9 +132,8 @@
                             
                             <xf:label model="data_model" ref="instance('localized_strings')/fbc_8-title[@lang=instance('localized_strings')/current_language]"/>
                             
-                            <div class="fbc_simple_text" id="fbc_9" type="fbc_simple_text">
-								<xf:label model="data_model" ref="instance('localized_strings')/fbc_9-label[@lang=instance('localized_strings')/current_language]"/>
-								<xf:output model="data_model" ref="instance('localized_strings')/fbc_9-text[@lang=instance('localized_strings')/current_language]"/>
+                            <div class="fbc_simple_text">
+								<xf:output model="data_model" ref="instance('localized_strings')/fbc_8-paragraph-text[@lang=instance('localized_strings')/current_language]"/>
 							</div>
                             
                             <xf:trigger>
@@ -153,7 +152,7 @@
                                     	<xf:output model="data_model" value="instance('localized_strings')/fbc_8-info[@lang=instance('localized_strings')/current_language]"/>
                                     </xf:group>
                                   <xf:output ref="@filename">
-                                    <xf:label model="data_model" ref="instance('localized_strings')/fbc_8-name[@lang=instance('localized_strings')/current_language]"/>
+                                    <xf:label model="data_model" ref="instance('localized_strings')/fbc_8-filename-label[@lang=instance('localized_strings')/current_language]"/>
                                     </xf:output>
                                     <xf:upload ref=".">
                                     <xf:filename ref="@filename"/>

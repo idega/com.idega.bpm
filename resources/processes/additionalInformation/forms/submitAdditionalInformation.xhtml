@@ -83,17 +83,22 @@
 			   	 <fbc_6-required lang="en">Additional information can not be empty</fbc_6-required>
 			<fbc_6-required lang="is_IS">Þessi reitur verður að vera útfylltur</fbc_6-required> 
 			<fbc_8-title lang="is_IS">Viðhengi</fbc_8-title>
-			<fbc_8-title lang="en">Attachements</fbc_8-title>
-			<fbc_8-label lang="is_IS">Bæta við viðhengi</fbc_8-label> 
-			<fbc_8-remove lang="is_IS">Fjarlægja viðhengi</fbc_8-remove>
-			<fbc_8-text lang="is_IS">Lýsandi nafn skjals</fbc_8-text> 
-			<fbc_8-label lang="en">Add attachement</fbc_8-label> 
-			<fbc_8-text lang="en">Descriptive name</fbc_8-text> 
-			<fbc_8-info lang="is_IS">Það þarf að setja lýsandi nafn á skjalið</fbc_8-info>
-			<fbc_8-info lang="en">Please enter file description</fbc_8-info>
-			<fbc_8-remove lang="en">Remove</fbc_8-remove> 
-			  <fbc_8-custom lang="is_IS">Það þarf að setja lýsandi nafn á skjalið</fbc_8-custom>
-                           <fbc_8-custom lang="en">Uploaded file description can not be empty</fbc_8-custom>
+               <fbc_8-title lang="en">Attachements</fbc_8-title>
+               <fbc_8-label lang="is_IS">Bæta við viðhengi</fbc_8-label> 
+               <fbc_8-remove lang="is_IS">Fjarlægja viðhengi</fbc_8-remove>
+               <fbc_8-text lang="is_IS">Lýsandi nafn skjals</fbc_8-text> 
+               <fbc_8-label lang="en">Add attachement</fbc_8-label> 
+               <fbc_8-text lang="en">Descriptive name</fbc_8-text> 
+               <fbc_8-info lang="is_IS">Það þarf að setja lýsandi nafn á skjalið</fbc_8-info>
+               <fbc_8-info lang="en">Please enter file description</fbc_8-info>
+               <fbc_8-remove lang="en">Remove</fbc_8-remove> 
+               <fbc_8-custom lang="is_IS">Það þarf að setja lýsandi nafn á skjalið</fbc_8-custom>
+               <fbc_8-custom lang="en">Uploaded file description can not be empty</fbc_8-custom>
+			<fbc_8-paragraph-text lang="is_IS">Mögulegt er að senda viðbótarupplýsingar í viðhengi</fbc_8-paragraph-text>
+           	<fbc_8-paragraph-text lang="en">Additional information can be sent with the form as attachments</fbc_8-paragraph-text>   
+           	<fbc_8-filename-label lang="is_IS">Skráarnafn</fbc_8-filename-label>
+			<fbc_8-filename-label lang="en">Uploaded file name</fbc_8-filename-label>
+		              
 		</localized_strings>
 	</xf:instance>
 	 
@@ -134,12 +139,17 @@
                             
 				</xf:textarea>
 				
-		      <!-- upload -->
+		       <!-- upload -->
              			<xf:group appearance="full" bind="fbc_8_bind" id="fbc_8" type="fbc_multiupload">
 
                 <idega:dispatch ev:event="idega-xforms-ready" name="idega-validate" target="//*[@id='fbc_8']//xf:upload" stopOnError="true"/>
                             
                             <xf:label model="data_model" ref="instance('localized_strings')/fbc_8-title[@lang=instance('localized_strings')/current_language]"/>
+                            
+                            <div class="fbc_simple_text">
+								<xf:output model="data_model" ref="instance('localized_strings')/fbc_8-paragraph-text[@lang=instance('localized_strings')/current_language]"/>
+							</div>
+                            
                             <xf:trigger>
                                 <xf:label model="data_model" ref="instance('localized_strings')/fbc_8-label[@lang=instance('localized_strings')/current_language]"/>
                                 <xf:action>
@@ -156,7 +166,7 @@
                                     	<xf:output model="data_model" value="instance('localized_strings')/fbc_8-info[@lang=instance('localized_strings')/current_language]"/>
                                     </xf:group>
                                   <xf:output ref="@filename">
-                                    <xf:label model="data_model" ref="instance('localized_strings')/fbc_8-name[@lang=instance('localized_strings')/current_language]"/>
+                                    <xf:label model="data_model" ref="instance('localized_strings')/fbc_8-filename-label[@lang=instance('localized_strings')/current_language]"/>
                                     </xf:output>
                                     <xf:upload ref=".">
                                     <xf:filename ref="@filename"/>
