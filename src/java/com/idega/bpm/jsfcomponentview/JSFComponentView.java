@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewToTask;
-import com.idega.jbpm.view.ViewToTaskType;
 import com.idega.util.expression.ELUtil;
 
 public class JSFComponentView implements View, Serializable {
@@ -27,7 +26,6 @@ public class JSFComponentView implements View, Serializable {
 	private Map<String, Object> variables;
 
 	@Autowired
-	@ViewToTaskType("jsf")
 	private transient ViewToTask viewToTask;
 
 	public Date getDateCreated() {

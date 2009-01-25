@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processBundle-config>
+
+    <processBundle beanIdentifier="defaultBPMProcessBundle" processManagerType="cases" />
+    
+    <tasks>
+        <task name="requestAdditionalInformationTask" initial="true">
+            <viewResource resourceIdentifier="forms/requestAdditionalInformation.xhtml" viewType="xforms" viewResourceType="xforms" />
+        </task>
+        <task name="submitAdditionalInformationTask">
+            <viewResource resourceIdentifier="forms/submitAdditionalInformation.xhtml" viewType="xforms" viewResourceType="xforms" />
+        </task>
+    </tasks>
+    
+</processBundle-config>

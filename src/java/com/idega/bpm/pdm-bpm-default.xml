@@ -2,8 +2,8 @@
 
 <processes>
   
-    <processBundle bundle="com.idega.bpm" propsUriWithinBundle="resources/processes/NewUserRegistration/bundle.properties" autoload="true" version="1" />
-    <processDefinition bundle="com.idega.bpm" uriWithinBundle="resources/processes/inviteParticipant/processdefinition.xml" autoload="true" version="10" />
-    <processBundle bundle="com.idega.bpm" propsUriWithinBundle="resources/processes/addAttachments/bundle.properties" autoload="true" version="1" />
-    <processBundle bundle="com.idega.bpm" propsUriWithinBundle="resources/processes/additionalInformation/bundle.properties" autoload="true" version="1" />
+    <processBundle bundle="com.idega.bpm" processBundleLocationWithinBundle="resources/processes/NewUserRegistration/" autoload="true" version="1" />
+    <processDefinition bundle="com.idega.bpm" processBundleLocationWithinBundle="resources/processes/inviteParticipant/" autoload="true" version="10" />
+    <processBundle bundle="com.idega.bpm" processBundleLocationWithinBundle="resources/processes/addAttachments/" autoload="true" version="1" />
+    <processBundle bundle="com.idega.bpm" processBundleLocationWithinBundle="resources/processes/additionalInformation/" autoload="true" version="1" />
 </processes>

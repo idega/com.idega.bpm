@@ -4,20 +4,9 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
 
-    <bean id="defaultBpmProcessManager" class="com.idega.bpm.exe.DefaultBPMProcessManager" scope="singleton">
+    <bean id="defaultBpmProcessManager" class="com.idega.bpm.exe.ProcessManagerAbstractImpl" scope="singleton">
         <lookup-method name="createPDW" bean="defaultPDW" />
         <lookup-method name="createPIW" bean="defaultPIW" />
         <lookup-method name="createTIW" bean="defaultTIW" />
     </bean>
-    
-    <bean id="process_xforms_viewToTask" class="com.idega.jbpm.view.DefaultViewToTask">
-        <qualifier type="com.idega.jbpm.view.ViewToTaskType" value="xforms" />
-        <constructor-arg type="java.lang.String" value="xforms"/>
-    </bean>
-    
-    <bean id="process_jsf_viewToTask" class="com.idega.jbpm.view.DefaultViewToTask">
-        <qualifier type="com.idega.jbpm.view.ViewToTaskType" value="jsf" />
-        <constructor-arg type="java.lang.String" value="jsf"/>
-    </bean>
-    
 </beans>

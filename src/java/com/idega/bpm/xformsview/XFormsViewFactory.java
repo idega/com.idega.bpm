@@ -18,15 +18,14 @@ import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewFactory;
 import com.idega.jbpm.view.ViewFactoryType;
 import com.idega.jbpm.view.ViewToTask;
-import com.idega.jbpm.view.ViewToTaskType;
-import com.idega.util.CoreConstants;
+import com.idega.util.StringUtil;
 import com.idega.xformsmanager.business.DocumentManagerFactory;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.5 $
  * 
- *          Last modified: $Date: 2008/12/09 02:49:00 $ by $Author: civilis $
+ *          Last modified: $Date: 2009/01/25 15:44:13 $ by $Author: civilis $
  */
 @Scope("singleton")
 @ViewFactoryType("xforms")
@@ -37,13 +36,14 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 
 	private DocumentManagerFactory documentManagerFactory;
 	private Converter converter;
+	@Autowired
 	private ViewToTask viewToTask;
+	@Autowired
 	private BPMDAO BPMDAO;
 
 	public View getView(String viewIdentifier, boolean submitable) {
 
-		if (viewIdentifier == null
-				|| CoreConstants.EMPTY.equals(viewIdentifier))
+		if (StringUtil.isEmpty(viewIdentifier))
 			throw new NullPointerException("View identifier not provided");
 
 		XFormsView view = getXFormsView();
@@ -136,8 +136,7 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 		return viewToTask;
 	}
 
-	@Autowired
-	public void setViewToTask(@ViewToTaskType("xforms") ViewToTask viewToTask) {
+	public void setViewToTask(ViewToTask viewToTask) {
 		this.viewToTask = viewToTask;
 	}
 
@@ -167,7 +166,6 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 		return BPMDAO;
 	}
 
-	@Autowired
 	public void setBPMDAO(BPMDAO bpmdao) {
 		BPMDAO = bpmdao;
 	}

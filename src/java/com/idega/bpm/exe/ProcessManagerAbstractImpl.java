@@ -2,6 +2,7 @@ package com.idega.bpm.exe;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.jbpm.JbpmContext;
 import org.jbpm.JbpmException;
 import org.jbpm.graph.def.ProcessDefinition;
@@ -24,12 +25,13 @@ import com.idega.util.ListUtil;
  * which create wanted bpm wrapper instances
  * 
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.4 $
+ * @version $Revision: 1.1 $
  * 
- *          Last modified: $Date: 2008/12/28 11:45:47 $ by $Author: civilis $
+ *          Last modified: $Date: 2009/01/25 15:44:13 $ by $Author: civilis $
  */
-public abstract class DefaultBPMProcessManager implements ProcessManager {
+public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 
+	private String managerType;
 	@Autowired
 	private BPMContext bpmContext;
 
@@ -77,7 +79,8 @@ public abstract class DefaultBPMProcessManager implements ProcessManager {
 	 */
 	protected abstract ProcessDefinitionW createPDW();
 
-	// synchronized because spring doesn't do it when autowiring beans
+	// synchronized because spring doesn't do it when autowiring beans (TODO: is
+	// this needed?)
 	public synchronized ProcessDefinitionW createProcessDefinition(long pdId) {
 
 		ProcessDefinitionW pdw = createPDW();
@@ -93,7 +96,8 @@ public abstract class DefaultBPMProcessManager implements ProcessManager {
 	 */
 	protected abstract ProcessInstanceW createPIW();
 
-	// synchronized because spring doesn't do it when autowiring beans
+	// synchronized because spring doesn't do it when autowiring beans (TODO: is
+	// this needed?)
 	public synchronized ProcessInstanceW createProcessInstance(long piId) {
 
 		ProcessInstanceW piw = createPIW();
@@ -109,7 +113,8 @@ public abstract class DefaultBPMProcessManager implements ProcessManager {
 	 */
 	protected abstract TaskInstanceW createTIW();
 
-	// synchronized because spring doesn't do it when autowiring beans
+	// synchronized because spring doesn't do it when autowiring beans (TODO: is
+	// this needed?)
 	public synchronized TaskInstanceW createTaskInstance(long tiId) {
 
 		TaskInstanceW tiw = createTIW();
@@ -136,6 +141,7 @@ public abstract class DefaultBPMProcessManager implements ProcessManager {
 		this.caseManagersProvider = caseManagersProvider;
 	}
 
+	// FIXME: wrong place for this, refactor
 	public List<ProcessDefinitionW> getAllProcesses() {
 		List<CaseManager> caseManagers = getCaseManagersProvider()
 				.getCaseManagers();
@@ -156,5 +162,13 @@ public abstract class DefaultBPMProcessManager implements ProcessManager {
 		}
 
 		return allProcesses;
+	}
+
+	public String getManagerType() {
+		return managerType != null ? managerType : "default";
+	}
+
+	public void setManagerType(String managerType) {
+		this.managerType = managerType;
 	}
 }

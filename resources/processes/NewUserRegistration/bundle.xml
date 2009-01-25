@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processBundle-config>
+
+    <processBundle beanIdentifier="defaultBPMProcessBundle" processManagerType="default" />
+    
+    <tasks>
+        <task name="New User Registration" initial="true">
+            <viewResource resourceIdentifier="forms/newUserRegistration.xhtml" viewType="xforms" viewResourceType="xforms" />
+        </task>
+    </tasks>
+    
+</processBundle-config>

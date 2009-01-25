@@ -19,7 +19,6 @@ import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.variables.Converter;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewToTask;
-import com.idega.jbpm.view.ViewToTaskType;
 import com.idega.util.StringUtil;
 import com.idega.util.expression.ELUtil;
 import com.idega.xformsmanager.business.Document;
@@ -28,9 +27,9 @@ import com.idega.xformsmanager.business.DocumentManagerFactory;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.10 $
+ * @version $Revision: 1.11 $
  * 
- *          Last modified: $Date: 2009/01/10 12:36:09 $ by $Author: civilis $
+ *          Last modified: $Date: 2009/01/25 15:44:13 $ by $Author: civilis $
  */
 public class XFormsView implements View {
 
@@ -46,6 +45,7 @@ public class XFormsView implements View {
 	private Map<String, String> parameters;
 	private Map<String, Object> variables;
 
+	@Autowired
 	private ViewToTask viewToTask;
 	@Autowired
 	private XFormsDAO xformsDAO;
@@ -57,8 +57,7 @@ public class XFormsView implements View {
 		return viewToTask;
 	}
 
-	@Autowired
-	public void setViewToTask(@ViewToTaskType("xforms") ViewToTask viewToTask) {
+	public void setViewToTask(ViewToTask viewToTask) {
 		this.viewToTask = viewToTask;
 	}
 
