@@ -38,8 +38,8 @@ import com.idega.xformsmanager.business.XFormPersistenceType;
  * Downloads PDF for provided XForm
  * @author <a href="mailto:valdas@idega.com>Valdas Žemaitis</a>
  * Created: 2008.05.10
- * @version $Revision: 1.6 $
- * Last modified: $Date: 2008/12/28 11:46:42 $ by $Author: civilis $
+ * @version $Revision: 1.7 $
+ * Last modified: $Date: 2009/01/26 11:08:40 $ by $Author: valdas $
  */
 public class XFormToPDFWriter extends DownloadWriter implements MediaWritable { 
 	
@@ -87,6 +87,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			
 			pdfName = xformSubmition.getXform().getDisplayName();
 			pathInSlide = xformSubmition.getSubmissionStorageIdentifier();
+			formSubmitionId = xformSubmition.getSubmissionUUID();	//	Using unique ID
 		}
 		
 		if (!StringUtil.isEmpty(taskInstanceId)) {
