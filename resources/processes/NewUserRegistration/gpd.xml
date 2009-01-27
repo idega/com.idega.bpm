@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<root-container name="NewUserRegistration" width="1054" height="654">
-  <node name="registerNewUser" x="316" y="31" width="104" height="32">
+<root-container name="NewUserRegistration" width="1025" height="654">
+  <node name="registerNewUser" x="222" y="24" width="104" height="32">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="createAccount" x="321" y="193" width="132" height="36">
+  <node name="createAccount" x="563" y="379" width="132" height="36">
+    <edge>
+      <label x="-25" y="-10"/>
+    </edge>
+  </node>
+  <node name="sendMessage" x="421" y="463" width="132" height="36">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="sendMessage" x="314" y="274" width="132" height="36">
-    <edge>
-      <label x="5" y="-10"/>
-    </edge>
-  </node>
-  <node name="loginAlreadyExists" x="222" y="125" width="128" height="36">
+  <node name="loginAlreadyExists" x="211" y="121" width="128" height="36">
     <edge>
       <label x="5" y="-10"/>
     </edge>
@@ -24,11 +24,28 @@
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="throwException" x="119" y="202" width="132" height="36">
+  <node name="throwException" x="52" y="214" width="132" height="36">
     <edge>
       <label x="5" y="-10"/>
-      <bendpoint w1="69" h1="109" w2="-142" h2="-29"/>
     </edge>
   </node>
-  <node name="end-state1" x="384" y="346" width="25" height="25"/>
+  <node name="end-state1" x="106" y="472" width="25" height="25"/>
+  <node name="locateExistingAccount" x="397" y="207" width="139" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="accountFound" x="403" y="291" width="132" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+    <edge>
+      <label x="-18" y="-15"/>
+    </edge>
+  </node>
+  <node name="createAccountLogin" x="287" y="380" width="132" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
 </root-container>
