@@ -17,10 +17,8 @@ import com.idega.jbpm.view.ViewFactoryType;
 
 @Scope("singleton")
 @ViewFactoryType(JSFComponentView.VIEW_TYPE)
-@Repository(JSFComponentViewFactory.beanIdentifier)
+@Repository("process_jsfComponent_viewFactory")
 public class JSFComponentViewFactory implements ViewFactory {
-
-	static final String beanIdentifier = "process_jsfComponent_viewFactory";
 
 	@Autowired
 	private BPMDAO BPMDAO;
@@ -29,10 +27,6 @@ public class JSFComponentViewFactory implements ViewFactory {
 			Collection<Long> processDefinitionsIds) {
 		throw new NotImplementedException(
 				"Method getAllViewsByProcessDefinitions is not implemented yet");
-	}
-
-	public String getBeanIdentifier() {
-		return beanIdentifier;
 	}
 
 	public View getView(String viewIdentifier, boolean submitable) {

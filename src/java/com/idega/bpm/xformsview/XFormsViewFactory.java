@@ -23,16 +23,14 @@ import com.idega.xformsmanager.business.DocumentManagerFactory;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  * 
- *          Last modified: $Date: 2009/01/25 15:44:13 $ by $Author: civilis $
+ *          Last modified: $Date: 2009/01/27 11:31:13 $ by $Author: civilis $
  */
 @Scope("singleton")
 @ViewFactoryType("xforms")
 @Repository("process_xforms_viewFactory")
 public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
-
-	private final String beanIdentifier = "process_xforms_viewFactory";
 
 	private DocumentManagerFactory documentManagerFactory;
 	private Converter converter;
@@ -102,10 +100,6 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 	@Autowired
 	public void setConverter(Converter converter) {
 		this.converter = converter;
-	}
-
-	public String getBeanIdentifier() {
-		return beanIdentifier;
 	}
 
 	/*
