@@ -4,131 +4,115 @@ import java.util.Locale;
 
 import javax.faces.context.FacesContext;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 import com.idega.bpm.jsfcomponentview.BPMCapableJSFComponent;
 import com.idega.bpm.jsfcomponentview.JSFComponentView;
 import com.idega.bpm.pdf.servlet.BPMTaskPDFPrinter;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.io.MediaWritable;
-import com.idega.jbpm.exe.BPMFactory;
-import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.presentation.IWBaseComponent;
 import com.idega.presentation.IWContext;
 import com.idega.presentation.Layer;
 import com.idega.presentation.ui.IFrame;
 import com.idega.util.URLUtil;
-import com.idega.util.expression.ELUtil;
 
 /**
  * Default class that show task view from attached pdf document.
  * 
  * @author <a href="mailto:juozas@idega.com>Juozapas Zabukas</a> Created:
- * @version $Revision: 1.3 $ Last modified: $Date: 2009/01/12 11:38:41 $ by $Author: juozas $
+ * @version $Revision: 1.4 $ Last modified: $Date: 2009/01/27 11:30:27 $ by
+ *          $Author: civilis $
  */
 public class BPMTaskPDFViewer extends IWBaseComponent implements
-        BPMCapableJSFComponent {
-	
+		BPMCapableJSFComponent {
+
 	public static final String DOCUMENT_VARIABLE_NAME = "files_pdfTaskView";
-	
+	public static final String COMPONENT_TYPE = "BPMTaskPDFViewer";
+
 	private JSFComponentView view;
-	
-	@Autowired
-	private VariablesHandler variablesHandler;
-	
-	@Autowired
-	private BPMFactory bpmFactory;
-	
+	private Long taskInstanceId;
+
 	public BPMTaskPDFViewer() {
 		super();
 	}
-	
+
 	@Override
 	protected void initializeComponent(FacesContext context) {
-		
+
 		super.initializeComponent(context);
 		initializeJSFView(context);
-		
+
 	}
-	
+
 	protected void initializeJSFView(FacesContext context) {
 		Layer div = new Layer();
 		div.setWidth("100%");
 		div.setHeight("800");
-		
+
 		IWContext iwc = IWContext.getIWContext(context);
-	
+
 		URLUtil uriToPDFPrinter = new URLUtil(iwc.getIWMainApplication()
-		        .getMediaServletURI());
+				.getMediaServletURI());
 		uriToPDFPrinter.addParameter(MediaWritable.PRM_WRITABLE_CLASS,
-		    IWMainApplication.getEncryptedClassName(BPMTaskPDFPrinter.class));
+				IWMainApplication
+						.getEncryptedClassName(BPMTaskPDFPrinter.class));
+
+		Long taskIntanceId = getTaskInstanceId() != null ? getTaskInstanceId()
+				: view.getTaskInstanceId();
+
 		uriToPDFPrinter.addParameter(BPMTaskPDFPrinter.PARAM_TASK_INSTANCE_ID,
-		    view.getTaskInstanceId().toString());
+				taskIntanceId.toString());
 		uriToPDFPrinter.addParameter(BPMTaskPDFPrinter.PARAM_VARIABLE_NAME,
-			DOCUMENT_VARIABLE_NAME);
-		
+				DOCUMENT_VARIABLE_NAME);
+
 		IFrame frame = new IFrame("documentView", uriToPDFPrinter.toString());
 		frame.setWidth("100%");
 		frame.setHeight("100%");
 		div.add(frame);
-		
+
 		add(div);
 	}
-	
+
 	public String getDefaultDisplayName() {
-		
+
 		return IWMainApplication.getDefaultIWMainApplication()
-		        .getLocalisedStringMessage("sign_document", "Sign document",
-		            "com.idega.ascertia");
-		
+				.getLocalisedStringMessage("sign_document", "Sign document",
+						"com.idega.ascertia");
+
 	}
-	
+
 	public String getDisplayName(Locale locale) {
 		return IWMainApplication.getDefaultIWMainApplication()
-		        .getLocalisedStringMessage("sign_document", "Sign document",
-		            "com.idega.ascertia", locale);
+				.getLocalisedStringMessage("sign_document", "Sign document",
+						"com.idega.ascertia", locale);
 	}
-	
+
 	public void setView(JSFComponentView view) {
 		this.view = view;
-		
+
 	}
-	
+
 	@Override
 	public Object saveState(FacesContext ctx) {
-		Object values[] = new Object[4];
+		Object values[] = new Object[3];
 		values[0] = super.saveState(ctx);
-		values[1] = this.view;
+		values[1] = view;
+		values[2] = taskInstanceId;
 		return values;
 	}
-	
+
 	@Override
 	public void restoreState(FacesContext ctx, Object state) {
 		Object values[] = (Object[]) state;
 		super.restoreState(ctx, values[0]);
-		this.view = (JSFComponentView) values[1];
+		view = (JSFComponentView) values[1];
+		taskInstanceId = (Long) values[2];
 	}
-	
-	public VariablesHandler getVariablesHandler() {
-		if (variablesHandler == null) {
-			ELUtil.getInstance().autowire(this);
-		}
-		return variablesHandler;
+
+	public Long getTaskInstanceId() {
+		return taskInstanceId;
 	}
-	
-	public void setVariablesHandler(VariablesHandler variablesHandler) {
-		this.variablesHandler = variablesHandler;
+
+	public void setTaskInstanceId(Long taskInstanceId) {
+		this.taskInstanceId = taskInstanceId;
 	}
-	
-	public BPMFactory getBpmFactory() {
-		if (bpmFactory == null) {
-			ELUtil.getInstance().autowire(this);
-		}
-		return bpmFactory;
-	}
-	
-	public void setBpmFactory(BPMFactory bpmFactory) {
-		this.bpmFactory = bpmFactory;
-	}
-	
 }
