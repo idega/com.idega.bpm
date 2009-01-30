@@ -19,7 +19,7 @@ import com.idega.util.URLUtil;
  * Default class that show task view from attached pdf document.
  * 
  * @author <a href="mailto:juozas@idega.com>Juozapas Zabukas</a> Created:
- * @version $Revision: 1.4 $ Last modified: $Date: 2009/01/27 11:30:27 $ by
+ * @version $Revision: 1.5 $ Last modified: $Date: 2009/01/30 13:56:40 $ by
  *          $Author: civilis $
  */
 public class BPMTaskPDFViewer extends IWBaseComponent implements
@@ -74,16 +74,25 @@ public class BPMTaskPDFViewer extends IWBaseComponent implements
 
 	public String getDefaultDisplayName() {
 
-		return IWMainApplication.getDefaultIWMainApplication()
-				.getLocalisedStringMessage("sign_document", "Sign document",
-						"com.idega.ascertia");
-
+//		return IWMainApplication.getDefaultIWMainApplication()
+//				.getLocalisedStringMessage("sign_document", "Sign document",
+//						"com.idega.ascertia");
+		
+//		TODO: resolve from process (in view, not here)
+		
+		return "Útgefið íbúakort til prentunar";
 	}
 
 	public String getDisplayName(Locale locale) {
-		return IWMainApplication.getDefaultIWMainApplication()
-				.getLocalisedStringMessage("sign_document", "Sign document",
-						"com.idega.ascertia", locale);
+
+//		TODO: resolve from process (in view, not here)
+		
+		return locale.equals(new Locale("en")) ? "Issued Parking Card for printing" : "Útgefið íbúakort til prentunar";
+//		
+//		
+//		return IWMainApplication.getDefaultIWMainApplication()
+//				.getLocalisedStringMessage("sign_document", "Sign document",
+//						"com.idega.ascertia", locale);
 	}
 
 	public void setView(JSFComponentView view) {
