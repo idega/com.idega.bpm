@@ -39,11 +39,10 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.14 $ Last modified: $Date: 2009/01/21 10:29:33 $ by $Author: juozas $
+ * @version $Revision: 1.15 $ Last modified: $Date: 2009/02/05 13:44:47 $ by $Author: donatas $
  */
 @Scope("prototype")
 @Service("defaultPDW")
-@Transactional(readOnly = true)
 public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	
 	private Long processDefinitionId;
@@ -59,6 +58,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	@Autowired
 	private VariablesHandler variablesHandler;
 	
+	@Transactional(readOnly = true)
 	public List<Variable> getTaskVariableList(final String taskName) {
 		
 		return getBpmContext().execute(new JbpmCallback() {
@@ -90,6 +90,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		});
 	}
 	
+	@Transactional(readOnly = true)
 	public void startProcess(final ViewSubmission viewSubmission) {
 		
 		Long processDefinitionId = viewSubmission.getProcessDefinitionId();
@@ -142,6 +143,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		}
 	}
 	
+	@Transactional(readOnly = true)
 	public View loadInitView(Integer initiatorId) {
 		
 		try {
@@ -203,6 +205,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	public void setRolesCanStartProcess(List<String> roles, Object context) {
 	}
 	
+	@Transactional(readOnly = true)
 	protected void submitVariablesAndProceedProcess(TaskInstance ti,
 	        Map<String, Object> variables, boolean proceed) {
 		
@@ -230,6 +233,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		
 	}
 	
+	@Transactional(readOnly = true)
 	public String getStartTaskName() {
 		
 		List<String> preferred = new ArrayList<String>(1);
@@ -243,6 +247,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		return view.getDisplayName(new Locale("is", "IS"));
 	}
 	
+	@Transactional(readOnly = true)
 	public Collection<String> getTaskNodeTransitionsNames(String taskName) {
 		
 		ProcessDefinition pdef = getProcessDefinition();
@@ -294,6 +299,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		this.variablesHandler = variablesHandler;
 	}
 	
+	@Transactional(readOnly = true)
 	public ProcessDefinition getProcessDefinition() {
 		
 		if (true || (processDefinition == null && getProcessDefinitionId() != null)) {
