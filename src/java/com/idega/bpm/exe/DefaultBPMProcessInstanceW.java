@@ -62,11 +62,10 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.18 $ Last modified: $Date: 2009/01/21 10:29:25 $ by $Author: juozas $
+ * @version $Revision: 1.19 $ Last modified: $Date: 2009/02/06 18:59:35 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPIW")
-@Transactional(readOnly = true)
 public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	
 	private Long processInstanceId;
@@ -92,6 +91,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	// private static final String CASHED_TASK_NAMES =
 	// "defaultBPM_taskinstance_names";
 	
+	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getAllTaskInstances() {
 		
 		// TODO: hide tasks of ended subprocesses
@@ -112,6 +112,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	 *            - only task instances of subprocesses listed here are included
 	 * @return
 	 */
+	@Transactional(readOnly = true)
 	Collection<TaskInstance> getAllTaskInstancesPRVT(
 	        final List<String> excludedSubProcessesNames,
 	        final List<String> includedOnlySubProcessesNames) {
@@ -166,6 +167,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		});
 	}
 	
+	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getSubmittedTaskInstances(
 	        List<String> excludedSubProcessesNames) {
 		
@@ -183,10 +185,12 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return encapsulateInstances(taskInstances);
 	}
 	
+	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getSubmittedTaskInstances() {
 		return getSubmittedTaskInstances(null);
 	}
 	
+	@Transactional(readOnly = true)
 	public List<BPMDocument> getTaskDocumentsForUser(User user, Locale locale) {
 		
 		List<TaskInstanceW> unfinishedTaskInstances = getAllUnfinishedTaskInstances();
@@ -218,6 +222,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return getBPMDocuments(unfinishedTaskInstances, locale);
 	}
 	
+	@Transactional(readOnly = true)
 	public List<BPMDocument> getSubmittedDocumentsForUser(User user,
 	        Locale locale) {
 		
@@ -315,6 +320,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return documents;
 	}
 	
+	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getUnfinishedTaskInstances(Token rootToken) {
 		
 		ProcessInstance processInstance = rootToken.getProcessInstance();
@@ -326,6 +332,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return encapsulateInstances(taskInstances);
 	}
 	
+	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getAllUnfinishedTaskInstances() {
 		
 		Collection<TaskInstance> taskInstances = getAllTaskInstancesPRVT();
@@ -385,6 +392,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		this.processManager = processManager;
 	}
 	
+	@Transactional(readOnly = true)
 	public ProcessInstance getProcessInstance() {
 		
 		if (true || (processInstance == null && getProcessInstanceId() != null)) {
@@ -423,6 +431,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return null;
 	}
 	
+	@Transactional(readOnly = true)
 	public ProcessDefinitionW getProcessDefinitionW() {
 		
 		Long pdId = getProcessInstance().getProcessDefinition().getId();
@@ -434,6 +443,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return null;
 	}
 	
+	@Transactional(readOnly = true)
 	public List<User> getUsersConnectedToProcess() {
 		
 		final Collection<User> users;
@@ -580,6 +590,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	 *            to check right against
 	 * @return
 	 */
+	@Transactional(readOnly = true)
 	public boolean hasRight(Right right, User user) {
 		
 		switch (right) {
@@ -607,6 +618,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return bpmDAO;
 	}
 	
+	@Transactional(readOnly = true)
 	public List<BPMEmailDocument> getAttachedEmails() {
 		
 		ArrayList<String> included = new ArrayList<String>(1);
@@ -655,6 +667,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return bpmEmailDocs;
 	}
 	
+	@Transactional(readOnly = false)
 	public TaskInstanceW createTask(final String taskName, final long tokenId) {
 		
 		return getBpmContext().execute(new JbpmCallback() {
@@ -691,6 +704,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		
 	}
 	
+	@Transactional(readOnly = true)
 	public TaskInstanceW getStartTaskInstance() {
 		
 		long id = getProcessDefinitionW().getProcessDefinition()
@@ -704,6 +718,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return null;
 	}
 	
+	@Transactional(readOnly = true)
 	public boolean hasEnded() {
 		return getProcessInstance().hasEnded();
 	}

@@ -2,7 +2,6 @@ package com.idega.bpm.exe;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.security.AccessControlException;
 import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,14 +60,12 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.34 $
+ * @version $Revision: 1.35 $
  * 
- *          Last modified: $Date: 2009/01/13 15:58:36 $ by $Author: civilis $
+ *          Last modified: $Date: 2009/02/06 18:59:35 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
-@Transactional(readOnly = false, noRollbackFor = {
-		AccessControlException.class, BPMAccessControlException.class })
 public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	private static final String allowSigningVariableRepresentation = "system_allowSigning";
@@ -104,6 +101,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	private static final String CASHED_TASK_NAMES = "defaultBPM_taskinstance_names";
 
+	@Transactional(readOnly = true)
 	public TaskInstance getTaskInstance() {
 
 		if (true || (taskInstance == null && getTaskInstanceId() != null)) {
@@ -149,6 +147,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		assign(userId);
 	}
 
+	@Transactional(readOnly = false)
 	public void assign(final int userId) {
 
 		try {
@@ -173,6 +172,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		}
 	}
 
+	@Transactional(readOnly = true)
 	public User getAssignedTo() {
 
 		try {
@@ -212,6 +212,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		}
 	}
 
+	@Transactional(readOnly = false)
 	public void start(final int userId) {
 
 		try {
@@ -241,6 +242,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		submit(view, true);
 	}
 
+	@Transactional(readOnly = false)
 	public void submit(final ViewSubmission viewSubmission,
 			final boolean proceedProcess) {
 
@@ -270,6 +272,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		});
 	}
 
+	@Transactional(readOnly = false)
 	protected void submitVariablesAndProceedProcess(TaskInstance ti,
 			Map<String, Object> variables, boolean proceed) {
 
@@ -318,6 +321,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		return loadView(true);
 	}
 
+	@Transactional(readOnly = true)
 	protected View loadView(final boolean loadForDisplay) {
 
 		try {
@@ -345,73 +349,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 							if (taskInstance.getPriority() == PRIORITY_SHARED_TASK) {
 
-								if (true) {
-									taskInstanceId = createSharedTask(context,
-											taskInstance);
-								} else {
-
-									// forever task. The original task instance
-									// is
-									// kept
-									// intact, while new token and task
-									// instances
-									// are created
-
-									Token currentToken = taskInstance
-											.getToken();
-
-									String keepMeAliveTknName = "KeepMeAlive";
-									Token keepMeAliveTkn = currentToken
-											.getChild(keepMeAliveTknName);
-
-									if (keepMeAliveTkn == null) {
-
-										keepMeAliveTkn = new Token(
-												currentToken,
-												keepMeAliveTknName);
-
-										context.save(keepMeAliveTkn);
-									}
-
-									// providing millis as token unique
-									// identifier
-									// for
-									// parent.
-									// This is needed, because parent holds
-									// children
-									// tokens
-									// in the map where key is token name
-									Token individualInstanceToken = new Token(
-											currentToken,
-											"sharedTask_"
-											// + taskInstance.getTask()
-													// .getName()
-													+ System
-															.currentTimeMillis());
-
-									context.save(individualInstanceToken);
-
-									taskInstance = taskInstance
-											.getTaskMgmtInstance()
-											.createTaskInstance(
-													taskInstance.getTask(),
-													individualInstanceToken);
-
-									// TODO: populate token with
-									// currentToken.getParent()
-									// variables
-
-									// setting hidden priority, so the task
-									// wouldn't
-									// appear
-									// in the tasks list
-									taskInstance.setPriority(PRIORITY_HIDDEN);
-
-									// System.out.println("__saving in asdasd");
-									// context.save(taskInstance);
-
-									taskInstanceId = taskInstance.getId();
-								}
+								taskInstanceId = createSharedTask(context,
+										taskInstance);
 							}
 						}
 
@@ -451,7 +390,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		}
 	}
 
-	private Long createSharedTask(JbpmContext context, TaskInstance taskInstance) {
+	@Transactional(readOnly = false)
+	Long createSharedTask(JbpmContext context, TaskInstance taskInstance) {
 
 		// forever task. The original task instance is
 		// kept
@@ -560,15 +500,18 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			name = names.get(locale);
 		else {
 
-			List<String> preferred = new ArrayList<String>(1);
-			preferred.add(XFormsView.VIEW_TYPE);
-
-			View taskInstanceView = getView();
-			name = taskInstanceView.getDisplayName(locale);
+			name = getNameFromView(locale);
 			names.put(locale, name);
 		}
 
 		return name;
+	}
+
+	@Transactional(readOnly = true)
+	String getNameFromView(Locale locale) {
+
+		View taskInstanceView = getView();
+		return taskInstanceView.getDisplayName(locale);
 	}
 
 	public void setTaskRolePermissions(Role role,
@@ -612,6 +555,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		this.variablesHandler = variablesHandler;
 	}
 
+	@Transactional(readOnly = false)
 	public BinaryVariable addAttachment(Variable variable, String fileName,
 			String description, InputStream is) {
 
@@ -657,6 +601,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		return uploadedResourceResolver;
 	}
 
+	@Transactional(readOnly = true)
 	public List<BinaryVariable> getAttachments() {
 
 		List<BinaryVariable> variableList = getVariablesHandler()
@@ -682,6 +627,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		return returnList;
 	}
 
+	@Transactional(readOnly = true)
 	public BinaryVariable getAttachment(Variable variable) {
 
 		for (BinaryVariable binaryVariable : getAttachments()) {
@@ -694,6 +640,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		return null;
 	}
 
+	@Transactional(readOnly = true)
 	public boolean isSignable() {
 		Map<String, Object> variablesMap = getVariablesHandler()
 				.populateVariables(getTaskInstanceId());
@@ -711,6 +658,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		this.processManager = processManager;
 	}
 
+	@Transactional(readOnly = true)
 	public ProcessInstanceW getProcessInstanceW() {
 
 		return getProcessManager().getProcessInstance(

@@ -39,7 +39,7 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.15 $ Last modified: $Date: 2009/02/05 13:44:47 $ by $Author: donatas $
+ * @version $Revision: 1.16 $ Last modified: $Date: 2009/02/06 18:59:35 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPDW")
@@ -90,7 +90,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		});
 	}
 	
-	@Transactional(readOnly = true)
+	@Transactional(readOnly = false)
 	public void startProcess(final ViewSubmission viewSubmission) {
 		
 		Long processDefinitionId = viewSubmission.getProcessDefinitionId();
@@ -143,7 +143,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		}
 	}
 	
-	@Transactional(readOnly = true)
+	@Transactional(readOnly = false)
 	public View loadInitView(Integer initiatorId) {
 		
 		try {
@@ -205,7 +205,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	public void setRolesCanStartProcess(List<String> roles, Object context) {
 	}
 	
-	@Transactional(readOnly = true)
+	@Transactional(readOnly = false)
 	protected void submitVariablesAndProceedProcess(TaskInstance ti,
 	        Map<String, Object> variables, boolean proceed) {
 		
