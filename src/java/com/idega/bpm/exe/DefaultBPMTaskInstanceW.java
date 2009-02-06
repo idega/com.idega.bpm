@@ -60,9 +60,9 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.35 $
+ * @version $Revision: 1.36 $
  * 
- *          Last modified: $Date: 2009/02/06 18:59:35 $ by $Author: civilis $
+ *          Last modified: $Date: 2009/02/06 22:11:28 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -514,6 +514,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		return taskInstanceView.getDisplayName(locale);
 	}
 
+	@Transactional(readOnly = false)
 	public void setTaskRolePermissions(Role role,
 			boolean setSameForAttachments, String variableIdentifier) {
 
