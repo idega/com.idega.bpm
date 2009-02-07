@@ -60,12 +60,13 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.36 $
+ * @version $Revision: 1.37 $
  * 
- *          Last modified: $Date: 2009/02/06 22:11:28 $ by $Author: civilis $
+ *          Last modified: $Date: 2009/02/07 18:21:09 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
+@Transactional(readOnly = false)
 public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	private static final String allowSigningVariableRepresentation = "system_allowSigning";
