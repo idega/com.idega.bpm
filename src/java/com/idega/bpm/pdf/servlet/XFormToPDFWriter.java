@@ -13,10 +13,12 @@ import org.apache.webdav.lib.WebdavResource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.idega.block.form.business.FormConverterToPDF;
+import com.idega.block.form.data.dao.XFormsDAO;
 import com.idega.bpm.BPMConstants;
 import com.idega.business.IBOLookup;
 import com.idega.business.IBOLookupException;
 import com.idega.core.file.util.MimeTypeUtil;
+import com.idega.idegaweb.IWMainApplication;
 import com.idega.io.DownloadWriter;
 import com.idega.io.MediaWritable;
 import com.idega.jbpm.exe.BPMFactory;
@@ -28,16 +30,19 @@ import com.idega.util.CoreConstants;
 import com.idega.util.FileUtil;
 import com.idega.util.StringUtil;
 import com.idega.util.expression.ELUtil;
+import com.idega.xformsmanager.business.DocumentManagerFactory;
+import com.idega.xformsmanager.business.Form;
 import com.idega.xformsmanager.business.PersistenceManager;
 import com.idega.xformsmanager.business.Submission;
 import com.idega.xformsmanager.business.XFormPersistenceType;
+import com.idega.xformsmanager.component.beans.LocalizedStringBean;
 
 /**
  * Downloads PDF for provided XForm
  * @author <a href="mailto:valdas@idega.com>Valdas Žemaitis</a>
  * Created: 2008.05.10
- * @version $Revision: 1.8 $
- * Last modified: $Date: 2009/02/12 09:08:27 $ by $Author: valdas $
+ * @version $Revision: 1.9 $
+ * Last modified: $Date: 2009/02/12 13:57:35 $ by $Author: valdas $
  */
 public class XFormToPDFWriter extends DownloadWriter implements MediaWritable { 
 	
@@ -45,6 +50,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	public static final String TASK_INSTANCE_ID_PARAMETER = "taskInstanceId";
 	public static final String PATH_IN_SLIDE_PARAMETER = "pathInSlideForXFormPDF";
 	public static final String XFORM_SUBMISSION_ID_PARAMETER = "XFormSubmitionId";
+	public static final String XFORM_SUBMISSION_UNIQUE_ID_PARAMETER = "XFormSubmissionUniqueId";
 	public static final String DO_NOT_CHECK_EXISTENCE_OF_XFORM_IN_PDF_PARAMETER = "doNotCheckExistence";
 	
 	private static final Logger LOGGER = Logger.getLogger(XFormToPDFWriter.class.getName());
@@ -61,34 +67,40 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	@Autowired
 	private FormConverterToPDF formConverter;
 	
+	@Autowired
+	private XFormsDAO xformsDAO;
+	
+	@Autowired
+	private DocumentManagerFactory documentManager;
+	
 	@Override
 	public void init(HttpServletRequest req, IWContext iwc) {
 		String taskInstanceId = iwc.getParameter(TASK_INSTANCE_ID_PARAMETER);
 		String formId = iwc.getParameter(XFORM_ID_PARAMETER);
 		String formSubmissionId = iwc.getParameter(XFORM_SUBMISSION_ID_PARAMETER);
+		String formSubmissionUniqueId = iwc.getParameter(XFORM_SUBMISSION_UNIQUE_ID_PARAMETER);
 		
 		String pdfName = null;
 		String pathInSlide = null;
 		
-		if (taskInstanceId == null && formId == null && formSubmissionId == null) {
+		if (taskInstanceId == null && formId == null && formSubmissionId == null && formSubmissionUniqueId == null) {
 			LOGGER.log(Level.SEVERE, "Do not know what to download: taskInstanceId, formId and formSubmitionId are nulls");
 			return;
 		}
-		if (!StringUtil.isEmpty(formSubmissionId)) {
-			if (getPersistenceManager() == null) {
-				LOGGER.log(Level.SEVERE, "Unable to get instance of: " + PersistenceManager.class.getName());
-				return;
-			}
-			Submission xformSubmition = null;
-			xformSubmition = getPersistenceManager().getSubmission(Long.valueOf(formSubmissionId));
-			if (xformSubmition == null) {
+		if (!StringUtil.isEmpty(formSubmissionId) || !StringUtil.isEmpty(formSubmissionUniqueId)) {
+			Submission submission = null;
+			try {
+				submission = getFormSubmission(formSubmissionId, formSubmissionUniqueId);
+			} catch (Exception e) {
 				LOGGER.log(Level.SEVERE, "Unable to get instance of XForm submition by id: " + formSubmissionId);
+			}
+			if (submission == null) {
 				return;
 			}
 			
-			pdfName = xformSubmition.getXform().getDisplayName();
-			pathInSlide = xformSubmition.getSubmissionStorageIdentifier();
-			formSubmissionId = xformSubmition.getSubmissionUUID();	//	Using unique ID
+			pdfName = getLocalizedFormName(submission, iwc.getCurrentLocale());
+			pathInSlide = submission.getSubmissionStorageIdentifier();
+			formSubmissionId = submission.getSubmissionUUID();	//	Using unique ID
 		}
 		
 		if (!StringUtil.isEmpty(taskInstanceId)) {
@@ -253,6 +265,38 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 		
 		return new StringBuilder(taskName).append(CoreConstants.MINUS).append(caseIdentifier).toString();
 	}
+	
+	private String getLocalizedFormName(Submission submission, Locale locale) {
+		Form form = null;
+		try {
+			form = submission.getXform();
+		} catch(Exception e) {
+			LOGGER.log(Level.SEVERE, "Error getting XForm!", e);
+		}
+		if (form == null) {
+			return "Unknown";
+		}
+		
+		LocalizedStringBean title = null;
+		try {
+			title = getDocumentManager().newDocumentManager(IWMainApplication.getDefaultIWMainApplication()).openFormLazy(form.getFormId()).getFormTitle();
+		} catch(Exception e) {
+			LOGGER.log(Level.WARNING, "Error getting localized title for form: " + form.getFormId(), e);
+		}
+		
+		return title == null ? form.getDisplayName() : title.getString(locale);
+	}
+	
+	private Submission getFormSubmission(String formSubmissionId, String formSubmissionUniqueId) throws Exception {
+		if (!StringUtil.isEmpty(formSubmissionId)) {
+			if (getPersistenceManager() == null) {
+				return null;
+			}
+			return getPersistenceManager().getSubmission(Long.valueOf(formSubmissionId));
+		}
+		
+		return getXformsDAO().getSubmissionBySubmissionUUID(formSubmissionUniqueId);
+	}
 
 	public FormConverterToPDF getFormConverter() {
 		if (formConverter == null) {
@@ -267,6 +311,36 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 
 	public void setFormConverter(FormConverterToPDF formConverter) {
 		this.formConverter = formConverter;
+	}
+
+	public XFormsDAO getXformsDAO() {
+		if (xformsDAO == null) {
+			try {
+				ELUtil.getInstance().autowire(this);
+			} catch(Exception e) {
+				LOGGER.log(Level.SEVERE, "Error getting Spring bean: " + XFormsDAO.class, e);
+			}
+		}
+		return xformsDAO;
+	}
+
+	public void setXformsDAO(XFormsDAO xformsDAO) {
+		this.xformsDAO = xformsDAO;
+	}
+
+	public DocumentManagerFactory getDocumentManager() {
+		if (documentManager == null) {
+			try {
+				ELUtil.getInstance().autowire(this);
+			} catch(Exception e) {
+				LOGGER.log(Level.SEVERE, "Error getting Spring bean: " + DocumentManagerFactory.class, e);
+			}
+		}
+		return documentManager;
+	}
+
+	public void setDocumentManager(DocumentManagerFactory documentManager) {
+		this.documentManager = documentManager;
 	}
 
 }
