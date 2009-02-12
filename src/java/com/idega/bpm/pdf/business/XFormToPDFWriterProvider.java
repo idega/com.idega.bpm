@@ -16,4 +16,8 @@ public class XFormToPDFWriterProvider implements PDFWriterProvider {
 		return XFormToPDFWriter.class;
 	}
 
+	public String getFormSubmissionUniqueIdParameterName() {
+		return XFormToPDFWriter.XFORM_SUBMISSION_UNIQUE_ID_PARAMETER;
+	}
+
 }
