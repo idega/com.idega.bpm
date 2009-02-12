@@ -3,19 +3,17 @@ package com.idega.bpm.pdf.servlet;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.rmi.RemoteException;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.httpclient.HttpException;
 import org.apache.webdav.lib.WebdavResource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.idega.block.form.business.FormConverterToPDF;
 import com.idega.bpm.BPMConstants;
-import com.idega.bpm.pdf.business.ProcessTaskInstanceConverterToPDF;
 import com.idega.business.IBOLookup;
 import com.idega.business.IBOLookupException;
 import com.idega.core.file.util.MimeTypeUtil;
@@ -38,8 +36,8 @@ import com.idega.xformsmanager.business.XFormPersistenceType;
  * Downloads PDF for provided XForm
  * @author <a href="mailto:valdas@idega.com>Valdas Žemaitis</a>
  * Created: 2008.05.10
- * @version $Revision: 1.7 $
- * Last modified: $Date: 2009/01/26 11:08:40 $ by $Author: valdas $
+ * @version $Revision: 1.8 $
+ * Last modified: $Date: 2009/02/12 09:08:27 $ by $Author: valdas $
  */
 public class XFormToPDFWriter extends DownloadWriter implements MediaWritable { 
 	
@@ -49,7 +47,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	public static final String XFORM_SUBMISSION_ID_PARAMETER = "XFormSubmitionId";
 	public static final String DO_NOT_CHECK_EXISTENCE_OF_XFORM_IN_PDF_PARAMETER = "doNotCheckExistence";
 	
-	private static final Logger logger = Logger.getLogger(XFormToPDFWriter.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(XFormToPDFWriter.class.getName());
 	
 	private WebdavResource resourceInPDF = null;
 	
@@ -60,34 +58,37 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	@Autowired(required = false)
 	private BPMFactory bpmFactory;
 	
+	@Autowired
+	private FormConverterToPDF formConverter;
+	
 	@Override
 	public void init(HttpServletRequest req, IWContext iwc) {
 		String taskInstanceId = iwc.getParameter(TASK_INSTANCE_ID_PARAMETER);
 		String formId = iwc.getParameter(XFORM_ID_PARAMETER);
-		String formSubmitionId = iwc.getParameter(XFORM_SUBMISSION_ID_PARAMETER);
+		String formSubmissionId = iwc.getParameter(XFORM_SUBMISSION_ID_PARAMETER);
 		
 		String pdfName = null;
 		String pathInSlide = null;
 		
-		if (taskInstanceId == null && formId == null && formSubmitionId == null) {
-			logger.log(Level.SEVERE, "Do not know what to download: taskInstanceId, formId and formSubmitionId are nulls");
+		if (taskInstanceId == null && formId == null && formSubmissionId == null) {
+			LOGGER.log(Level.SEVERE, "Do not know what to download: taskInstanceId, formId and formSubmitionId are nulls");
 			return;
 		}
-		if (!StringUtil.isEmpty(formSubmitionId)) {
+		if (!StringUtil.isEmpty(formSubmissionId)) {
 			if (getPersistenceManager() == null) {
-				logger.log(Level.SEVERE, "Unable to get instance of: " + PersistenceManager.class.getName());
+				LOGGER.log(Level.SEVERE, "Unable to get instance of: " + PersistenceManager.class.getName());
 				return;
 			}
 			Submission xformSubmition = null;
-			xformSubmition = getPersistenceManager().getSubmission(Long.valueOf(formSubmitionId));
+			xformSubmition = getPersistenceManager().getSubmission(Long.valueOf(formSubmissionId));
 			if (xformSubmition == null) {
-				logger.log(Level.SEVERE, "Unable to get instance of XForm submition by id: " + formSubmitionId);
+				LOGGER.log(Level.SEVERE, "Unable to get instance of XForm submition by id: " + formSubmissionId);
 				return;
 			}
 			
 			pdfName = xformSubmition.getXform().getDisplayName();
 			pathInSlide = xformSubmition.getSubmissionStorageIdentifier();
-			formSubmitionId = xformSubmition.getSubmissionUUID();	//	Using unique ID
+			formSubmissionId = xformSubmition.getSubmissionUUID();	//	Using unique ID
 		}
 		
 		if (!StringUtil.isEmpty(taskInstanceId)) {
@@ -99,7 +100,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 				pathInSlide = iwc.getParameter(PATH_IN_SLIDE_PARAMETER);
 			
 				if (pathInSlide == null || CoreConstants.EMPTY.equals(pathInSlide)) {
-					logger.log(Level.SEVERE, "Unknown path for resource in Slide");
+					LOGGER.log(Level.SEVERE, "Unknown path for resource in Slide");
 					return;
 				}
 			}
@@ -113,19 +114,14 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			checkExistence = Boolean.valueOf(iwc.getParameter(DO_NOT_CHECK_EXISTENCE_OF_XFORM_IN_PDF_PARAMETER));
 		}
 		
-		ProcessTaskInstanceConverterToPDF pdfGenerator = null;
-		try {
-			pdfGenerator = ELUtil.getInstance().getBean(ProcessTaskInstanceConverterToPDF.STRING_BEAN_IDENTIFIER);
-		} catch(Exception e) {
-			logger.log(Level.SEVERE, "Error getting Spring bean!", e);
-		}
-		if (pdfGenerator == null) {
+		FormConverterToPDF formConverter = getFormConverter();
+		if (formConverter == null) {
 			return;
 		}
 		
-		String pathToPdf = pdfGenerator.getGeneratedPDFFromXForm(taskInstanceId, formId, formSubmitionId, pathInSlide, pdfName, checkExistence);
+		String pathToPdf = formConverter.getGeneratedPDFFromXForm(taskInstanceId, formId, formSubmissionId, pathInSlide, pdfName, checkExistence);
 		if (StringUtil.isEmpty(pathToPdf)) {
-			logger.log(Level.SEVERE, "PDF from XForm was not generated!");
+			LOGGER.log(Level.SEVERE, "PDF from XForm was not generated!");
 			return;
 		}
 		
@@ -133,14 +129,14 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 		try {
 			slide = (IWSlideService) IBOLookup.getServiceInstance(iwc, IWSlideService.class);
 		} catch (IBOLookupException e) {
-			logger.log(Level.SEVERE, "Error getting IWSlideService!", e);
+			LOGGER.log(Level.SEVERE, "Error getting IWSlideService!", e);
 		}
 		if (slide == null) {
 			return;
 		}
 		
 		if (!setResource(slide, pathToPdf)) {
-			logger.log(Level.SEVERE, "Error reading PDF document: " + pathToPdf);
+			LOGGER.log(Level.SEVERE, "Error reading PDF document: " + pathToPdf);
 			return;
 		}
 		if (resourceInPDF == null || !resourceInPDF.exists()) {
@@ -153,12 +149,8 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	private boolean setResource(IWSlideService slide, String pathToPDF) {
 		try {
 			resourceInPDF = slide.getWebdavResourceAuthenticatedAsRoot(pathToPDF);
-		} catch (HttpException e) {
-			e.printStackTrace();
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Error getting resource: " + pathToPDF, e);
 		}
 		
 		return resourceInPDF == null ? false : true;
@@ -167,7 +159,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	@Override
 	public void writeTo(OutputStream streamOut) throws IOException {
 		if (resourceInPDF == null) {
-			logger.log(Level.SEVERE, "Unable to get resource: " + resourceInPDF.getName());
+			LOGGER.log(Level.SEVERE, "Unable to get resource: " + resourceInPDF.getName());
 			return;
 		}
 		
@@ -189,7 +181,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			try {
 				ELUtil.getInstance().autowire(this);
 			} catch(Exception e) {
-				e.printStackTrace();
+				LOGGER.log(Level.SEVERE, "Error getting Spring bean: " + PersistenceManager.class, e);
 			}
 		}
 		return persistenceManager;
@@ -204,7 +196,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			try {
 				ELUtil.getInstance().autowire(this);
 			} catch(Exception e) {
-				e.printStackTrace();
+				LOGGER.log(Level.SEVERE, "Error getting Spring bean: " + BPMFactory.class, e);
 			}
 		}
 		return bpmFactory;
@@ -227,7 +219,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 		try {
 			taskInstance = Long.valueOf(taskInstanceId);
 		} catch(NumberFormatException e) {
-			logger.log(Level.WARNING, "Error converting task instance ID from String to Long: " + taskInstanceId, e);
+			LOGGER.log(Level.WARNING, "Error converting task instance ID from String to Long: " + taskInstanceId, e);
 		}
 		if (taskInstance == null) {
 			return null;
@@ -245,7 +237,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 				return null;
 			
 		} catch(Exception e) {
-			logger.log(Level.WARNING, "Error getting name for task instance by ID: " + taskInstance + " and locale: " + locale, e);
+			LOGGER.log(Level.WARNING, "Error getting name for task instance by ID: " + taskInstance + " and locale: " + locale, e);
 			return null;
 		}
 		
@@ -253,13 +245,28 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 		try {
 			caseIdentifier = tiw.getProcessInstanceW().getProcessIdentifier();
 		} catch(Exception e) {
-			logger.log(Level.WARNING, "Error getting case identifier for task instance: " + taskInstanceId, e);
+			LOGGER.log(Level.WARNING, "Error getting case identifier for task instance: " + taskInstanceId, e);
 		}
 		if (StringUtil.isEmpty(caseIdentifier)) {
 			return taskName;
 		}
 		
 		return new StringBuilder(taskName).append(CoreConstants.MINUS).append(caseIdentifier).toString();
+	}
+
+	public FormConverterToPDF getFormConverter() {
+		if (formConverter == null) {
+			try {
+				ELUtil.getInstance().autowire(this);
+			} catch(Exception e) {
+				LOGGER.log(Level.SEVERE, "Error getting Spring bean: " + FormConverterToPDF.class, e);
+			}
+		}
+		return formConverter;
+	}
+
+	public void setFormConverter(FormConverterToPDF formConverter) {
+		this.formConverter = formConverter;
 	}
 
 }

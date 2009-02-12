@@ -3,6 +3,13 @@
 
 <dwr>
 	<allow>
+		<create creator="jsf" javascript="PDFGeneratorFromProcess">
+            <param name="managedBeanName" value="processTaskInstanceConverterToPDF" />
+            <param name="class" value="com.idega.bpm.pdf.business.FormConverterToPDFBean" />
+            <include method="getGeneratedPDFFromXForm" />
+            <include method="getHashValueForGeneratedPDFFromXForm" />
+        </create>
+	
     	<convert match="com.idega.bpm.bean.CasesBPMAssetProperties" converter="bean" />
 	</allow>
 	<signatures>
