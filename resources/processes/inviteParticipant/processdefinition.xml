@@ -2,8 +2,22 @@
 
 <process-definition
   xmlns=""  name="participantInvitation">
+  
    <start-state name="start">
-      <transition name="toCreateBpmUser" to="createBpmUser"></transition>
+	   <event type="node-leave">
+	    <script>
+	        <expression>
+	                if(mainProcessInstanceId == null) {
+	                
+	                //  this is backward compatibility because of late binding
+	                    mainProcessInstanceId = sendFromProcessInstanceId;
+	                }
+	        </expression>
+	        <variable name='mainProcessInstanceId' access='read,write' />
+	        <variable name='sendFromProcessInstanceId' access='read' />
+	    </script>
+	  </event>
+      <transition to="createBpmUser"></transition>
    </start-state>
    <node name="sendInvitation">
       <event type="node-enter">
@@ -12,7 +26,7 @@
 				<propertyMap key-type='java.lang.String' value-type='java.lang.String'>
 			        <entry><key>message</key><value>#{participantInvitationMessage}</value></entry>
 					<entry><key>userData</key><value>#{participantUserData}</value></entry>
-			        <entry><key>processInstanceId</key><value>#{sendFromProcessInstanceId}</value></entry>
+			        <entry><key>processInstanceId</key><value>#{mainProcessInstanceId}</value></entry>
 			        <entry><key>bpmUserId</key><value>#{bpmUserId}</value></entry>
 			       
 			        <entry>
@@ -53,7 +67,7 @@
 			    </propertyMap>
 			</action>
       </event>
-      <transition name="toEnd" to="end1"></transition>
+      <transition to="end1"></transition>
    </node>
 
 	<node name="createBpmUser">
@@ -61,14 +75,14 @@
 			<action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
 				<handlerName>createBPMUserHandler</handlerName>
 				<propertyMap key-type='java.lang.String' value-type='java.lang.String'>
-					<entry><key>processInstanceId</key><value>#{sendFromProcessInstanceId}</value></entry>
+					<entry><key>processInstanceId</key><value>#{mainProcessInstanceId}</value></entry>
 					<entry><key>userData</key><value>#{participantUserData}</value></entry>
 					<entry><key>roleExpression</key><value>#{participantRoleExpression}</value></entry>
 			        <entry><key>bpmUserIdVariableName</key><value>bpmUserId</value></entry>
 			    </propertyMap>
 			</action>
 		</event>
-		<transition to="sendInvitation" name="toSendInvitation"></transition>
+		<transition to="sendInvitation"></transition>
 	</node>
 
 	<node name="assignRoleToBpmUser">
@@ -76,7 +90,7 @@
 			<action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
 				<handlerName>assignUserToRoleHandler</handlerName>
 				<propertyMap key-type='java.lang.String' value-type='java.lang.String'>
-					<entry><key>processInstanceId</key><value>#{sendFromProcessInstanceId}</value></entry>
+					<entry><key>processInstanceId</key><value>#{mainProcessInstanceId}</value></entry>
 					<entry><key>roleExpression</key><value>#{participantRoleExpression}</value></entry>
 					<entry><key>userId</key><value>#{bpmUserId}</value></entry>
 			    </propertyMap>

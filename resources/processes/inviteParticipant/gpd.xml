@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<root-container name="participantInvitation" width="976" height="837">
+<root-container name="participantInvitation" width="1026" height="662">
   <node name="start" x="226" y="35" width="23" height="24">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="sendInvitation" x="156" y="244" width="130" height="41">
+  <node name="sendInvitation" x="171" y="170" width="130" height="30">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="createBpmUser" x="167" y="104" width="137" height="46">
+  <node name="createBpmUser" x="167" y="104" width="137" height="29">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="assignRoleToBpmUser" x="398" y="188" width="132" height="36"/>
-  <node name="end1" x="203" y="305" width="22" height="24"/>
+  <node name="assignRoleToBpmUser" x="0" y="0" width="132" height="36"/>
+  <node name="end1" x="0" y="0" width="132" height="36"/>
 </root-container>
