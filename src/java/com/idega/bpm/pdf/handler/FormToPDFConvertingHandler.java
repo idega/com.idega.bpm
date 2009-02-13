@@ -15,8 +15,8 @@ public class FormToPDFConvertingHandler implements ActionHandler {
 	/**
      * 
      */
-    private static final long serialVersionUID = 7681983044074871629L;
-    
+	private static final long serialVersionUID = 7681983044074871629L;
+	
 	private String taskInstanceId;
 	private String pdfName;
 	
@@ -24,35 +24,32 @@ public class FormToPDFConvertingHandler implements ActionHandler {
 	private FormConverterToPDF formConverterToPDF;
 	
 	public void execute(ExecutionContext executionContext) throws Exception {
-		getFormConverterToPDF().getHashValueForGeneratedPDFFromXForm(taskInstanceId, true,getPdfName());
+		getFormConverterToPDF().getHashValueForGeneratedPDFFromXForm(
+		    taskInstanceId, true, getPdfName());
 	}
 	
 	public String getTaskInstanceId() {
 		return taskInstanceId;
 	}
-
+	
 	public FormConverterToPDF getFormConverterToPDF() {
-    	return formConverterToPDF;
-    }
-
+		return formConverterToPDF;
+	}
+	
 	public String getPdfName() {
 		return pdfName;
 	}
-	
 	
 	public void setTaskInstanceId(String taskInstanceId) {
 		this.taskInstanceId = taskInstanceId;
 	}
 	
-	
-	
 	public void setPdfName(String pdfName) {
 		this.pdfName = pdfName;
 	}
-
-
+	
 	public void setFormConverterToPDF(FormConverterToPDF formConverterToPDF) {
-    	this.formConverterToPDF = formConverterToPDF;
-    }
+		this.formConverterToPDF = formConverterToPDF;
+	}
 	
 }
