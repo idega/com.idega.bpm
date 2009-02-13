@@ -57,12 +57,13 @@ import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
+import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.37 $
+ * @version $Revision: 1.38 $
  * 
- *          Last modified: $Date: 2009/02/07 18:21:09 $ by $Author: civilis $
+ *          Last modified: $Date: 2009/02/13 16:53:14 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -617,7 +618,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		for (BinaryVariable variable : variableList) {
 			try {
 				Permission permission = getPermissionsFactory()
-						.getTaskVariableViewPermission(true, getTaskInstance(),
+						.getTaskInstanceVariableViewPermission(true,
+								getTaskInstance(),
 								variable.getHash().toString());
 				rolesManager.checkPermission(permission);
 				returnList.add(variable);
@@ -669,5 +671,27 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	public PermissionsFactory getPermissionsFactory() {
 		return permissionsFactory;
+	}
+
+	public Collection<Role> getRolesPermissions() {
+
+		Collection<Role> roles = getBpmFactory().getRolesManager()
+				.getRolesPermissionsForTaskInstance(getTaskInstanceId(), null);
+
+		return roles;
+	}
+
+	public Collection<Role> getAttachmentRolesPermissions(
+			String attachmentHashValue) {
+
+		if (StringUtil.isEmpty(attachmentHashValue))
+			throw new IllegalArgumentException(
+					"Attachment hash value not provided");
+
+		Collection<Role> roles = getBpmFactory().getRolesManager()
+				.getRolesPermissionsForTaskInstance(getTaskInstanceId(),
+						attachmentHashValue);
+
+		return roles;
 	}
 }
