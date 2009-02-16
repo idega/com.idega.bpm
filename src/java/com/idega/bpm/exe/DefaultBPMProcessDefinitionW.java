@@ -39,7 +39,7 @@ import com.idega.util.CoreConstants;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.16 $ Last modified: $Date: 2009/02/06 18:59:35 $ by $Author: civilis $
+ * @version $Revision: 1.17 $ Last modified: $Date: 2009/02/16 22:02:37 $ by $Author: donatas $
  */
 @Scope("prototype")
 @Service("defaultPDW")
@@ -82,6 +82,38 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 					Variable variable = Variable
 					        .parseDefaultStringRepresentation(variableAccess
 					                .getVariableName());
+					variables.add(variable);
+				}
+				
+				return variables;
+			}
+		});
+	}
+	
+	@Transactional(readOnly = true)
+	public List<Variable> getTaskVariableWithAccessesList(final String taskName) {
+		
+		return getBpmContext().execute(new JbpmCallback() {
+			
+			public Object doInJbpm(JbpmContext context) throws JbpmException {
+				ProcessDefinition pdef = getProcessDefinition();
+				Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
+				TaskController tiController = task.getTaskController();
+				
+				if (tiController == null)
+					return null;
+				
+				@SuppressWarnings("unchecked")
+				List<VariableAccess> variableAccesses = tiController
+				        .getVariableAccesses();
+				ArrayList<Variable> variables = new ArrayList<Variable>(
+				        variableAccesses.size());
+				
+				for (VariableAccess variableAccess : variableAccesses) {
+					
+					Variable variable = Variable
+					        .parseDefaultStringRepresentationWithAccess(variableAccess
+					                .getVariableName(), variableAccess.getAccess().toString());
 					variables.add(variable);
 				}
 				
