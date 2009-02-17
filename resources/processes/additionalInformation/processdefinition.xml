@@ -37,8 +37,8 @@
             </propertyMap>
          </assignment>
          <controller>
-            <variable name="string_additionalInformationRequestText" access="read,write,required"></variable>
-            <variable name="files_additionalInformationRequestAttachments"></variable>
+            <variable name="string_additionalInformationRequestText" access="write,required"></variable>
+            <variable name="files_additionalInformationRequestAttachments" access="write"></variable>
          </controller>
       </task>
 		<transition to="sendMessage"></transition>
@@ -95,8 +95,8 @@
          </assignment>
          <controller>
             <variable name="string_additionalInformationRequestText" access="read"></variable>
-            <variable name="string_additionalInformation" access="read,write,required"></variable>
-            <variable name="files_additionalAttachments"></variable>
+            <variable name="string_additionalInformation" access="write,required"></variable>
+            <variable name="files_additionalAttachments" access="write"></variable>
          </controller>
       </task>
 	  <transition to="end-state1"></transition>
