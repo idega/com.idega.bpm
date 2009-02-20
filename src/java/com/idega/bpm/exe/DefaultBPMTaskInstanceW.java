@@ -61,9 +61,9 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.38 $
+ * @version $Revision: 1.39 $
  * 
- *          Last modified: $Date: 2009/02/13 16:53:14 $ by $Author: civilis $
+ *          Last modified: $Date: 2009/02/20 14:27:58 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -565,8 +565,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		String filesFolder = getTaskInstanceId() + System.currentTimeMillis()
 				+ CoreConstants.SLASH;
 
-		getFileUploadManager().uploadToTmpDir(filesFolder, fileName, is,
-				getUploadedResourceResolver());
+		getUploadedResourceResolver().uploadToTmpLocation(filesFolder, fileName, is);
 
 		Collection<URI> uris = getFileUploadManager().getFilesUris(filesFolder,
 				null, getUploadedResourceResolver());
