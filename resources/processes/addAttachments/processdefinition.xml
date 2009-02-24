@@ -9,8 +9,8 @@
    <!-- priority -1 means it's a forever task -->
       <task name="addAttachmentTask" priority="-1">
          <controller>
-            <variable name="string_description" access="read,write"></variable>
-            <variable name="files_attachments" access="read,write"></variable>
+            <variable name="string_description" access="write"></variable>
+            <variable name="files_attachments" access="write"></variable>
          </controller>
       	  <assignment class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
 			<handlerName>jsonAssignmentHandler</handlerName>
