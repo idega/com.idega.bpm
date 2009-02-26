@@ -243,6 +243,7 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		if (!pdfName.endsWith(".pdf")) {
 			pdfName = new StringBuilder(pdfName).append(".pdf").toString();
 		}
+		pdfName = StringUtil.escapeFileNameSpecialCharacters(pdfName);
 		String pathToForm = new StringBuilder(pathInSlide).append(pdfName)
 		        .toString();
 		
