@@ -36,9 +36,10 @@
                     </entry>
             </propertyMap>
          </assignment>
-         <controller>
-            <variable name="string_additionalInformationRequestText" access="write,required"></variable>
-            <variable name="files_additionalInformationRequestAttachments" access="write"></variable>
+         <controller class="com.idega.jbpm.proxy.JbpmHandlerProxy">
+              <handlerName>taskControllerDefault</handlerName>
+              <variable name="string_additionalInformationRequestText" access="write,required"></variable>
+              <variable name="files_additionalInformationRequestAttachments" access="write"></variable>
          </controller>
       </task>
 		<transition to="sendMessage"></transition>
@@ -93,10 +94,11 @@
                 </entry>
             </propertyMap>
          </assignment>
-         <controller>
-            <variable name="string_additionalInformationRequestText" access="read"></variable>
-            <variable name="string_additionalInformation" access="write,required"></variable>
-            <variable name="files_additionalAttachments" access="write"></variable>
+         <controller class="com.idega.jbpm.proxy.JbpmHandlerProxy">
+              <handlerName>taskControllerDefault</handlerName>
+              <variable name="string_additionalInformationRequestText" access="read"></variable>
+              <variable name="string_additionalInformation" access="write,required"></variable>
+              <variable name="files_additionalAttachments" access="write"></variable>
          </controller>
       </task>
 	  <transition to="end-state1"></transition>
@@ -106,7 +108,6 @@
 		<transition to="alwaysLive" name="toAlwaysLive"></transition>
 		<transition to="requestAdditionalInformation" name="toRequestAdditionalInformation"></transition>
 	</fork>
-
 
 	<end-state name="end-state1"></end-state>
 </process-definition>
