@@ -63,7 +63,7 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.21 $ Last modified: $Date: 2009/03/02 15:37:11 $ by $Author: civilis $
+ * @version $Revision: 1.22 $ Last modified: $Date: 2009/03/04 16:11:11 $ by $Author: donatas $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -136,8 +136,8 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 					taskInstances = new ArrayList<TaskInstance>();
 				} else {
 					
-					taskInstances = processInstance.getTaskMgmtInstance()
-					        .getTaskInstances();
+					taskInstances = new ArrayList(processInstance.getTaskMgmtInstance()
+					        .getTaskInstances());
 				}
 				
 				if (!subProcessInstances.isEmpty()) {
