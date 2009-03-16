@@ -54,6 +54,7 @@ import com.idega.jbpm.identity.permission.Access;
 import com.idega.jbpm.identity.permission.BPMTypedPermission;
 import com.idega.jbpm.identity.permission.PermissionsFactory;
 import com.idega.jbpm.rights.Right;
+import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
@@ -63,7 +64,7 @@ import com.idega.util.CoreUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.23 $ Last modified: $Date: 2009/03/16 10:43:03 $ by $Author: civilis $
+ * @version $Revision: 1.24 $ Last modified: $Date: 2009/03/16 10:58:13 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -88,6 +89,8 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	private VariablesHandler variablesHandler;
 	
 	public static final String email_fetch_process_name = "fetchEmails";
+	
+	public static final String add_attachement_process_name = "addAttachments";
 	
 	// private static final String CASHED_TASK_NAMES =
 	// "defaultBPM_taskinstance_names";
@@ -136,8 +139,9 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 					taskInstances = new ArrayList<TaskInstance>();
 				} else {
 					
-					taskInstances = new ArrayList(processInstance.getTaskMgmtInstance()
-					        .getTaskInstances());
+					taskInstances = processInstance.getTaskMgmtInstance()
+					        .getTaskInstances();
+					
 				}
 				
 				if (!subProcessInstances.isEmpty()) {
@@ -669,6 +673,44 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return bpmEmailDocs;
 	}
 	
+	@Transactional(readOnly = true)
+	public List<BinaryVariable> getAttachements() {
+		
+		ArrayList<String> included = new ArrayList<String>(1);
+		included.add(add_attachement_process_name);
+		Collection<TaskInstance> taskInstances = getAllTaskInstancesPRVT(null,
+		    included);
+		
+		List<BinaryVariable> attachements = new ArrayList<BinaryVariable>();
+		
+		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator
+		        .hasNext();) {
+			TaskInstance taskInstance = iterator.next();
+			
+			if (taskInstance.hasEnded()) {
+				
+				try {
+					Permission permission = getPermissionsFactory()
+					        .getTaskInstanceViewPermission(true, taskInstance);
+					getBpmFactory().getRolesManager().checkPermission(
+					    permission);
+					
+				} catch (BPMAccessControlException e) {
+					continue;
+				}
+				
+				attachements
+				        .addAll(getBpmFactory()
+				                .getProcessManagerByTaskInstanceId(
+				                    taskInstance.getId()).getTaskInstance(
+				                    taskInstance).getAttachments());
+				
+			}
+		}
+		
+		return attachements;
+	}
+		
 	@Transactional(readOnly = false)
 	public TaskInstanceW createTask(final String taskName, final long tokenId) {
 		
