@@ -36,6 +36,7 @@ import com.idega.core.file.tmp.TmpFilesManager;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
+import com.idega.jbpm.data.Actor;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessException;
@@ -46,6 +47,7 @@ import com.idega.jbpm.identity.BPMAccessControlException;
 import com.idega.jbpm.identity.BPMUser;
 import com.idega.jbpm.identity.Role;
 import com.idega.jbpm.identity.RolesManager;
+import com.idega.jbpm.identity.permission.Access;
 import com.idega.jbpm.identity.permission.PermissionsFactory;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
@@ -61,7 +63,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.41 $ Last modified: $Date: 2009/02/25 14:19:19 $ by $Author: civilis $
+ * @version $Revision: 1.42 $ Last modified: $Date: 2009/03/16 10:59:12 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -518,6 +520,14 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		    getTaskInstanceId(), setSameForAttachments, variableIdentifier);
 	}
 	
+	@Transactional(readOnly = false)
+	public void setTaskPermissionsForActors(List<Actor> actorsToSetPermissionsTo,List<Access> accesses,
+			boolean setSameForAttachments, String variableIdentifier) {
+
+		getBpmFactory().getRolesManager().setTaskPermissionsTIScopeForActors(
+			actorsToSetPermissionsTo, accesses, getTaskInstanceId(), setSameForAttachments,variableIdentifier);
+	}
+	
 	private IWMainApplication getIWMA() {
 		
 		final IWContext iwc = IWContext.getCurrentInstance();
@@ -686,5 +696,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		            attachmentHashValue);
 		
 		return roles;
+	}
+	
+	public Object getVariable(String variableName){
+		return getVariablesHandler().populateVariables(getTaskInstanceId()).get(variableName);
 	}
 }
