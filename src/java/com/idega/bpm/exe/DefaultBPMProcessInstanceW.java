@@ -61,10 +61,11 @@ import com.idega.user.data.User;
 import com.idega.user.util.UserComparator;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
+import com.idega.util.ListUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.24 $ Last modified: $Date: 2009/03/16 10:58:13 $ by $Author: juozas $
+ * @version $Revision: 1.25 $ Last modified: $Date: 2009/03/16 20:46:47 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -100,11 +101,11 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		
 		// TODO: hide tasks of ended subprocesses
 		
-		return encapsulateInstances(getAllTaskInstancesPRVT());
+		return wrapTaskInstances(getUnfilteredProcessTaskInstances());
 	}
 	
-	Collection<TaskInstance> getAllTaskInstancesPRVT() {
-		return getAllTaskInstancesPRVT(null, null);
+	Collection<TaskInstance> getUnfilteredProcessTaskInstances() {
+		return getProcessTaskInstances(null, null);
 	}
 	
 	/**
@@ -117,7 +118,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	 * @return
 	 */
 	@Transactional(readOnly = true)
-	Collection<TaskInstance> getAllTaskInstancesPRVT(
+	Collection<TaskInstance> getProcessTaskInstances(
 	        final List<String> excludedSubProcessesNames,
 	        final List<String> includedOnlySubProcessesNames) {
 		
@@ -128,9 +129,6 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 				
 				ProcessInstance processInstance = getProcessInstance();
 				
-				List<ProcessInstance> subProcessInstances = getBpmDAO()
-				        .getSubprocessInstancesOneLevel(processInstance.getId());
-				
 				final Collection<TaskInstance> taskInstances;
 				
 				if (includedOnlySubProcessesNames != null) {
@@ -139,45 +137,70 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 					taskInstances = new ArrayList<TaskInstance>();
 				} else {
 					
-					taskInstances = processInstance.getTaskMgmtInstance()
-					        .getTaskInstances();
+					taskInstances = new ArrayList<TaskInstance>(processInstance
+					        .getTaskMgmtInstance().getTaskInstances());
 					
 				}
 				
-				if (!subProcessInstances.isEmpty()) {
-					
-					for (ProcessInstance subProcessInstance : subProcessInstances) {
-						
-						if ((includedOnlySubProcessesNames != null && !includedOnlySubProcessesNames
-						        .contains(subProcessInstance
-						                .getProcessDefinition().getName()))
-						        || (includedOnlySubProcessesNames == null
-						                && excludedSubProcessesNames != null && excludedSubProcessesNames
-						                .contains(subProcessInstance
-						                        .getProcessDefinition()
-						                        .getName()))) {
-							
-							continue;
-						}
-						
-						Collection<TaskInstance> subTaskInstances = subProcessInstance
-						        .getTaskMgmtInstance().getTaskInstances();
-						
-						if(subTaskInstances != null)
-							taskInstances.addAll(subTaskInstances);
-					}
-				}
+				taskInstances.addAll(getSubprocessesTaskInstances(
+				    processInstance, excludedSubProcessesNames,
+				    includedOnlySubProcessesNames));
 				
 				return taskInstances;
 			}
 		});
 	}
 	
+	private boolean isFilterOutProcessInstance(String processName,
+	        final List<String> excludedSubProcessesNames,
+	        final List<String> includedOnlySubProcessesNames) {
+		
+		return (includedOnlySubProcessesNames != null && !includedOnlySubProcessesNames
+		        .contains(processName))
+		        || (includedOnlySubProcessesNames == null
+		                && excludedSubProcessesNames != null && excludedSubProcessesNames
+		                .contains(processName));
+	}
+	
+	private Collection<TaskInstance> getSubprocessesTaskInstances(
+	        ProcessInstance processInstance,
+	        final List<String> excludedSubProcessesNames,
+	        final List<String> includedOnlySubProcessesNames) {
+		
+		List<ProcessInstance> subProcessInstances = getBpmDAO()
+		        .getSubprocessInstancesOneLevel(processInstance.getId());
+		
+		List<TaskInstance> taskInstances;
+		
+		if (!subProcessInstances.isEmpty()) {
+			
+			taskInstances = new ArrayList<TaskInstance>();
+			
+			for (ProcessInstance subProcessInstance : subProcessInstances) {
+				
+				if (!isFilterOutProcessInstance(subProcessInstance
+				        .getProcessDefinition().getName(),
+				    excludedSubProcessesNames, includedOnlySubProcessesNames)) {
+					
+					@SuppressWarnings("unchecked")
+					Collection<TaskInstance> subTaskInstances = subProcessInstance
+					        .getTaskMgmtInstance().getTaskInstances();
+					
+					if (subTaskInstances != null)
+						taskInstances.addAll(subTaskInstances);
+				}
+			}
+		} else
+			taskInstances = Collections.emptyList();
+		
+		return taskInstances;
+	}
+	
 	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getSubmittedTaskInstances(
 	        List<String> excludedSubProcessesNames) {
 		
-		Collection<TaskInstance> taskInstances = getAllTaskInstancesPRVT(
+		Collection<TaskInstance> taskInstances = getProcessTaskInstances(
 		    excludedSubProcessesNames, null);
 		
 		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator
@@ -185,10 +208,11 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			TaskInstance taskInstance = iterator.next();
 			
 			if (!taskInstance.hasEnded())
+				// simply filtering out the not ended task instances
 				iterator.remove();
 		}
 		
-		return encapsulateInstances(taskInstances);
+		return wrapTaskInstances(taskInstances);
 	}
 	
 	@Transactional(readOnly = true)
@@ -199,7 +223,29 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	@Transactional(readOnly = true)
 	public List<BPMDocument> getTaskDocumentsForUser(User user, Locale locale) {
 		
-		List<TaskInstanceW> unfinishedTaskInstances = getAllUnfinishedTaskInstances();
+		System.out.println("_______WTF");
+		
+		try {
+			List<TaskInstanceW> unfinishedTaskInstances = getAllUnfinishedTaskInstances();
+			
+			unfinishedTaskInstances = filterTasksByUserPermission(user,
+			    unfinishedTaskInstances);
+			
+			return getBPMDocuments(unfinishedTaskInstances, locale);
+			
+		} catch (Exception e) {
+			System.out.println("_______EXCEPTION");
+			e.printStackTrace();
+		} catch (Error e) {
+			System.out.println("_______EXCEPTION");
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	private List<TaskInstanceW> filterTasksByUserPermission(User user,
+	        List<TaskInstanceW> unfinishedTaskInstances) {
 		
 		PermissionsFactory permissionsFactory = getBpmFactory()
 		        .getPermissionsFactory();
@@ -225,15 +271,11 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			}
 		}
 		
-		return getBPMDocuments(unfinishedTaskInstances, locale);
+		return unfinishedTaskInstances;
 	}
 	
-	@Transactional(readOnly = true)
-	public List<BPMDocument> getSubmittedDocumentsForUser(User user,
-	        Locale locale) {
-		
-		List<TaskInstanceW> submittedTaskInstances = getSubmittedTaskInstances(Arrays
-		        .asList(email_fetch_process_name));
+	private List<TaskInstanceW> filterDocumentsByUserPermission(User user,
+	        List<TaskInstanceW> submittedTaskInstances) {
 		
 		PermissionsFactory permissionsFactory = getBpmFactory()
 		        .getPermissionsFactory();
@@ -258,7 +300,27 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			}
 		}
 		
-		return getBPMDocuments(submittedTaskInstances, locale);
+		return submittedTaskInstances;
+	}
+	
+	@Transactional(readOnly = true)
+	public List<BPMDocument> getSubmittedDocumentsForUser(User user,
+	        Locale locale) {
+		
+		try {
+			List<TaskInstanceW> submittedTaskInstances = getSubmittedTaskInstances(Arrays
+			        .asList(email_fetch_process_name));
+			
+			submittedTaskInstances = filterDocumentsByUserPermission(user,
+			    submittedTaskInstances);
+			
+			return getBPMDocuments(submittedTaskInstances, locale);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
 	
 	private List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiws,
@@ -335,13 +397,13 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		Collection<TaskInstance> taskInstances = processInstance
 		        .getTaskMgmtInstance().getUnfinishedTasks(rootToken);
 		
-		return encapsulateInstances(taskInstances);
+		return wrapTaskInstances(taskInstances);
 	}
 	
 	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getAllUnfinishedTaskInstances() {
 		
-		Collection<TaskInstance> taskInstances = getAllTaskInstancesPRVT();
+		Collection<TaskInstance> taskInstances = getUnfilteredProcessTaskInstances();
 		
 		// removing hidden, ended task instances, and task insances of ended
 		// processes (i.e. subprocesses)
@@ -355,10 +417,10 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 				iterator.remove();
 		}
 		
-		return encapsulateInstances(taskInstances);
+		return wrapTaskInstances(taskInstances);
 	}
 	
-	private ArrayList<TaskInstanceW> encapsulateInstances(
+	private List<TaskInstanceW> wrapTaskInstances(
 	        Collection<TaskInstance> taskInstances) {
 		ArrayList<TaskInstanceW> instances = new ArrayList<TaskInstanceW>(
 		        taskInstances.size());
@@ -468,7 +530,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			return null;
 		}
 		
-		if (users != null && !users.isEmpty()) {
+		if (!ListUtil.isEmpty(users)) {
 			
 			// using separate list, as the resolved one could be cashed (shared)
 			// and so
@@ -625,20 +687,51 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	}
 	
 	@Transactional(readOnly = true)
-	public List<BPMEmailDocument> getAttachedEmails() {
+	public List<BPMEmailDocument> getAttachedEmails(User user) {
 		
 		ArrayList<String> included = new ArrayList<String>(1);
 		included.add(email_fetch_process_name);
-		Collection<TaskInstance> taskInstances = getAllTaskInstancesPRVT(null,
-		    included);
+		Collection<TaskInstance> emailsTaskInstances = getProcessTaskInstances(
+		    null, included);
 		
-		List<BPMEmailDocument> bpmEmailDocs = new ArrayList<BPMEmailDocument>();
+		emailsTaskInstances = filterEmailsTaskInstances(emailsTaskInstances);
 		
-		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator
+		List<BPMEmailDocument> bpmEmailDocs = new ArrayList<BPMEmailDocument>(
+		        emailsTaskInstances.size());
+		
+		for (TaskInstance emailTaskInstance : emailsTaskInstances) {
+			
+			Map<String, Object> vars = getVariablesHandler().populateVariables(
+			    emailTaskInstance.getId());
+			
+			String subject = (String) vars.get("string_subject");
+			String fromPersonal = (String) vars.get("string_fromPersonal");
+			String fromAddress = (String) vars.get("string_fromAddress");
+			
+			BPMEmailDocument bpmEmailDocument = new BPMEmailDocumentImpl();
+			bpmEmailDocument.setTaskInstanceId(emailTaskInstance.getId());
+			bpmEmailDocument.setSubject(subject);
+			bpmEmailDocument.setFromAddress(fromAddress);
+			bpmEmailDocument.setFromPersonal(fromPersonal);
+			bpmEmailDocument.setEndDate(emailTaskInstance.getEnd());
+			bpmEmailDocument.setDocumentName(emailTaskInstance.getName());
+			bpmEmailDocument.setCreateDate(emailTaskInstance.getCreate());
+			bpmEmailDocs.add(bpmEmailDocument);
+		}
+		
+		return bpmEmailDocs;
+	}
+	
+	Collection<TaskInstance> filterEmailsTaskInstances(
+	        Collection<TaskInstance> emailsTaskInstances) {
+		
+		for (Iterator<TaskInstance> iterator = emailsTaskInstances.iterator(); iterator
 		        .hasNext();) {
 			TaskInstance taskInstance = iterator.next();
 			
-			if (taskInstance.hasEnded()) {
+			if (!taskInstance.hasEnded()) {
+				iterator.remove();
+			} else {
 				
 				try {
 					Permission permission = getPermissionsFactory()
@@ -647,30 +740,12 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 					    permission);
 					
 				} catch (BPMAccessControlException e) {
-					continue;
+					iterator.remove();
 				}
-				
-				Map<String, Object> vars = getVariablesHandler()
-				        .populateVariables(taskInstance.getId());
-				
-				String subject = (String) vars.get("string_subject");
-				String fromPersonal = (String) vars.get("string_fromPersonal");
-				String fromAddress = (String) vars.get("string_fromAddress");
-				
-				BPMEmailDocument bpmEmailDocument = new BPMEmailDocumentImpl();
-				bpmEmailDocument.setTaskInstanceId(taskInstance.getId());
-				bpmEmailDocument.setSubject(subject);
-				bpmEmailDocument.setFromAddress(fromAddress);
-				bpmEmailDocument.setFromPersonal(fromPersonal);
-				bpmEmailDocument.setEndDate(taskInstance.getEnd());
-				bpmEmailDocument.setDocumentName(taskInstance.getName());
-				bpmEmailDocument.setCreateDate(taskInstance.getCreate());
-				bpmEmailDocs.add(bpmEmailDocument);
-				
 			}
 		}
 		
-		return bpmEmailDocs;
+		return emailsTaskInstances;
 	}
 	
 	@Transactional(readOnly = true)
@@ -678,7 +753,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		
 		ArrayList<String> included = new ArrayList<String>(1);
 		included.add(add_attachement_process_name);
-		Collection<TaskInstance> taskInstances = getAllTaskInstancesPRVT(null,
+		Collection<TaskInstance> taskInstances = getProcessTaskInstances(null,
 		    included);
 		
 		List<BinaryVariable> attachements = new ArrayList<BinaryVariable>();
@@ -710,7 +785,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		
 		return attachements;
 	}
-		
+	
 	@Transactional(readOnly = false)
 	public TaskInstanceW createTask(final String taskName, final long tokenId) {
 		
