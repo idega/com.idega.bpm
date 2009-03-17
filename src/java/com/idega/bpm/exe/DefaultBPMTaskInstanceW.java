@@ -63,7 +63,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.42 $ Last modified: $Date: 2009/03/16 10:59:12 $ by $Author: juozas $
+ * @version $Revision: 1.43 $ Last modified: $Date: 2009/03/17 14:17:35 $ by $Author: valdas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -700,5 +700,41 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	
 	public Object getVariable(String variableName){
 		return getVariablesHandler().populateVariables(getTaskInstanceId()).get(variableName);
+	}
+
+	@Transactional(readOnly = false)
+	public Long creatTask(final String tokenName) {
+		return getBpmContext().execute(new JbpmCallback() {
+			public Object doInJbpm(JbpmContext context) throws JbpmException {
+				TaskInstance taskInstance = getTaskInstance();
+				Token currentToken = taskInstance.getToken();
+				
+				Token keepMeAliveTkn = new Token(currentToken, "KeepMeAlive");
+				context.save(keepMeAliveTkn);
+				
+				Token forNewTask = currentToken.findToken(tokenName);
+				TaskInstance newTaskInstance = taskInstance.getTaskMgmtInstance().createTaskInstance(taskInstance.getTask(), forNewTask);
+				return newTaskInstance.getId();
+			}
+		});
+	}
+	
+	@Transactional(readOnly = false)
+	public String submit() {
+		return getBpmContext().execute(new JbpmCallback() {
+			public Object doInJbpm(JbpmContext context) throws JbpmException {
+				TaskInstance taskInstance = getTaskInstance();
+				
+				String newTokenName = taskInstance.getName() + System.currentTimeMillis();
+				Token newToken = new Token(taskInstance.getToken(), newTokenName);
+				context.save(newToken);
+				
+				ViewSubmission taskSubmission = getBpmFactory().getViewSubmission();
+				taskSubmission.setTaskInstanceId(getTaskInstanceId());
+				submit(taskSubmission);
+				
+				return newTokenName;
+			}
+		});
 	}
 }
