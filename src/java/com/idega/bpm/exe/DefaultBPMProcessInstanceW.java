@@ -62,10 +62,11 @@ import com.idega.user.util.UserComparator;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
 import com.idega.util.ListUtil;
+import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.26 $ Last modified: $Date: 2009/03/17 14:34:25 $ by $Author: civilis $
+ * @version $Revision: 1.27 $ Last modified: $Date: 2009/03/17 17:53:41 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -383,17 +384,28 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getAllUnfinishedTaskInstances() {
 		
+		return getUnfinishedTaskInstancesForTask(null);
+	}
+	
+	@Transactional(readOnly = true)
+	public List<TaskInstanceW> getUnfinishedTaskInstancesForTask(String taskName) {
+		
 		Collection<TaskInstance> taskInstances = getUnfilteredProcessTaskInstances();
 		
-		// removing hidden, ended task instances, and task insances of ended
-		// processes (i.e. subprocesses)
+		boolean filterByTaskName = !StringUtil.isEmpty(taskName);
+		
 		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator
 		        .hasNext();) {
 			TaskInstance ti = iterator.next();
 			
+			// removing hidden, ended task instances, and task insances of ended
+			// processes (i.e. subprocesses), also leaving on task for taskName, if taskName
+			// provided
 			if (ti.hasEnded()
 			        || ti.getPriority() == DefaultBPMTaskInstanceW.PRIORITY_HIDDEN
-			        || ti.getProcessInstance().hasEnded())
+			        || ti.getProcessInstance().hasEnded()
+			        || (filterByTaskName && !taskName.equals(ti.getTask()
+			                .getName())))
 				iterator.remove();
 		}
 		
