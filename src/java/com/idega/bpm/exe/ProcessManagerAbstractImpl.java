@@ -9,7 +9,7 @@ import org.jbpm.graph.def.ProcessDefinition;
 import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.idega.block.process.business.CaseManager;
+import com.idega.block.process.business.CasesRetrievalManager;
 import com.idega.block.process.business.CaseManagersProvider;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
@@ -24,7 +24,7 @@ import com.idega.util.ListUtil;
  * instantiates this and proxies the abstract methods, which create wanted bpm wrapper instances
  * 
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $ Last modified: $Date: 2009/03/17 13:59:19 $ by $Author: civilis $
+ * @version $Revision: 1.3 $ Last modified: $Date: 2009/03/17 20:56:09 $ by $Author: civilis $
  */
 public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 	
@@ -146,14 +146,14 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 	
 	// FIXME: wrong place for this, refactor
 	public List<ProcessDefinitionW> getAllProcesses() {
-		List<CaseManager> caseManagers = getCaseManagersProvider()
+		List<CasesRetrievalManager> caseManagers = getCaseManagersProvider()
 		        .getCaseManagers();
 		if (ListUtil.isEmpty(caseManagers)) {
 			return null;
 		}
 		
 		List<ProcessDefinitionW> allProcesses = new ArrayList<ProcessDefinitionW>();
-		for (CaseManager caseManager : caseManagers) {
+		for (CasesRetrievalManager caseManager : caseManagers) {
 			List<Long> caseProcesses = caseManager
 			        .getAllCaseProcessDefinitions();
 			
