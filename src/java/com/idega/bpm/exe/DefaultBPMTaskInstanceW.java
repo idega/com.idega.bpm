@@ -63,7 +63,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.43 $ Last modified: $Date: 2009/03/17 14:17:35 $ by $Author: valdas $
+ * @version $Revision: 1.44 $ Last modified: $Date: 2009/03/17 17:43:25 $ by $Author: valdas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -731,6 +731,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 				
 				ViewSubmission taskSubmission = getBpmFactory().getViewSubmission();
 				taskSubmission.setTaskInstanceId(getTaskInstanceId());
+				taskSubmission.populateVariables(getVariablesHandler().populateVariables(getTaskInstanceId()));
 				submit(taskSubmission);
 				
 				return newTokenName;
