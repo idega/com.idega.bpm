@@ -65,7 +65,7 @@ import com.idega.util.ListUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.25 $ Last modified: $Date: 2009/03/16 20:46:47 $ by $Author: civilis $
+ * @version $Revision: 1.26 $ Last modified: $Date: 2009/03/17 14:34:25 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -223,25 +223,12 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	@Transactional(readOnly = true)
 	public List<BPMDocument> getTaskDocumentsForUser(User user, Locale locale) {
 		
-		System.out.println("_______WTF");
+		List<TaskInstanceW> unfinishedTaskInstances = getAllUnfinishedTaskInstances();
 		
-		try {
-			List<TaskInstanceW> unfinishedTaskInstances = getAllUnfinishedTaskInstances();
-			
-			unfinishedTaskInstances = filterTasksByUserPermission(user,
-			    unfinishedTaskInstances);
-			
-			return getBPMDocuments(unfinishedTaskInstances, locale);
-			
-		} catch (Exception e) {
-			System.out.println("_______EXCEPTION");
-			e.printStackTrace();
-		} catch (Error e) {
-			System.out.println("_______EXCEPTION");
-			e.printStackTrace();
-		}
+		unfinishedTaskInstances = filterTasksByUserPermission(user,
+		    unfinishedTaskInstances);
 		
-		return null;
+		return getBPMDocuments(unfinishedTaskInstances, locale);
 	}
 	
 	private List<TaskInstanceW> filterTasksByUserPermission(User user,
@@ -307,20 +294,13 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	public List<BPMDocument> getSubmittedDocumentsForUser(User user,
 	        Locale locale) {
 		
-		try {
-			List<TaskInstanceW> submittedTaskInstances = getSubmittedTaskInstances(Arrays
-			        .asList(email_fetch_process_name));
-			
-			submittedTaskInstances = filterDocumentsByUserPermission(user,
-			    submittedTaskInstances);
-			
-			return getBPMDocuments(submittedTaskInstances, locale);
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		List<TaskInstanceW> submittedTaskInstances = getSubmittedTaskInstances(Arrays
+		        .asList(email_fetch_process_name));
 		
-		return null;
+		submittedTaskInstances = filterDocumentsByUserPermission(user,
+		    submittedTaskInstances);
+		
+		return getBPMDocuments(submittedTaskInstances, locale);
 	}
 	
 	private List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiws,
