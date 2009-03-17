@@ -63,7 +63,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.44 $ Last modified: $Date: 2009/03/17 17:43:25 $ by $Author: valdas $
+ * @version $Revision: 1.45 $ Last modified: $Date: 2009/03/17 20:54:13 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -521,11 +521,13 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 	
 	@Transactional(readOnly = false)
-	public void setTaskPermissionsForActors(List<Actor> actorsToSetPermissionsTo,List<Access> accesses,
-			boolean setSameForAttachments, String variableIdentifier) {
-
+	public void setTaskPermissionsForActors(
+	        List<Actor> actorsToSetPermissionsTo, List<Access> accesses,
+	        boolean setSameForAttachments, String variableIdentifier) {
+		
 		getBpmFactory().getRolesManager().setTaskPermissionsTIScopeForActors(
-			actorsToSetPermissionsTo, accesses, getTaskInstanceId(), setSameForAttachments,variableIdentifier);
+		    actorsToSetPermissionsTo, accesses, getTaskInstanceId(),
+		    setSameForAttachments, variableIdentifier);
 	}
 	
 	private IWMainApplication getIWMA() {
@@ -698,44 +700,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		return roles;
 	}
 	
-	public Object getVariable(String variableName){
-		return getVariablesHandler().populateVariables(getTaskInstanceId()).get(variableName);
-	}
-
-	@Transactional(readOnly = false)
-	public Long creatTask(final String tokenName) {
-		return getBpmContext().execute(new JbpmCallback() {
-			public Object doInJbpm(JbpmContext context) throws JbpmException {
-				TaskInstance taskInstance = getTaskInstance();
-				Token currentToken = taskInstance.getToken();
-				
-				Token keepMeAliveTkn = new Token(currentToken, "KeepMeAlive");
-				context.save(keepMeAliveTkn);
-				
-				Token forNewTask = currentToken.findToken(tokenName);
-				TaskInstance newTaskInstance = taskInstance.getTaskMgmtInstance().createTaskInstance(taskInstance.getTask(), forNewTask);
-				return newTaskInstance.getId();
-			}
-		});
-	}
-	
-	@Transactional(readOnly = false)
-	public String submit() {
-		return getBpmContext().execute(new JbpmCallback() {
-			public Object doInJbpm(JbpmContext context) throws JbpmException {
-				TaskInstance taskInstance = getTaskInstance();
-				
-				String newTokenName = taskInstance.getName() + System.currentTimeMillis();
-				Token newToken = new Token(taskInstance.getToken(), newTokenName);
-				context.save(newToken);
-				
-				ViewSubmission taskSubmission = getBpmFactory().getViewSubmission();
-				taskSubmission.setTaskInstanceId(getTaskInstanceId());
-				taskSubmission.populateVariables(getVariablesHandler().populateVariables(getTaskInstanceId()));
-				submit(taskSubmission);
-				
-				return newTokenName;
-			}
-		});
+	public Object getVariable(String variableName) {
+		return getVariablesHandler().populateVariables(getTaskInstanceId())
+		        .get(variableName);
 	}
 }
