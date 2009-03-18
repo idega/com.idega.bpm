@@ -63,7 +63,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.45 $ Last modified: $Date: 2009/03/17 20:54:13 $ by $Author: civilis $
+ * @version $Revision: 1.46 $ Last modified: $Date: 2009/03/18 20:21:12 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -72,7 +72,14 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	
 	private static final String allowSigningVariableRepresentation = "system_allowSigning";
 	
+	/**
+	 * task instance is hidden in the task list, _and_ when resolving task instances by task name (see processInstanceW) 
+	 */
 	public static final int PRIORITY_HIDDEN = -21;
+	/**
+	 * task instance is hidden in the task list, _but not_ when resolving task instances by task name (see processInstanceW).
+	 */
+	public static final int PRIORITY_VALID_HIDDEN = -22;
 	
 	private ProcessManager processManager;
 	
