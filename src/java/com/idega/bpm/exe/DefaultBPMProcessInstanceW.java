@@ -66,7 +66,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.27 $ Last modified: $Date: 2009/03/17 17:53:41 $ by $Author: civilis $
+ * @version $Revision: 1.28 $ Last modified: $Date: 2009/03/18 20:20:55 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -201,14 +201,27 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	public List<TaskInstanceW> getSubmittedTaskInstances(
 	        List<String> excludedSubProcessesNames) {
 		
+		return getSubmittedTaskInstances(excludedSubProcessesNames,
+		    DefaultBPMTaskInstanceW.PRIORITY_HIDDEN,
+		    DefaultBPMTaskInstanceW.PRIORITY_VALID_HIDDEN);
+	}
+	
+	List<TaskInstanceW> getSubmittedTaskInstances(
+	        List<String> excludedSubProcessesNames,
+	        Integer... prioritiesToFilter) {
+		
 		Collection<TaskInstance> taskInstances = getProcessTaskInstances(
 		    excludedSubProcessesNames, null);
 		
+		List<Integer> prioritiesToFilterList = Arrays
+		        .asList(prioritiesToFilter);
+		
 		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator
 		        .hasNext();) {
-			TaskInstance taskInstance = iterator.next();
+			TaskInstance ti = iterator.next();
 			
-			if (!taskInstance.hasEnded())
+			if (!ti.hasEnded()
+			        || prioritiesToFilterList.contains(ti.getPriority()))
 				// simply filtering out the not ended task instances
 				iterator.remove();
 		}
@@ -384,13 +397,25 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getAllUnfinishedTaskInstances() {
 		
-		return getUnfinishedTaskInstancesForTask(null);
+		return getUnfinishedTaskInstancesForTask(null,
+		    DefaultBPMTaskInstanceW.PRIORITY_HIDDEN,
+		    DefaultBPMTaskInstanceW.PRIORITY_VALID_HIDDEN);
 	}
 	
 	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getUnfinishedTaskInstancesForTask(String taskName) {
 		
+		return getUnfinishedTaskInstancesForTask(taskName,
+		    DefaultBPMTaskInstanceW.PRIORITY_HIDDEN);
+	}
+	
+	List<TaskInstanceW> getUnfinishedTaskInstancesForTask(String taskName,
+	        Integer... prioritiesToFilter) {
+		
 		Collection<TaskInstance> taskInstances = getUnfilteredProcessTaskInstances();
+		
+		List<Integer> prioritiesToFilterList = Arrays
+		        .asList(prioritiesToFilter);
 		
 		boolean filterByTaskName = !StringUtil.isEmpty(taskName);
 		
@@ -402,7 +427,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			// processes (i.e. subprocesses), also leaving on task for taskName, if taskName
 			// provided
 			if (ti.hasEnded()
-			        || ti.getPriority() == DefaultBPMTaskInstanceW.PRIORITY_HIDDEN
+			        || prioritiesToFilterList.contains(ti.getPriority())
 			        || ti.getProcessInstance().hasEnded()
 			        || (filterByTaskName && !taskName.equals(ti.getTask()
 			                .getName())))
@@ -410,6 +435,28 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		}
 		
 		return wrapTaskInstances(taskInstances);
+	}
+	
+	public TaskInstanceW getSingleUnfinishedTaskInstanceForTask(String taskName) {
+		
+		List<TaskInstanceW> tiws = getUnfinishedTaskInstancesForTask(taskName);
+		TaskInstanceW tiw;
+		
+		if (ListUtil.isEmpty(tiws))
+			tiw = null;
+		else {
+			
+			if (tiws.size() > 1)
+				Logger.getLogger(getClass().getName()).log(
+				    Level.WARNING,
+				    "More than one unfinished task instance resolved for task="
+				            + taskName + " in the process="
+				            + getProcessInstanceId());
+			
+			tiw = tiws.iterator().next();
+		}
+		
+		return tiw;
 	}
 	
 	private List<TaskInstanceW> wrapTaskInstances(
