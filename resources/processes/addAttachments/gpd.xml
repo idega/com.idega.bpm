@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<root-container name="addAttachments" width="809" height="654">
+<root-container name="addAttachments" width="839" height="837">
   <node name="start" x="241" y="28" width="79" height="34">
     <edge>
       <label x="-46" y="-3"/>
