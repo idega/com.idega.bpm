@@ -63,7 +63,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.46 $ Last modified: $Date: 2009/03/18 20:21:12 $ by $Author: civilis $
+ * @version $Revision: 1.47 $ Last modified: $Date: 2009/03/19 16:08:00 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -73,11 +73,13 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	private static final String allowSigningVariableRepresentation = "system_allowSigning";
 	
 	/**
-	 * task instance is hidden in the task list, _and_ when resolving task instances by task name (see processInstanceW) 
+	 * task instance is hidden in the task list, _and_ when resolving task instances by task name
+	 * (see processInstanceW)
 	 */
 	public static final int PRIORITY_HIDDEN = -21;
 	/**
-	 * task instance is hidden in the task list, _but not_ when resolving task instances by task name (see processInstanceW).
+	 * task instance is hidden in the task list, _but not_ when resolving task instances by task
+	 * name (see processInstanceW).
 	 */
 	public static final int PRIORITY_VALID_HIDDEN = -22;
 	
@@ -660,9 +662,13 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	public boolean isSignable() {
 		Map<String, Object> variablesMap = getVariablesHandler()
 		        .populateVariables(getTaskInstanceId());
-		if (variablesMap.keySet().contains(allowSigningVariableRepresentation)) {
+		
+		if (variablesMap.get(allowSigningVariableRepresentation) != null
+		        && variablesMap.get(allowSigningVariableRepresentation).equals(
+		            Boolean.TRUE.toString())) {
 			return true;
 		}
+		
 		return false;
 	}
 	
