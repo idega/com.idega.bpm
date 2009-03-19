@@ -66,7 +66,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.28 $ Last modified: $Date: 2009/03/18 20:20:55 $ by $Author: civilis $
+ * @version $Revision: 1.29 $ Last modified: $Date: 2009/03/19 17:43:15 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -787,6 +787,10 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return emailsTaskInstances;
 	}
 	
+	/**
+	 * @return all attachments that where added with addAttachment subprocess, and that are not
+	 * hidden (binVar.getHidden() == false)
+	 */
 	@Transactional(readOnly = true)
 	public List<BinaryVariable> getAttachements() {
 		
@@ -795,7 +799,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		Collection<TaskInstance> taskInstances = getProcessTaskInstances(null,
 		    included);
 		
-		List<BinaryVariable> attachements = new ArrayList<BinaryVariable>();
+		List<BinaryVariable> attachments = new ArrayList<BinaryVariable>();
 		
 		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator
 		        .hasNext();) {
@@ -813,16 +817,21 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 					continue;
 				}
 				
-				attachements
-				        .addAll(getBpmFactory()
+				List<BinaryVariable> allAttachments = getBpmFactory()
 				                .getProcessManagerByTaskInstanceId(
 				                    taskInstance.getId()).getTaskInstance(
-				                    taskInstance).getAttachments());
+				                    taskInstance).getAttachments();
+				
+				for(BinaryVariable attachment:allAttachments){
+					if(attachment.getHidden() == null || !attachment.getHidden()){
+						attachments.add(attachment);
+					}
+				}
 				
 			}
 		}
 		
-		return attachements;
+		return attachments;
 	}
 	
 	@Transactional(readOnly = false)
