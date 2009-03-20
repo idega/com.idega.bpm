@@ -20,9 +20,9 @@ import org.jbpm.JbpmException;
 import org.jbpm.context.exe.ContextInstance;
 import org.jbpm.graph.exe.ProcessInstance;
 import org.jbpm.graph.exe.Token;
-import org.jbpm.graph.node.TaskNode;
 import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -44,6 +44,7 @@ import com.idega.jbpm.exe.ProcessInstanceW;
 import com.idega.jbpm.exe.ProcessManager;
 import com.idega.jbpm.exe.ProcessWatch;
 import com.idega.jbpm.exe.TaskInstanceW;
+import com.idega.jbpm.exe.TaskMgmtInstanceW;
 import com.idega.jbpm.exe.impl.BPMDocumentImpl;
 import com.idega.jbpm.exe.impl.BPMEmailDocumentImpl;
 import com.idega.jbpm.identity.BPMAccessControlException;
@@ -66,10 +67,10 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.29 $ Last modified: $Date: 2009/03/19 17:43:15 $ by $Author: juozas $
+ * @version $Revision: 1.30 $ Last modified: $Date: 2009/03/20 19:20:22 $ by $Author: civilis $
  */
 @Scope("prototype")
-@Service("defaultPIW")
+@Service
 public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	
 	private Long processInstanceId;
@@ -89,6 +90,10 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	
 	@Autowired
 	private VariablesHandler variablesHandler;
+	
+	@Autowired
+	@Qualifier("default")
+	private TaskMgmtInstanceW taskMgmtInstance;
 	
 	public static final String email_fetch_process_name = "fetchEmails";
 	
@@ -834,45 +839,6 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		return attachments;
 	}
 	
-	@Transactional(readOnly = false)
-	public TaskInstanceW createTask(final String taskName, final long tokenId) {
-		
-		return getBpmContext().execute(new JbpmCallback() {
-			
-			public Object doInJbpm(JbpmContext context) throws JbpmException {
-				ProcessInstance processInstance = getProcessInstance();
-				
-				@SuppressWarnings("unchecked")
-				List<Token> tkns = processInstance.findAllTokens();
-				
-				for (Token token : tkns) {
-					
-					if (token.getId() == tokenId) {
-						TaskInstance ti = processInstance.getTaskMgmtInstance()
-						        .createTaskInstance(
-						            ((TaskNode) token.getNode())
-						                    .getTask(taskName), token);
-						/*
-						 * getBpmFactory().takeView(ti.getId(), true,
-						 * preferred);
-						 */
-
-						TaskInstanceW taskInstanceW = getBpmFactory()
-						        .getProcessManagerByTaskInstanceId(ti.getId())
-						        .getTaskInstance(ti.getId());
-						
-						taskInstanceW.loadView();
-						return taskInstanceW;
-						
-					}
-				}
-				
-				return null;
-			}
-		});
-		
-	}
-	
 	@Transactional(readOnly = true)
 	public TaskInstanceW getStartTaskInstance() {
 		
@@ -930,5 +896,10 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		
 		Object val = contextInstnace.getVariableLocally(variableName, token);
 		return val;
+	}
+	
+	public TaskMgmtInstanceW getTaskMgmtInstance() {
+		
+		return taskMgmtInstance.init(this);
 	}
 }
