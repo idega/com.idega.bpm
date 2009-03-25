@@ -54,10 +54,16 @@ public class AddAttachmentsToTaskInstanceHanlder implements ActionHandler {
 				        .valueOf(taskInstnaceId), Integer
 				        .valueOf(variableHash));
 				
-				taskInstanceW.addAttachment(variable, binaryVariable
+				BinaryVariable addedAttachment = taskInstanceW.addAttachment(variable, binaryVariable
 				        .getFileName(), binaryVariable.getDescription(),
 				    getVariablesHandler().getBinaryVariablesHandler()
 				            .getBinaryVariableContent(binaryVariable));
+				
+				
+				//TODO: what really should be copied and what shoud not?
+				addedAttachment.setMetadata(binaryVariable.getMetadata());
+				addedAttachment.setSigned(binaryVariable.getSigned());
+				addedAttachment.update();
 			}
 		}
 		
