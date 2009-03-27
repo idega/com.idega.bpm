@@ -57,6 +57,7 @@ import com.idega.jbpm.identity.permission.PermissionsFactory;
 import com.idega.jbpm.rights.Right;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
+import com.idega.jbpm.view.View;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.user.util.UserComparator;
@@ -67,7 +68,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.31 $ Last modified: $Date: 2009/03/27 10:52:24 $ by $Author: juozas $
+ * @version $Revision: 1.32 $ Last modified: $Date: 2009/03/27 15:53:54 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service
@@ -380,6 +381,11 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			bpmDoc.setCreateDate(ti.getCreate());
 			bpmDoc.setEndDate(ti.getEnd());
 			bpmDoc.setSignable(tiw.isSignable());
+			
+			View view = tiw.getView();
+			
+			if (!view.hasViewForDisplay())
+				bpmDoc.setHasViewUI(false);
 			
 			documents.add(bpmDoc);
 		}
@@ -793,8 +799,8 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	}
 	
 	/**
-	 * @return all attachments that where attached to process(including subprocesses), and that are not
-	 * hidden (binVar.getHidden() == false)
+	 * @return all attachments that where attached to process(including subprocesses), and that are
+	 *         not hidden (binVar.getHidden() == false)
 	 */
 	@Transactional(readOnly = true)
 	public List<BinaryVariable> getAttachements() {
@@ -802,7 +808,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		List<BinaryVariable> attachments = new ArrayList<BinaryVariable>();
 		
 		for (Iterator<TaskInstanceW> iterator = taskInstances.iterator(); iterator
-		        .hasNext();) {			
+		        .hasNext();) {
 			attachments.addAll(iterator.next().getAttachments());
 			
 		}
