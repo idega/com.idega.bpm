@@ -67,7 +67,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.30 $ Last modified: $Date: 2009/03/20 19:20:22 $ by $Author: civilis $
+ * @version $Revision: 1.31 $ Last modified: $Date: 2009/03/27 10:52:24 $ by $Author: juozas $
  */
 @Scope("prototype")
 @Service
@@ -793,47 +793,18 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	}
 	
 	/**
-	 * @return all attachments that where added with addAttachment subprocess, and that are not
+	 * @return all attachments that where attached to process(including subprocesses), and that are not
 	 * hidden (binVar.getHidden() == false)
 	 */
 	@Transactional(readOnly = true)
 	public List<BinaryVariable> getAttachements() {
-		
-		ArrayList<String> included = new ArrayList<String>(1);
-		included.add(add_attachement_process_name);
-		Collection<TaskInstance> taskInstances = getProcessTaskInstances(null,
-		    included);
-		
+		List<TaskInstanceW> taskInstances = getSubmittedTaskInstances();
 		List<BinaryVariable> attachments = new ArrayList<BinaryVariable>();
 		
-		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator
-		        .hasNext();) {
-			TaskInstance taskInstance = iterator.next();
+		for (Iterator<TaskInstanceW> iterator = taskInstances.iterator(); iterator
+		        .hasNext();) {			
+			attachments.addAll(iterator.next().getAttachments());
 			
-			if (taskInstance.hasEnded()) {
-				
-				try {
-					Permission permission = getPermissionsFactory()
-					        .getTaskInstanceViewPermission(true, taskInstance);
-					getBpmFactory().getRolesManager().checkPermission(
-					    permission);
-					
-				} catch (BPMAccessControlException e) {
-					continue;
-				}
-				
-				List<BinaryVariable> allAttachments = getBpmFactory()
-				                .getProcessManagerByTaskInstanceId(
-				                    taskInstance.getId()).getTaskInstance(
-				                    taskInstance).getAttachments();
-				
-				for(BinaryVariable attachment:allAttachments){
-					if(attachment.getHidden() == null || !attachment.getHidden()){
-						attachments.add(attachment);
-					}
-				}
-				
-			}
 		}
 		
 		return attachments;
