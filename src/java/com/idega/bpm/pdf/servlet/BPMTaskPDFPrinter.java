@@ -1,5 +1,6 @@
 package com.idega.bpm.pdf.servlet;
 
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -11,6 +12,7 @@ import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.TaskInstanceW;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.presentation.IWContext;
+import com.idega.util.ListUtil;
 import com.idega.util.expression.ELUtil;
 
 public class BPMTaskPDFPrinter extends AttachmentWriter {
@@ -48,7 +50,9 @@ public class BPMTaskPDFPrinter extends AttachmentWriter {
 			TaskInstanceW taskInstanceW = getBpmFactory()
 			.getProcessManagerByTaskInstanceId(taskInstanceId)
 			.getTaskInstance(taskInstanceId);
-			binaryVariable = taskInstanceW.getAttachment(variable);
+			List<BinaryVariable> attachmentsForVar = taskInstanceW.getAttachments(variable);
+//			TODO: check if this is correct implementation (expecting only one attachment for variable)
+			binaryVariable = !ListUtil.isEmpty(attachmentsForVar) ? attachmentsForVar.iterator().next() : null;
 			
 		} else {
 			

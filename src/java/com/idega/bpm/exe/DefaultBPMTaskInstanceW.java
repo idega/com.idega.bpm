@@ -63,7 +63,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.48 $ Last modified: $Date: 2009/03/20 19:20:36 $ by $Author: civilis $
+ * @version $Revision: 1.49 $ Last modified: $Date: 2009/03/30 13:16:56 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -646,16 +646,20 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 	
 	@Transactional(readOnly = true)
-	public BinaryVariable getAttachment(Variable variable) {
+	public List<BinaryVariable> getAttachments(Variable variable) {
 		
-		for (BinaryVariable binaryVariable : getAttachments()) {
+		List<BinaryVariable> allAttachments = getAttachments();
+		ArrayList<BinaryVariable> attachmentsForVariable = new ArrayList<BinaryVariable>(
+		        allAttachments.size());
+		
+		for (BinaryVariable binaryVariable : allAttachments) {
 			
 			if (binaryVariable.getVariable().equals(variable)) {
-				return binaryVariable;
+				attachmentsForVariable.add(binaryVariable);
 			}
 		}
 		
-		return null;
+		return attachmentsForVariable;
 	}
 	
 	@Transactional(readOnly = true)
