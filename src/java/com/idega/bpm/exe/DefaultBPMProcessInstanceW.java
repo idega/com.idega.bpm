@@ -68,10 +68,10 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.32 $ Last modified: $Date: 2009/03/27 15:53:54 $ by $Author: civilis $
+ * @version $Revision: 1.33 $ Last modified: $Date: 2009/04/02 15:40:31 $ by $Author: civilis $
  */
 @Scope("prototype")
-@Service
+@Service("defaultPIW")
 public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	
 	private Long processInstanceId;
