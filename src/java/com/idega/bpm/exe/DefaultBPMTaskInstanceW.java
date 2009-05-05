@@ -63,7 +63,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.49 $ Last modified: $Date: 2009/03/30 13:16:56 $ by $Author: civilis $
+ * @version $Revision: 1.50 $ Last modified: $Date: 2009/05/05 09:04:30 $ by $Author: civilis $
  */
 @Scope("prototype")
 @Service("defaultTIW")
@@ -725,5 +725,13 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	public void hide() {
 		
 		getTaskInstance().setPriority(PRIORITY_HIDDEN);
+	}
+	
+	public void addVariable(Variable variable, Object value) {
+		
+		Map<String, Object> variables = new HashMap<String, Object>(1);
+		variables.put(variable.getName(), value);
+		getVariablesHandler().submitVariablesExplicitly(variables,
+		    getTaskInstanceId());
 	}
 }
