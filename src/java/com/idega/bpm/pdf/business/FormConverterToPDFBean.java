@@ -219,7 +219,7 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 	
 	private IWSlideService getSlideService() {
 		try {
-			return (IWSlideService) IBOLookup.getServiceInstance(
+			return IBOLookup.getServiceInstance(
 			    IWMainApplication.getDefaultIWApplicationContext(),
 			    IWSlideService.class);
 		} catch (IBOLookupException e) {

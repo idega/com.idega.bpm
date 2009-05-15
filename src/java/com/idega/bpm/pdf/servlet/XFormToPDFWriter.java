@@ -41,8 +41,8 @@ import com.idega.xformsmanager.component.beans.LocalizedStringBean;
  * Downloads PDF for provided XForm
  * @author <a href="mailto:valdas@idega.com>Valdas Žemaitis</a>
  * Created: 2008.05.10
- * @version $Revision: 1.9 $
- * Last modified: $Date: 2009/02/12 13:57:35 $ by $Author: valdas $
+ * @version $Revision: 1.10 $
+ * Last modified: $Date: 2009/05/15 07:23:58 $ by $Author: valdas $
  */
 public class XFormToPDFWriter extends DownloadWriter implements MediaWritable { 
 	
@@ -139,7 +139,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 		
 		IWSlideService slide = null;
 		try {
-			slide = (IWSlideService) IBOLookup.getServiceInstance(iwc, IWSlideService.class);
+			slide = IBOLookup.getServiceInstance(iwc, IWSlideService.class);
 		} catch (IBOLookupException e) {
 			LOGGER.log(Level.SEVERE, "Error getting IWSlideService!", e);
 		}
