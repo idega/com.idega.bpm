@@ -11,14 +11,15 @@ import com.idega.bpm.xformsview.XFormsView;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.bundle.ProcessBundleResources;
 import com.idega.jbpm.view.ViewResource;
+import com.idega.util.IOUtil;
 import com.idega.util.xml.XmlUtil;
 import com.idega.xformsmanager.business.DocumentManager;
 import com.idega.xformsmanager.business.DocumentManagerFactory;
 
 /**
  * @author <a href="civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.1 $ Last modified: $Date: 2009/01/25 15:44:13 $ by
- *          $Author: civilis $
+ * @version $Revision: 1.2 $ Last modified: $Date: 2009/05/19 13:18:07 $ by
+ *          $Author: valdas $
  */
 public class ViewResourceXFormImpl implements ViewResource {
 
@@ -53,15 +54,10 @@ public class ViewResourceXFormImpl implements ViewResource {
 			form.save(basePath);
 
 			viewId = form.getFormId().toString();
-
-		} catch (IOException e) {
-			throw e;
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw new RuntimeException("Error deploying: " + getPathWithinBundle(), e);
 		} finally {
-
-			if (is != null)
-				is.close();
+			IOUtil.closeInputStream(is);
 		}
 	}
 
