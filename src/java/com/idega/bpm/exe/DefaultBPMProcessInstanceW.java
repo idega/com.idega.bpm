@@ -68,7 +68,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.33 $ Last modified: $Date: 2009/04/02 15:40:31 $ by $Author: civilis $
+ * @version $Revision: 1.34 $ Last modified: $Date: 2009/05/25 13:46:42 $ by $Author: valdas $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -713,22 +713,24 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		
 		switch (right) {
 			case processHandler:
-
-				try {
-					Permission perm = getBpmFactory().getPermissionsFactory()
-					        .getAccessPermission(getProcessInstanceId(),
-					            Access.caseHandler, user);
-					getBpmFactory().getRolesManager().checkPermission(perm);
-					
-					return true;
-					
-				} catch (AccessControlException e) {
-					return false;
-				}
+				return hasPermission(Access.caseHandler, user);
+				
+			case commentsViewer:
+				return hasPermission(Access.seeComments, user) || hasPermission(Access.writeComments, user);
 				
 			default:
 				throw new IllegalArgumentException("Right type " + right
 				        + " not supported for cases process instance");
+		}
+	}
+	
+	private boolean hasPermission(Access access, User user) {
+		try {
+			Permission perm = getBpmFactory().getPermissionsFactory().getAccessPermission(getProcessInstanceId(), access, user);
+			getBpmFactory().getRolesManager().checkPermission(perm);
+			return true;
+		} catch (AccessControlException e) {
+			return false;
 		}
 	}
 	
