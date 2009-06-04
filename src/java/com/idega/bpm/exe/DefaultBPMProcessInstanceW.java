@@ -68,7 +68,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.34 $ Last modified: $Date: 2009/05/25 13:46:42 $ by $Author: valdas $
+ * @version $Revision: 1.35 $ Last modified: $Date: 2009/06/04 12:29:52 $ by $Author: valdas $
  */
 @Scope("prototype")
 @Service("defaultPIW")
@@ -805,7 +805,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	 *         not hidden (binVar.getHidden() == false)
 	 */
 	@Transactional(readOnly = true)
-	public List<BinaryVariable> getAttachements() {
+	public List<BinaryVariable> getAttachments() {
 		List<TaskInstanceW> taskInstances = getSubmittedTaskInstances();
 		List<BinaryVariable> attachments = new ArrayList<BinaryVariable>();
 		
