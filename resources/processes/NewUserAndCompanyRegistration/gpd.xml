@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root-container name="NewUserAndCompanyRegistration" width="1031" height="662">
+  <node name="registerNewUserAndCompany" x="194" y="30" width="165" height="32">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="createAccount" x="563" y="379" width="132" height="36">
+    <edge>
+      <label x="-25" y="-10"/>
+    </edge>
+  </node>
+  <node name="sendMessage" x="419" y="542" width="132" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="loginAlreadyExists" x="211" y="121" width="128" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="throwException" x="52" y="214" width="132" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="locateExistingAccount" x="397" y="207" width="139" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="accountFound" x="403" y="291" width="132" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+    <edge>
+      <label x="-18" y="-15"/>
+    </edge>
+  </node>
+  <node name="createAccountLogin" x="287" y="380" width="132" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="createCompany" x="417" y="455" width="132" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="end-state1" x="106" y="472" width="25" height="25"/>
+</root-container>

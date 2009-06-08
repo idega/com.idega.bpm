@@ -3,6 +3,7 @@
 <processes>
   
     <processBundle bundle="com.idega.bpm" processBundleLocationWithinBundle="resources/processes/NewUserRegistration/" autoload="true" version="1" />
+    <processBundle bundle="com.idega.bpm" processBundleLocationWithinBundle="resources/processes/NewUserAndCompanyRegistration/" autoload="true" version="1" />
     <processBundle bundle="com.idega.bpm" processBundleLocationWithinBundle="resources/processes/inviteParticipant/" autoload="true" version="11" />
     <processBundle bundle="com.idega.bpm" processBundleLocationWithinBundle="resources/processes/addAttachments/" autoload="true" version="2" />
     <processBundle bundle="com.idega.bpm" processBundleLocationWithinBundle="resources/processes/additionalInformation/" autoload="true" version="2" />
