@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.idega.block.process.variables.Variable;
+import com.idega.core.file.util.MimeTypeUtil;
 import com.idega.jbpm.artifacts.presentation.AttachmentWriter;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.TaskInstanceW;
@@ -26,12 +27,13 @@ public class BPMTaskPDFPrinter extends AttachmentWriter {
 	@Autowired
 	private BPMFactory bpmFactory;
 	
+	@Override
 	public String getMimeType() {
 
 		if(binaryVariable != null && binaryVariable.getMimeType() != null)
 			return binaryVariable.getMimeType();
 		
-		return "application/pdf";
+		return MimeTypeUtil.MIME_TYPE_PDF_1;
 	}
 
 	@Override
@@ -59,7 +61,13 @@ public class BPMTaskPDFPrinter extends AttachmentWriter {
 			binaryVariable = null;
 			logger.log(Level.WARNING, "No task instance id and variable name provided");
 		}
-			
+		
+		if (binaryVariable == null) {
+			logger.warning("Variable not found by instance id: " + taskIdStr + " and variable name: " + variableName);
+		} else {
+			logger.info("Starting to download: " + binaryVariable.getFileName() + ", " + binaryVariable.getIdentifier());
+		}
+		
 		return binaryVariable;
 	}
 
