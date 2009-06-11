@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import com.idega.block.form.business.FormConverterToPDF;
 import com.idega.block.form.presentation.FormViewer;
-import com.idega.block.pdf.PDFRenderedComponent;
 import com.idega.block.process.variables.Variable;
 import com.idega.block.process.variables.VariableDataType;
 import com.idega.bpm.BPMConstants;
@@ -32,6 +31,7 @@ import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.TaskInstanceW;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.presentation.IWContext;
+import com.idega.presentation.PDFRenderedComponent;
 import com.idega.slide.business.IWSlideService;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;

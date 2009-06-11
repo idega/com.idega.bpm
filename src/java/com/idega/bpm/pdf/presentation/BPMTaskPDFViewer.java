@@ -12,6 +12,7 @@ import com.idega.io.MediaWritable;
 import com.idega.presentation.IWBaseComponent;
 import com.idega.presentation.IWContext;
 import com.idega.presentation.Layer;
+import com.idega.presentation.PDFRenderedComponent;
 import com.idega.presentation.ui.IFrame;
 import com.idega.util.URLUtil;
 
@@ -19,11 +20,10 @@ import com.idega.util.URLUtil;
  * Default class that show task view from attached pdf document.
  * 
  * @author <a href="mailto:juozas@idega.com>Juozapas Zabukas</a> Created:
- * @version $Revision: 1.5 $ Last modified: $Date: 2009/01/30 13:56:40 $ by
- *          $Author: civilis $
+ * @version $Revision: 1.6 $ Last modified: $Date: 2009/06/11 07:18:18 $ by
+ *          $Author: valdas $
  */
-public class BPMTaskPDFViewer extends IWBaseComponent implements
-		BPMCapableJSFComponent {
+public class BPMTaskPDFViewer extends IWBaseComponent implements BPMCapableJSFComponent, PDFRenderedComponent {
 
 	public static final String DOCUMENT_VARIABLE_NAME = "files_pdfTaskView";
 	public static final String COMPONENT_TYPE = "BPMTaskPDFViewer";
@@ -124,4 +124,10 @@ public class BPMTaskPDFViewer extends IWBaseComponent implements
 	public void setTaskInstanceId(Long taskInstanceId) {
 		this.taskInstanceId = taskInstanceId;
 	}
+
+	public boolean isPdfViewer() {
+		return true;
+	}
+
+	public void setPdfViewer(boolean pdfViewer) {}
 }
