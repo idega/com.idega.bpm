@@ -4,6 +4,7 @@ public class CasesBPMAssetProperties {
 	
 	private String caseId;
 	private String processorType;
+	private String commentsPersistenceManagerIdentifier;
 	
 	private boolean usePDFDownloadColumn = true;
 	private boolean allowPDFSigning = true;
@@ -38,6 +39,12 @@ public class CasesBPMAssetProperties {
 	}
 	public void setHideEmptySection(boolean hideEmptySection) {
 		this.hideEmptySection = hideEmptySection;
+	}
+	public String getCommentsPersistenceManagerIdentifier() {
+		return commentsPersistenceManagerIdentifier;
+	}
+	public void setCommentsPersistenceManagerIdentifier(String commentsPersistenceManagerIdentifier) {
+		this.commentsPersistenceManagerIdentifier = commentsPersistenceManagerIdentifier;
 	}
 
 }
