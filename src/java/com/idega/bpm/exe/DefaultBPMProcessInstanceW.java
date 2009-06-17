@@ -24,6 +24,7 @@ import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Required;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,9 +69,9 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.35 $ Last modified: $Date: 2009/06/04 12:29:52 $ by $Author: valdas $
+ * @version $Revision: 1.36 $ Last modified: $Date: 2009/06/17 14:05:57 $ by $Author: valdas $
  */
-@Scope("prototype")
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
 @Service("defaultPIW")
 public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	
@@ -625,6 +626,10 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		
 		getBpmFactory().getRolesManager().setContactsPermission(role,
 		    processInstanceId, userId);
+	}
+	
+	public void setAttachmentsPermission(Role role, Integer userId) {
+		getBpmFactory().getRolesManager().setAttachmentsPermission(role, getProcessInstanceId(), userId);
 	}
 	
 	public BPMFactory getBpmFactory() {
