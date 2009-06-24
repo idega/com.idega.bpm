@@ -159,6 +159,8 @@
                     <fbc_22-help lang="en"/>
                     <fbc_22-required lang="is_IS">Það þarf að fylla út reitinn X</fbc_22-required>
                     <fbc_22-required lang="en">Company's name is required</fbc_22-required>
+                    <fbc_22-validation lang="is_IS">Kennitala má bara innihalda tölur</fbc_22-validation>
+                    <fbc_22-validation lang="en">Social security should be a number</fbc_22-validation>
                     <fbc_23-required lang="is_IS">Það þarf að fylla út reitinn X</fbc_23-required>
                     <fbc_23-required lang="en">SSN is required</fbc_23-required>
                     <fbc_24-label lang="is_IS">Heimilisfang</fbc_24-label>
@@ -380,13 +382,11 @@
                             <xf:help>
                                 <xf:output ref="instance('localized_strings')/fbc_22-help[@lang=instance('localized_strings')/current_language]"/>
                             </xf:help>
-                            <xf:dispatch ev:event="idega-xforms-ready"
-                                name="idega-validate" target="fbc_22"/>
-                            <xf:dispatch ev:event="xforms-value-changed"
-                                name="idega-validate" target="fbc_22"/>
+                            <xf:dispatch ev:event="idega-xforms-ready" name="idega-validate" target="fbc_22"/>
+                            <xf:dispatch ev:event="xforms-value-changed" name="idega-validate" target="fbc_22"/>
                             <idega:validator ev:event="idega-validate">
-                                <idega:message errorType="required"
-                                    model="data_model" value="instance('localized_strings')/fbc_22-required[@lang=instance('localized_strings')/current_language]"/>
+                                <idega:message errorType="required" model="data_model" value="instance('localized_strings')/fbc_22-required[@lang=instance('localized_strings')/current_language]"/>
+                                <idega:message errorType="validation" model="data_model" value="instance('localized_strings')/fbc_22-validation[@lang=instance('localized_strings')/current_language]"/>
                             </idega:validator>
                             <xf:alert ref="instance('error-instance')/error[@for='fbc_22']"/>
                         </xf:input>

@@ -29,6 +29,22 @@
             </propertyMap>
         </action>
 	</event>
+	<event type="process-start">
+        <action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+            <handlerName>rightsManagementRolesAssignmentHandler</handlerName>
+                <propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+                    <entry>
+                        <key>assignmentExpression</key>
+                        <value>
+                            {rightsAssignment: {roles: {role: [
+                                {roleName: "bpm_user_and_company_confirmation_handler", accesses: {access: [modifyPermissions, caseHandler]}},
+                                {roleName: "bpm_user_and_company_confirmation_handler", accesses: {access: [seeContacts]}, rolesContacts: {string: ["all"]}}
+                            ]} }}
+                        </value>
+                </entry>
+            </propertyMap>
+        </action>
+    </event>
 
 	<start-state name="registerNewUserAndCompany">
 		<task name="New User And Company Registration">
@@ -220,13 +236,13 @@
 				<propertyMap key-type='java.lang.String' value-type='java.lang.String'>
 					<entry><key>expression</key>
 						<value>
-			                {taskAssignment: {roles: {role: [
-			                    {roleName: "bpm_user_and_company_confirmation_handler", accesses: {access: [read, write]}}
-		                    ]} }}
+				             {taskAssignment: {roles: {role: [
+				                   {roleName: "bpm_user_and_company_confirmation_handler", accesses: {access: [read, write]}}
+		               		 ]} }}
 			            </value>
 					</entry>
 				</propertyMap>
-			</assignment>
+		 	</assignment>
 			<controller>
 				<variable access="read" name="string_ownerPhone"></variable>
 				<variable access="read" name="string_ownerMobile"></variable>

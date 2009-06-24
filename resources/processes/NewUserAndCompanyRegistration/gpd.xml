@@ -6,7 +6,7 @@
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="createAccount" x="678" y="457" width="132" height="36">
+  <node name="createAccount" x="679" y="448" width="132" height="36">
     <edge>
       <label x="-25" y="-10"/>
     </edge>
@@ -36,23 +36,23 @@
   </node>
   <node name="accountFound" x="518" y="369" width="132" height="36">
     <edge>
+      <label x="5" y="-10"/>
+    </edge>
+    <edge>
       <label x="-18" y="-15"/>
     </edge>
+  </node>
+  <node name="createAccountLogin" x="382" y="444" width="132" height="36">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="createAccountLogin" x="380" y="446" width="132" height="36">
+  <node name="createCompany" x="532" y="525" width="132" height="36">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="createCompany" x="534" y="516" width="132" height="36">
-    <edge>
-      <label x="5" y="-10"/>
-    </edge>
-  </node>
-  <node name="confirmUserAndCompany" x="400" y="210" width="144" height="36">
+  <node name="confirmUserAndCompany" x="504" y="189" width="132" height="36">
     <edge>
       <label x="5" y="-10"/>
     </edge>
@@ -60,10 +60,10 @@
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="rejectRegistration" x="222" y="283" width="132" height="36">
+  <node name="rejectRegistration" x="276" y="282" width="132" height="36">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="end-state1" x="93" y="578" width="132" height="36"/>
+  <node name="end-state1" x="68" y="571" width="132" height="36"/>
 </root-container>
