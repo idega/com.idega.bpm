@@ -1,5 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <process-definition xmlns="" name="NewUserAndCompanyRegistration">
+	<event type="process-start">
+		<script>
+			<expression>
+				String handlerRoleName = "bpm_user_and_company_confirmation_handler";
+			</expression>
+            <variable name='handlerRoleName' access='write' />
+		</script>
+	</event>
+	<event type="process-start">
+    	<action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+    		<handlerName>rolesAssignmentHandler</handlerName>
+            <propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+	            <entry>
+	            	<key>assignmentExpression</key>
+	                <value>
+	                	${
+	                    	String handlerRoleName = resolver.get("handlerRoleName");
+	                        String handlerNativeRoleName = handlerRoleName;
+	                        
+	                        return
+	                        	"{rolesAssignment: {roles: {role: ["+
+	                            "     {roleName: \""+handlerRoleName+"\", identities: {identity: [{identityType: ROLE, identityId: \""+handlerNativeRoleName+"\"}]}}"+
+	                            " ]} }}";
+	                    }
+	                </value>
+	            </entry>
+            </propertyMap>
+        </action>
+	</event>
+
 	<start-state name="registerNewUserAndCompany">
 		<task name="New User And Company Registration">
 			<controller>
@@ -18,6 +48,14 @@
 				<variable access="write,required" name="string_ownerCompanyPostalCode"></variable>
 			</controller>
 		</task>
+		<event type="task-end">
+			<script>
+				<expression>
+					taskInstanceId = taskInstance.getId();
+		 		</expression>
+				<variable name='startTaskInstanceId' access='write' mapped-name='taskInstanceId' />
+			</script>
+		</event>
 		<event type="node-leave">
 			<script>
 				<expression> 
@@ -118,7 +156,7 @@
 		
 		
 		<transition to="throwException" name="true"></transition>
-		<transition to="locateExistingAccount" name="false"></transition>
+		<transition to="confirmUserAndCompany" name="false"></transition>
 	</decision>
 	<node name="throwException">
 	   <event type="node-leave">
@@ -173,6 +211,123 @@
 			</action>
 		</event>
 		<transition to="sendMessage"></transition>
+	</node>
+
+	<task-node name="confirmUserAndCompany">
+		<task name="Confirm user and company">
+			<assignment class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+				<handlerName>jsonAssignmentHandler</handlerName>
+				<propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+					<entry><key>expression</key>
+						<value>
+			                {taskAssignment: {roles: {role: [
+			                    {roleName: "bpm_user_and_company_confirmation_handler", accesses: {access: [read, write]}}
+		                    ]} }}
+			            </value>
+					</entry>
+				</propertyMap>
+			</assignment>
+			<controller>
+				<variable access="read" name="string_ownerPhone"></variable>
+				<variable access="read" name="string_ownerMobile"></variable>
+				<variable access="read,required" name="string_ownerEmailAddress"></variable>
+				<variable access="read,required" name="string_ownerAddress"></variable>
+				<variable access="read,required" name="string_ownerPostalCode"></variable>
+				<variable access="read,required" name="string_ownerMunicipality"></variable>
+				<variable access="read,required" name="string_ownerFullName"></variable>
+				<variable access="read,required" name="string_ownerPersonalId"></variable>
+				<variable access="read,required" name="string_ownerGender"></variable>
+				<variable access="read,required" name="string_ownerCompanySsn"></variable>
+				<variable access="read,required" name="string_ownerCompanyName"></variable>
+				<variable access="read,required" name="string_ownerCompanyAddress"></variable>
+				<variable access="read,required" name="string_ownerCompanyPostalCode"></variable>
+			</controller>
+		</task>
+		<event type="node-leave">
+			<script>
+				<expression> 
+				    s_upd = new com.idega.jbpm.identity.UserPersonalData();
+					s_upd.setUserEmail(userEmailAddress);
+					s_upd.setFullName(userFullName);
+					s_upd.setPersonalId(userPersonalId);
+					s_upd.setUserType("BPM_USER_NATURAL");
+					s_upd.setUserAddress(userAddress);
+					s_upd.setUserPostalCode(userPostalCode);
+					s_upd.setUserMunicipality(userMunicipality);
+					s_upd.setCreateWithLogin(true);
+					s_upd.setUserName(userPersonalId);
+					s_upd.setGenderName(userGenderName);
+					s_upd.setUserPhone(userPhone);
+					
+					s_cd = new com.idega.jbpm.identity.CompanyData();
+					s_cd.setSsn(companySsn);
+					s_cd.setName(companyName);
+					s_cd.setAddress(companyAddress);
+					s_cd.setPostalCode(companyPostalCode);
+                </expression>
+				<variable name='ownerUserData' access='write' mapped-name='s_upd' />
+				<variable name='ownerCompanyData' access='write' mapped-name='s_cd' />
+				<variable name='string_ownerPersonalId' access='read' mapped-name='userPersonalId' />
+				<variable name='string_ownerAddress' access='read' mapped-name='userAddress' />
+				<variable name='string_ownerPostalCode' access='read' mapped-name='userPostalCode' />
+				<variable name='string_ownerMunicipality' access='read' mapped-name='userMunicipality' />
+				<variable name='string_ownerFullName' access='read' mapped-name='userFullName' />
+				<variable name='string_ownerEmailAddress' access='read' mapped-name='userEmailAddress' />
+				<variable name='string_ownerGender' access='read' mapped-name='userGenderName' />
+				<variable name='string_ownerPhone' access='read' mapped-name='userPhone' />
+				<variable name='string_ownerCompanySsn' access='read' mapped-name='companySsn' />
+				<variable name='string_ownerCompanyName' access='read' mapped-name='companyName' />
+				<variable name='string_ownerCompanyAddress' access='read' mapped-name='companyAddress' />
+				<variable name='string_ownerCompanyPostalCode' access='read' mapped-name='companyPostalCode' />
+			</script>
+		</event>
+		<event type="task-create">
+			<action class="com.idega.jbpm.proxy.JbpmHandlerProxy">
+				<handlerName>sendInvitationToConfirmUserAndCompanyHandler</handlerName>
+			</action>
+		</event>
+		<transition to="locateExistingAccount" name="toConfirmRegistration"></transition>
+		<transition to="rejectRegistration" name="toRejectRegistration"></transition>
+	</task-node>
+
+	<node name="rejectRegistration">
+		<event type="node-enter">
+			<action class="com.idega.jbpm.proxy.JbpmHandlerProxy"> 
+				<handlerName>sendMessagesHandler</handlerName>
+				<propertyMap key-type='java.lang.String' value-type='java.lang.String'>
+			        <entry>
+			        	<key>inlineSubject</key>
+			        	<value>
+			        		${
+			        		Map subjectMap = new HashMap();
+			        		subjectMap.put("en", "Registration was rejected");
+			        		subjectMap.put("is_IS", "Registration was rejected");
+			        		return subjectMap;
+			        		}
+                		</value>
+                	</entry>
+                	<entry>
+			        	<key>inlineMessage</key>
+			        	<value>
+			        		${
+			        		Map messageMap = new HashMap();
+			        		messageMap.put("en", "Hello, {0}. \n\nYour registration was rejected.");
+			        		messageMap.put("is_IS", "S\u00e6l/ll, {0}. Your registration was rejected.");
+			        		return messageMap;
+			        		}
+                		</value>
+                	</entry>
+                	<entry>
+			        	<key>messageValues</key>
+			        	<value>
+			        		{list: {mv: [{type: "bean", value: "upd.fullName"}, {type: "bean", value: "upd.userName"}, {type: "bean", value: "upd.userPassword"}, {type: "bean", value: "iwc.domain.URL"}]}}
+                		</value>
+                	</entry>
+                	<entry><key>userData</key><value>#{ownerUserData}</value></entry>
+			    </propertyMap>
+			</action>
+		</event>
+		<transition to="end-state1"></transition>
 	</node>
 	<end-state name="end-state1"></end-state>
 </process-definition>

@@ -14,13 +14,15 @@
                     <City_fbc_12 mapping="string_ownerMunicipality"/>
                     <Name_fbc_13 mapping="string_ownerFullName"/>
                     <Personal_id_fbc_14 mapping="string_ownerPersonalId" xsi:nil="true"/>
-                    <Matching_emails_2_fbc_15 xsi:nil="true"/>
+                    <Matching_emails_2_fbc_15 mapping="string_ownerEmailAddress" xsi:nil="true"/>
                     <Matching_emails_1_fbc_16 mapping="string_ownerEmailAddress" xsi:nil="true"/>
                     <Gender_fbc_19 mapping="string_ownerGender"/>
                     <Name_fbc_22 mapping="string_ownerCompanyName"/>
                     <SSN_fbc_23  mapping="string_ownerCompanySsn"/>
                     <Address_fbc_24  mapping="string_ownerCompanyAddress"/>
                     <Postal_code_fbc_25  mapping="string_ownerCompanyPostalCode"/>
+                    
+                    <actionTaken mapping="string_actionTaken" />
                 </data>
             </xf:instance>
             <xf:instance id="control-instance">
@@ -33,6 +35,8 @@
                     <controlsButton/>
                 </control>
             </xf:instance>
+            
+             <xf:bind id="actionTaken" idega:shared="true" nodeset="instance('data-instance')/actionTaken"/>
             
             <xf:bind id="errorsGroup" nodeset="instance('error-instance')/error" relevant="instance('control-instance')/submission = 'true' and count-non-empty(instance('error-instance')/error)!=0"/>
             <xf:bind id="errors" nodeset="instance('error-instance')/error[. != '']"/>
@@ -48,34 +52,31 @@
             <xf:submission action="xformsBPM:/nouri" id="submit_data_submission" method="post" replace="none">
                 <idega:toggle case="fbc_4" ev:event="xforms-submit-done"/>
             </xf:submission>
+            <xf:submission action="xformsBPM:/nouri" id="reject_registration_submission" method="post" replace="none">
+                <idega:toggle case="fbc_444" ev:event="xforms-submit-done"/>
+            </xf:submission>
+            
              <xf:action ev:event="xforms-submit-error" id="submission-error">
                 <xf:dispatch name="idega-submit-error" target="idega-submission-error"/>
             </xf:action>
             <xf:action ev:event="idega-submit-error" id="idega-submission-error">
                 <xf:message level="modeless" ref="instance('localized_strings')/submission-error_message[@lang=instance('localized_strings')/current_language]"/>
             </xf:action>
-            <xf:bind id="fbc_6_bind" nodeset="Mobile_fbc_6" type="xs:string"/>
-            <xf:bind id="fbc_7_bind" nodeset="Telephone_fbc_7" type="xs:string"/>
-            <xf:bind id="fbc_10_bind" nodeset="Address_fbc_10" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
-            <xf:bind id="fbc_11_bind" nodeset="Postal_code_fbc_11" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
-            <xf:bind id="fbc_12_bind" nodeset="City_fbc_12" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
-            <xf:bind id="fbc_13_bind" nodeset="Name_fbc_13" required="instance('control-instance')/generatePdf != 'true'" type="xs:string"/>
-            <xf:bind id="fbc_14_bind" nodeset="Personal_id_fbc_14" required="instance('control-instance')/generatePdf != 'true'" type="xs:integer"/>
-            <xf:bind id="fbc_15_bind" nodeset="Matching_emails_2_fbc_15" required="instance('control-instance')/generatePdf != 'true'" type="fbc_15fb_email"/>
-            <xf:bind id="fbc_16_bind" nodeset="Matching_emails_1_fbc_16" required="instance('control-instance')/generatePdf != 'true'" type="fbc_16fb_email"/>
-            <xf:bind id="fbc_19_bind" nodeset="Gender_fbc_19" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
-			<xf:bind id="fbc_22_bind" nodeset="Name_fbc_22" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
-            <xf:bind id="fbc_23_bind" nodeset="SSN_fbc_23" type="xs:integer" required="instance('control-instance')/generatePdf != 'true'"/>
-            <xf:bind id="fbc_24_bind" nodeset="Address_fbc_24" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
-            <xf:bind id="fbc_25_bind" nodeset="Postal_code_fbc_25" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
-			
-			<xf:instance id="fbc_6_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.usersMobilePhone.number"/>			
-			<xf:instance id="fbc_7_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.usersHomePhone.number"/>            
-			<xf:instance id="fbc_10_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.usersMainAddress.streetAddress"/>
-			<xf:instance id="fbc_11_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.usersMainAddress.postalCode.postalCode"/>           
-           	<xf:instance id="fbc_12_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.usersMainAddress.city"/>
-			<xf:instance id="fbc_13_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.name"/>           
-            <xf:instance id="fbc_14_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.personalID"/>
+            
+            <xf:bind id="fbc_6_bind" nodeset="Mobile_fbc_6" type="xs:string" readonly="true"/>
+            <xf:bind id="fbc_7_bind" nodeset="Telephone_fbc_7" type="xs:string" readonly="true"/>
+            <xf:bind id="fbc_10_bind" nodeset="Address_fbc_10" type="xs:string" required="instance('control-instance')/generatePdf != 'true'" readonly="true"/>
+            <xf:bind id="fbc_11_bind" nodeset="Postal_code_fbc_11" type="xs:string" required="instance('control-instance')/generatePdf != 'true'" readonly="true"/>
+            <xf:bind id="fbc_12_bind" nodeset="City_fbc_12" type="xs:string" required="instance('control-instance')/generatePdf != 'true'" readonly="true"/>
+            <xf:bind id="fbc_13_bind" nodeset="Name_fbc_13" required="instance('control-instance')/generatePdf != 'true'" type="xs:string" readonly="true"/>
+            <xf:bind id="fbc_14_bind" nodeset="Personal_id_fbc_14" required="instance('control-instance')/generatePdf != 'true'" type="xs:integer" readonly="true"/>
+            <xf:bind id="fbc_15_bind" nodeset="Matching_emails_2_fbc_15" required="instance('control-instance')/generatePdf != 'true'" type="fbc_15fb_email" readonly="true"/>
+            <xf:bind id="fbc_16_bind" nodeset="Matching_emails_1_fbc_16" required="instance('control-instance')/generatePdf != 'true'" type="fbc_16fb_email" readonly="true"/>
+            <xf:bind id="fbc_19_bind" nodeset="Gender_fbc_19" type="xs:string" required="instance('control-instance')/generatePdf != 'true'" readonly="true"/>
+			<xf:bind id="fbc_22_bind" nodeset="Name_fbc_22" type="xs:string" required="instance('control-instance')/generatePdf != 'true'" readonly="true"/>
+            <xf:bind id="fbc_23_bind" nodeset="SSN_fbc_23" type="xs:integer" required="instance('control-instance')/generatePdf != 'true'" readonly="true"/>
+            <xf:bind id="fbc_24_bind" nodeset="Address_fbc_24" type="xs:string" required="instance('control-instance')/generatePdf != 'true'" readonly="true"/>
+            <xf:bind id="fbc_25_bind" nodeset="Postal_code_fbc_25" type="xs:string" required="instance('control-instance')/generatePdf != 'true'" readonly="true"/>
         </xf:model>
         <xf:model id="data_model">
             <xf:instance xmlns="" id="localized_strings">
@@ -84,18 +85,24 @@
                     <current_language>en</current_language>
                     <submission-error_message lang="en">Submission error. Please check your form!</submission-error_message>
                     <submission-error_message lang="is_IS">Villa varð við að senda formið vinsamlegast athugið hvort stjörnumerktir reitir hafi allir verið útfylltir og að engar villur séu í forminu.</submission-error_message>
-                    <form-title lang="en">Create an account</form-title>
-                    <form-title lang="is_IS">Nýskráning</form-title>
-                    <formInfo-section-1 lang="en">Please enter you details.</formInfo-section-1>
-                    <formInfo-section-2 lang="en">Your access will be sent to you immediately after registration is confirmed via the email you registered</formInfo-section-2>
-                    <formInfo-section-1 lang="is_IS">Vinsamlegast skráið inn kennitölu og tölvupóstfang sem og aðrar upplýsingar eftir því sem við á.</formInfo-section-1>
-                    <formInfo-section-2 lang="is_IS">Your access will be sent to you immediately after registration is confirmed via the email you registered</formInfo-section-2>
-                    <page-2-label lang="en">Registration received</page-2-label>
-                    <page-2-label lang="is_IS">Registration received</page-2-label>
-                    <page-1-submit-label lang="en">Submit</page-1-submit-label>
-                    <page-1-submit-label lang="is_IS">Senda formið</page-1-submit-label>
-                    <page-2-info lang="en">Thank you. Your registration has been received. You will get an email with your login information after registration is confirmed.</page-2-info>
-                    <page-2-info lang="is_IS">Thank you. Your registration has been received. You will get an email with your login information after registration is confirmed.</page-2-info>
+                    <form-title lang="en">Review an account</form-title>
+                    <form-title lang="is_IS">Review an account</form-title>
+                    <formInfo-section-1 lang="en">Please check and confirm or reject registration</formInfo-section-1>
+                    <formInfo-section-2 lang="en">System will notify form submitter about your decision</formInfo-section-2>
+                    <formInfo-section-1 lang="is_IS">Please check and confirm or reject registration</formInfo-section-1>
+                    <formInfo-section-2 lang="is_IS">System will notify form submitter about your decision</formInfo-section-2>
+                    <page-2-label lang="en">Registration accepted</page-2-label>
+                    <page-2-label lang="is_IS">Nýskráning móttekin</page-2-label>
+                    <rejected_page-label lang="en">Registration rejected</rejected_page-label>
+                    <rejected_page-label lang="is_IS">Registration rejected</rejected_page-label>
+                    <rejected_page-info lang="en">Registration rejected</rejected_page-info>
+                    <rejected_page-info lang="is_IS">Registration rejected</rejected_page-info>
+                    <page-1-submit-label lang="en">Confirm</page-1-submit-label>
+                    <page-1-submit-label lang="is_IS">Confirm</page-1-submit-label>
+                    <page-1-reject-label lang="en">Reject</page-1-reject-label>
+                    <page-1-reject-label lang="is_IS">Reject</page-1-reject-label>
+                    <page-2-info lang="en">Thank you. Registration has been accepted and form submitter will get an email shortly with his/her login information.</page-2-info>
+                    <page-2-info lang="is_IS">Thank you. Registration has been accepted and form submitter will get an email shortly with his/her login information.</page-2-info>
                     <fbc_8-error lang="is_IS">Invalid email</fbc_8-error>
                     <fbc_8-error lang="en">Invalid email</fbc_8-error>
                     
@@ -226,20 +233,6 @@
                 </xs:restriction>
             </xs:simpleType>
         </xs:schema>
-        <xf:model id="x-autofill-model">
-         <xf:instance xmlns="" id="x-autofill-model-instance">
-                <foo/>
-            </xf:instance>
-            <xf:action ev:event="xforms-ready">
-            	<xf:setvalue bind="fbc_7_bind" id="fbc_7-autofill-setvalue" model="submission_model" value="instance('fbc_7_autofill-instance')/fb-afk-loginSession.user.usersHomePhone.number"/>
-                <xf:setvalue bind="fbc_6_bind" id="fbc_6-autofill-setvalue" model="submission_model" value="instance('fbc_6_autofill-instance')/fb-afk-loginSession.user.usersMobilePhone.number"/>
-                <xf:setvalue bind="fbc_10_bind" id="fbc_10-autofill-setvalue" model="submission_model" value="instance('fbc_10_autofill-instance')/fb-afk-loginSession.user.usersMainAddress.streetAddress"/>
-                <xf:setvalue bind="fbc_11_bind" id="fbc_11-autofill-setvalue" model="submission_model" value="instance('fbc_11_autofill-instance')/fb-afk-loginSession.user.usersMainAddress.postalCode.postalCode"/>
-                <xf:setvalue bind="fbc_12_bind" id="fbc_12-autofill-setvalue" model="submission_model" value="instance('fbc_12_autofill-instance')/fb-afk-loginSession.user.usersMainAddress.city"/>
-                <xf:setvalue bind="fbc_13_bind" id="fbc_13-autofill-setvalue" model="submission_model" value="instance('fbc_13_autofill-instance')/fb-afk-loginSession.user.name"/>
-                <xf:setvalue bind="fbc_14_bind" id="fbc_14-autofill-setvalue" model="submission_model" value="instance('fbc_14_autofill-instance')/fb-afk-loginSession.user.personalID"/>
-            </xf:action>
-        </xf:model>
     </head>
     <body>
         <xf:group appearance="full">
@@ -252,9 +245,6 @@
             <idega:switch>
                 <idega:case id="fbc_1">
                     <xf:group appearance="full">
-                    <!--  
-                        <xf:label model="data_model" ref="instance('localized_strings')/page-1-label[@lang=instance('localized_strings')/current_language]"/>
-                        -->
                     <div class="formInfo">
                         <xf:output model="data_model" ref="instance('localized_strings')/formInfo-section-1[@lang=instance('localized_strings')/current_language]"/>
                         <br />
@@ -431,6 +421,7 @@
                                 <xf:label model="data_model" ref="instance('localized_strings')/page-1-submit-label[@lang=instance('localized_strings')/current_language]"/>
                                 <xf:action ev:event="DOMActivate">
                                     <xf:setvalue ref="instance('control-instance')/submission" value="'true'"/>
+                                    <xf:setvalue bind="actionTaken">toConfirmRegistration</xf:setvalue>
                                     <idega:dispatch name="idega-validate" target="//h:body//*[starts-with(@id, 'fbc_')]"/>
                                     <xf:dispatch name="xforms-rebuild" target="data_model"/>
                                     <xf:dispatch name="xforms-recalculate" target="data_model"/>
@@ -442,6 +433,22 @@
                                     <xf:dispatch if="count-non-empty(instance('error-instance')/error)!=0" name="idega-submit-error" target="idega-submission-error"/>
                                 </xf:action>
                             </xf:trigger>
+                            <xf:trigger id="fbc_9999" class="fbc_button_submit" type="fbc_button_submit" bind="bind-submissionButton">
+					   	  		<xf:label model="data_model" ref="instance('localized_strings')/page-1-reject-label[@lang=instance('localized_strings')/current_language]"/>
+					   	  	    <xf:action ev:event="DOMActivate">
+                                	<xf:setvalue ref="instance('control-instance')/submission" value="'true'"/>
+                                    <xf:setvalue bind="actionTaken">toRejectRegistration</xf:setvalue>
+                                    <idega:dispatch name="idega-validate" target="//h:body//*[starts-with(@id, 'fbc_')]"/>
+                                    <xf:dispatch name="xforms-rebuild" target="data_model"/>
+                                    <xf:dispatch name="xforms-recalculate" target="data_model"/>
+                                    <xf:dispatch name="xforms-revalidate" target="data_model"/>
+                                    <xf:dispatch name="xforms-refresh" target="data_model"/>
+                                    <xf:action if="count-non-empty(instance('error-instance')/error)=0">
+                                    	<xf:send submission="reject_registration_submission"/>
+                                	</xf:action>
+                                	<xf:dispatch if="count-non-empty(instance('error-instance')/error)!=0" name="idega-submit-error" target="idega-submission-error"/>    
+                            	</xf:action>
+                        </xf:trigger>
                         </div>
                     </xf:group>
                 </idega:case>
@@ -449,6 +456,12 @@
                     <xf:group appearance="full">
                         <xf:label model="data_model" ref="instance('localized_strings')/page-2-label[@lang=instance('localized_strings')/current_language]"/>
                         <xf:output model="data_model" ref="instance('localized_strings')/page-2-info[@lang=instance('localized_strings')/current_language]"/>
+                    </xf:group>
+                </idega:case>
+                <idega:case id="fbc_444" name="thx_page">
+                	<xf:group appearance="full">
+                        <xf:label model="data_model" ref="instance('localized_strings')/rejected_page-label[@lang=instance('localized_strings')/current_language]"/>
+                        <xf:output model="data_model" ref="instance('localized_strings')/rejected_page-info[@lang=instance('localized_strings')/current_language]"/>
                     </xf:group>
                 </idega:case>
             </idega:switch>

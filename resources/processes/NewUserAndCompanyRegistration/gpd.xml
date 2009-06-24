@@ -6,12 +6,12 @@
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="createAccount" x="563" y="379" width="132" height="36">
+  <node name="createAccount" x="678" y="457" width="132" height="36">
     <edge>
       <label x="-25" y="-10"/>
     </edge>
   </node>
-  <node name="sendMessage" x="419" y="542" width="132" height="36">
+  <node name="sendMessage" x="539" y="612" width="132" height="36">
     <edge>
       <label x="5" y="-10"/>
     </edge>
@@ -29,28 +29,41 @@
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="locateExistingAccount" x="397" y="207" width="139" height="36">
+  <node name="locateExistingAccount" x="508" y="284" width="139" height="36">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="accountFound" x="403" y="291" width="132" height="36">
-    <edge>
-      <label x="5" y="-10"/>
-    </edge>
+  <node name="accountFound" x="518" y="369" width="132" height="36">
     <edge>
       <label x="-18" y="-15"/>
     </edge>
-  </node>
-  <node name="createAccountLogin" x="287" y="380" width="132" height="36">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="createCompany" x="417" y="455" width="132" height="36">
+  <node name="createAccountLogin" x="380" y="446" width="132" height="36">
     <edge>
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="end-state1" x="106" y="472" width="25" height="25"/>
+  <node name="createCompany" x="534" y="516" width="132" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="confirmUserAndCompany" x="400" y="210" width="144" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="rejectRegistration" x="222" y="283" width="132" height="36">
+    <edge>
+      <label x="5" y="-10"/>
+    </edge>
+  </node>
+  <node name="end-state1" x="93" y="578" width="132" height="36"/>
 </root-container>

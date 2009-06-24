@@ -8,6 +8,9 @@
         <task name="New User And Company Registration" initial="true">
             <viewResource resourceIdentifier="forms/newUserAndCompanyRegistration.xhtml" viewType="xforms" viewResourceType="xforms" />
         </task>
+        <task name="Confirm user and company">
+        	<viewResource resourceIdentifier="forms/newUserAndCompanyConfirmation.xhtml" viewType="xforms" viewResourceType="xforms" />
+        </task>
     </tasks>
     
 </processBundle-config>
