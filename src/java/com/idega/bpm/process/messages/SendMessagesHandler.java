@@ -10,6 +10,7 @@ import org.jbpm.graph.def.ActionHandler;
 import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.graph.exe.Token;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -20,12 +21,12 @@ import com.idega.presentation.IWContext;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  *
- * Last modified: $Date: 2009/01/15 19:36:45 $ by $Author: arunas $
+ * Last modified: $Date: 2009/06/24 08:59:39 $ by $Author: valdas $
  */
 @Service("sendMessagesHandler")
-@Scope("prototype")
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
 public class SendMessagesHandler implements ActionHandler {
 
 	private static final long serialVersionUID = -7421283155844789254L;
