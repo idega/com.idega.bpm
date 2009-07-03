@@ -69,7 +69,7 @@ import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.36 $ Last modified: $Date: 2009/06/17 14:05:57 $ by $Author: valdas $
+ * @version $Revision: 1.37 $ Last modified: $Date: 2009/07/03 08:56:48 $ by $Author: valdas $
  */
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
 @Service("defaultPIW")
@@ -626,10 +626,6 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 		
 		getBpmFactory().getRolesManager().setContactsPermission(role,
 		    processInstanceId, userId);
-	}
-	
-	public void setAttachmentsPermission(Role role, Integer userId) {
-		getBpmFactory().getRolesManager().setAttachmentsPermission(role, getProcessInstanceId(), userId);
 	}
 	
 	public BPMFactory getBpmFactory() {
