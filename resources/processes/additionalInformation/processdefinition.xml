@@ -42,7 +42,7 @@
               <variable name="files_additionalInformationRequestAttachments" access="write"></variable>
          </controller>
       </task>
-		<transition to="sendMessage"></transition>
+		<transition to="sendMessage"  name="toSendMessage"></transition>
 	</task-node>
 
 	<node name="sendMessage">
@@ -79,7 +79,7 @@
                 </propertyMap>
         </action>
       </event>
-		<transition to="submitAdditionalInformation"></transition>
+		<transition to="submitAdditionalInformation"  name="toSubmitAddInfo"></transition>
 	</node>
 
 	<task-node name="submitAdditionalInformation">
