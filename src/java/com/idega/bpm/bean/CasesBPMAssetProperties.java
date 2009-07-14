@@ -9,6 +9,7 @@ public class CasesBPMAssetProperties {
 	private boolean usePDFDownloadColumn = true;
 	private boolean allowPDFSigning = true;
 	private boolean hideEmptySection;
+	private boolean showAttachmentStatistics;
 	
 	public String getCaseId() {
 		return caseId;
@@ -45,6 +46,12 @@ public class CasesBPMAssetProperties {
 	}
 	public void setCommentsPersistenceManagerIdentifier(String commentsPersistenceManagerIdentifier) {
 		this.commentsPersistenceManagerIdentifier = commentsPersistenceManagerIdentifier;
+	}
+	public boolean isShowAttachmentStatistics() {
+		return showAttachmentStatistics;
+	}
+	public void setShowAttachmentStatistics(boolean showAttachmentStatistics) {
+		this.showAttachmentStatistics = showAttachmentStatistics;
 	}
 
 }
