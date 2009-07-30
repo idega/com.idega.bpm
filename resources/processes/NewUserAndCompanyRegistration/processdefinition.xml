@@ -57,11 +57,11 @@
 				<variable access="write,required" name="string_ownerMunicipality"></variable>
 				<variable access="write,required" name="string_ownerFullName"></variable>
 				<variable access="write,required" name="string_ownerPersonalId"></variable>
-				<variable access="write,required" name="string_ownerGender"></variable>
 				<variable access="write,required" name="string_ownerCompanySsn"></variable>
 				<variable access="write,required" name="string_ownerCompanyName"></variable>
 				<variable access="write,required" name="string_ownerCompanyAddress"></variable>
 				<variable access="write,required" name="string_ownerCompanyPostalCode"></variable>
+				<variable access="write,required" name="list_agreeToTheTerms"></variable>
 			</controller>
 		</task>
 		<event type="task-end">
@@ -85,7 +85,6 @@
 					s_upd.setUserMunicipality(userMunicipality);
 					s_upd.setCreateWithLogin(true);
 					s_upd.setUserName(userPersonalId);
-					s_upd.setGenderName(userGenderName);
 					s_upd.setUserPhone(userPhone);
 					
 					s_cd = new com.idega.jbpm.identity.CompanyData();
@@ -102,7 +101,6 @@
 				<variable name='string_ownerMunicipality' access='read' mapped-name='userMunicipality' />
 				<variable name='string_ownerFullName' access='read' mapped-name='userFullName' />
 				<variable name='string_ownerEmailAddress' access='read' mapped-name='userEmailAddress' />
-				<variable name='string_ownerGender' access='read' mapped-name='userGenderName' />
 				<variable name='string_ownerPhone' access='read' mapped-name='userPhone' />
 				<variable name='string_ownerCompanySsn' access='read' mapped-name='companySsn' />
 				<variable name='string_ownerCompanyName' access='read' mapped-name='companyName' />
@@ -252,7 +250,6 @@
 				<variable access="read,required" name="string_ownerMunicipality"></variable>
 				<variable access="read,required" name="string_ownerFullName"></variable>
 				<variable access="read,required" name="string_ownerPersonalId"></variable>
-				<variable access="read,required" name="string_ownerGender"></variable>
 				<variable access="read,required" name="string_ownerCompanySsn"></variable>
 				<variable access="read,required" name="string_ownerCompanyName"></variable>
 				<variable access="read,required" name="string_ownerCompanyAddress"></variable>
@@ -272,7 +269,6 @@
 					s_upd.setUserMunicipality(userMunicipality);
 					s_upd.setCreateWithLogin(true);
 					s_upd.setUserName(userPersonalId);
-					s_upd.setGenderName(userGenderName);
 					s_upd.setUserPhone(userPhone);
 					
 					s_cd = new com.idega.jbpm.identity.CompanyData();
@@ -289,7 +285,6 @@
 				<variable name='string_ownerMunicipality' access='read' mapped-name='userMunicipality' />
 				<variable name='string_ownerFullName' access='read' mapped-name='userFullName' />
 				<variable name='string_ownerEmailAddress' access='read' mapped-name='userEmailAddress' />
-				<variable name='string_ownerGender' access='read' mapped-name='userGenderName' />
 				<variable name='string_ownerPhone' access='read' mapped-name='userPhone' />
 				<variable name='string_ownerCompanySsn' access='read' mapped-name='companySsn' />
 				<variable name='string_ownerCompanyName' access='read' mapped-name='companyName' />

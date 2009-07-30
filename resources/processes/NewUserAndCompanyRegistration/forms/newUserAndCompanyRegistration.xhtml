@@ -16,11 +16,11 @@
                     <Personal_id_fbc_14 mapping="string_ownerPersonalId" xsi:nil="true"/>
                     <Matching_emails_2_fbc_15 xsi:nil="true"/>
                     <Matching_emails_1_fbc_16 mapping="string_ownerEmailAddress" xsi:nil="true"/>
-                    <Gender_fbc_19 mapping="string_ownerGender"/>
                     <Name_fbc_22 mapping="string_ownerCompanyName"/>
                     <SSN_fbc_23  mapping="string_ownerCompanySsn"/>
                     <Address_fbc_24  mapping="string_ownerCompanyAddress"/>
                     <Postal_code_fbc_25  mapping="string_ownerCompanyPostalCode"/>
+                    <Agree_to_the_terms_fbc_26 mapping="list_agreeToTheTerms"/>
                 </data>
             </xf:instance>
             <xf:instance id="control-instance">
@@ -63,11 +63,11 @@
             <xf:bind id="fbc_14_bind" nodeset="Personal_id_fbc_14" required="instance('control-instance')/generatePdf != 'true'" type="xs:integer"/>
             <xf:bind id="fbc_15_bind" nodeset="Matching_emails_2_fbc_15" required="instance('control-instance')/generatePdf != 'true'" type="fbc_15fb_email"/>
             <xf:bind id="fbc_16_bind" nodeset="Matching_emails_1_fbc_16" required="instance('control-instance')/generatePdf != 'true'" type="fbc_16fb_email"/>
-            <xf:bind id="fbc_19_bind" nodeset="Gender_fbc_19" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
 			<xf:bind id="fbc_22_bind" nodeset="Name_fbc_22" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
             <xf:bind id="fbc_23_bind" nodeset="SSN_fbc_23" type="xs:integer" required="instance('control-instance')/generatePdf != 'true'"/>
             <xf:bind id="fbc_24_bind" nodeset="Address_fbc_24" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
             <xf:bind id="fbc_25_bind" nodeset="Postal_code_fbc_25" type="xs:string" required="instance('control-instance')/generatePdf != 'true'"/>
+			<xf:bind id="fbc_26_bind" nodeset="Agree_to_the_terms_fbc_26" required="instance('control-instance')/generatePdf != 'true'" type="xs:string"/>
 			
 			<xf:instance id="fbc_6_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.usersMobilePhone.number"/>			
 			<xf:instance id="fbc_7_autofill-instance" relevant="false()" src="context:fb-afk-loginSession.user.usersHomePhone.number"/>            
@@ -144,10 +144,6 @@
                     <fbc_16-validation lang="en">Email is incorrect</fbc_16-validation>
                     <fbc_15-custom lang="en">Emails must match</fbc_15-custom>
                     <fbc_15-custom lang="is_IS">Netföngin þurfa að vera eins</fbc_15-custom>
-                    <fbc_19-title lang="is_IS">Kyn</fbc_19-title>
-                    <fbc_19-title lang="en">Gender</fbc_19-title>
-                    <fbc_19-required lang="is_IS">Kyn, verður að vera valið</fbc_19-required>
-                    <fbc_19-required lang="en">Gender is required</fbc_19-required>
                     <fbc_20-text lang="is_IS">Fyrirsögn</fbc_20-text>
                     <fbc_20-text lang="en">User</fbc_20-text>
                     <fbc_21-text lang="is_IS">Fyrirsögn</fbc_21-text>
@@ -171,6 +167,10 @@
                     <fbc_25-label lang="en">Postal code</fbc_25-label>
                     <fbc_25-required lang="is_IS">Það þarf að fylla út reitinn X</fbc_25-required>
                     <fbc_25-required lang="en">Company's postal code is required</fbc_25-required>
+                    <fbc_26-label lang="is_IS">Valhnappar (fjölval)</fbc_26-label>
+                    <fbc_26-label lang="en">Agree to the terms</fbc_26-label>
+                    <fbc_26-required lang="is_IS">Það þarf að fylla út reitinn X</fbc_26-required>
+                    <fbc_26-required lang="en">You must agree to the terms</fbc_26-required>
                 </localized_strings>
             </xf:instance>
             
@@ -179,32 +179,25 @@
                 <xf:setvalue model="data_model" ref="instance('localized_strings')/current_language" value="instance('locale-instance')/fb-afk-loginSession.currentLocale"/>
                 <idega:dispatch name="idega-xforms-ready" target="//h:body//*[starts-with(@id, 'fbc_')]"/>
             </xf:action>
-            
-            <xf:instance xmlns="" id="fbc_19_lds">
+            <xf:instance id="fbc_26_lds" xmlns="">
                 <local_src>
                     <localizedEntries lang="en">
                         <item>
-                            <itemLabel>Male</itemLabel>
-                            <itemValue>male</itemValue>
-                        </item>
-                        <item>
-                            <itemLabel>Female</itemLabel>
-                            <itemValue>female</itemValue>
+                            <itemLabel>Agree</itemLabel>
+                            <itemValue>true</itemValue>
                         </item>
                     </localizedEntries>
                     <localizedEntries lang="is_IS">
                         <item>
-                            <itemLabel>KK</itemLabel>
-                            <itemValue>male</itemValue>
-                        </item>
-                        <item>
-                            <itemLabel>KVK</itemLabel>
-                            <itemValue>female</itemValue>
+                            <itemLabel>Agree</itemLabel>
+                            <itemValue>true</itemValue>
                         </item>
                     </localizedEntries>
                 </local_src>
             </xf:instance>
-            
+            <xf:instance id="fbc_26_eds" xmlns="">
+                <ext_src/>
+            </xf:instance>
         </xf:model>
         <xs:schema id="fb-schema">
             <xs:simpleType name="fbc_8fb_email">
@@ -361,19 +354,6 @@
                             </idega:validator>
                             <xf:alert ref="instance('error-instance')/error[@for='fbc_12']"/>
                         </xf:input>
-                        <xf:select1 appearance="full" bind="fbc_19_bind" id="fbc_19">
-                            <xf:label model="data_model" ref="instance('localized_strings')/fbc_19-title[@lang=instance('localized_strings')/current_language]"/>
-                            <xf:itemset model="data_model" nodeset="instance('fbc_19_lds')/localizedEntries[@lang=instance('localized_strings')/current_language]/item">
-                                <xf:label ref="itemLabel"/>
-                                <xf:value ref="itemValue"/>
-                            </xf:itemset>
-                            <xf:dispatch ev:event="idega-xforms-ready" name="idega-validate" target="fbc_19"/>
-                            <xf:dispatch ev:event="xforms-value-changed" name="idega-validate" target="fbc_19"/>
-                            <idega:validator ev:event="idega-validate">
-                                <idega:message errorType="required" model="data_model" value="instance('localized_strings')/fbc_19-required[@lang=instance('localized_strings')/current_language]"/>
-                            </idega:validator>
-                            <xf:alert ref="instance('error-instance')/error[@for='fbc_19']"/>
-                        </xf:select1>
                         <div class="fbc_header_text" id="fbc_21" type="fbc_header_text">
                             <xf:output model="data_model" ref="instance('localized_strings')/fbc_21-text[@lang=instance('localized_strings')/current_language]"/>
                         </div>
@@ -392,13 +372,10 @@
                         </xf:input>
                         <xf:input bind="fbc_23_bind" id="fbc_23" type="fbc_text">
                             <xf:label model="data_model" ref="instance('localized_strings')/fbc_23-label[@lang=instance('localized_strings')/current_language]"/>
-                            <xf:dispatch ev:event="idega-xforms-ready"
-                                name="idega-validate" target="fbc_23"/>
-                            <xf:dispatch ev:event="xforms-value-changed"
-                                name="idega-validate" target="fbc_23"/>
+                            <xf:dispatch ev:event="idega-xforms-ready" name="idega-validate" target="fbc_23"/>
+                            <xf:dispatch ev:event="xforms-value-changed" name="idega-validate" target="fbc_23"/>
                             <idega:validator ev:event="idega-validate">
-                                <idega:message errorType="required"
-                                    model="data_model" value="instance('localized_strings')/fbc_23-required[@lang=instance('localized_strings')/current_language]"/>
+                                <idega:message errorType="required" model="data_model" value="instance('localized_strings')/fbc_23-required[@lang=instance('localized_strings')/current_language]"/>
                             </idega:validator>
                             <xf:alert ref="instance('error-instance')/error[@for='fbc_23']"/>
                         </xf:input>
@@ -426,6 +403,23 @@
                             </idega:validator>
                             <xf:alert ref="instance('error-instance')/error[@for='fbc_25']"/>
                         </xf:input>
+                        <xf:select appearance="full" bind="fbc_26_bind"
+                            id="fbc_26" type="fbc_multiple_select">
+                            <xf:label model="data_model" ref="instance('localized_strings')/fbc_26-label[@lang=instance('localized_strings')/current_language]"/>
+                            <xf:itemset model="data_model" nodeset="instance('fbc_26_lds')/localizedEntries[@lang=instance('localized_strings')/current_language]/item">
+                                <xf:label ref="itemLabel"/>
+                                <xf:value ref="itemValue"/>
+                            </xf:itemset>
+                            <xf:dispatch ev:event="idega-xforms-ready"
+                                name="idega-validate" target="fbc_26"/>
+                            <xf:dispatch ev:event="xforms-value-changed"
+                                name="idega-validate" target="fbc_26"/>
+                            <idega:validator ev:event="idega-validate">
+                                <idega:message errorType="required"
+                                    model="data_model" value="instance('localized_strings')/fbc_26-required[@lang=instance('localized_strings')/current_language]"/>
+                            </idega:validator>
+                            <xf:alert ref="instance('error-instance')/error[@for='fbc_26']"/>
+                        </xf:select>
                         <div class="fbc_button_area" id="fbc_2" name="fbc_button_area">
                             <xf:trigger bind="bind-submissionButton" class="fbc_button_submit" id="fbc_3" name="fbc_button_submit">
                                 <xf:label model="data_model" ref="instance('localized_strings')/page-1-submit-label[@lang=instance('localized_strings')/current_language]"/>
