@@ -29,6 +29,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.idega.block.process.business.CaseManagersProvider;
+import com.idega.block.process.business.CasesRetrievalManager;
 import com.idega.business.IBOLookup;
 import com.idega.business.IBOLookupException;
 import com.idega.business.IBORuntimeException;
@@ -66,6 +68,7 @@ import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
 import com.idega.util.ListUtil;
 import com.idega.util.StringUtil;
+import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
@@ -327,7 +330,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	private List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiws,
 	        Locale locale) {
 		
-		ArrayList<BPMDocument> documents = new ArrayList<BPMDocument>(tiws
+		List<BPMDocument> documents = new ArrayList<BPMDocument>(tiws
 		        .size());
 		
 		UserBusiness userBusiness = getUserBusiness();
@@ -473,7 +476,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	
 	private List<TaskInstanceW> wrapTaskInstances(
 	        Collection<TaskInstance> taskInstances) {
-		ArrayList<TaskInstanceW> instances = new ArrayList<TaskInstanceW>(
+		List<TaskInstanceW> instances = new ArrayList<TaskInstanceW>(
 		        taskInstances.size());
 		
 		for (TaskInstance instance : taskInstances) {
@@ -585,7 +588,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 			
 			// using separate list, as the resolved one could be cashed (shared)
 			// and so
-			ArrayList<User> connectedPeople = new ArrayList<User>(users);
+			List<User> connectedPeople = new ArrayList<User>(users);
 			
 			for (Iterator<User> iterator = connectedPeople.iterator(); iterator
 			        .hasNext();) {
@@ -742,7 +745,7 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	@Transactional(readOnly = true)
 	public List<BPMEmailDocument> getAttachedEmails(User user) {
 		
-		ArrayList<String> included = new ArrayList<String>(1);
+		List<String> included = new ArrayList<String>(1);
 		included.add(email_fetch_process_name);
 		Collection<TaskInstance> emailsTaskInstances = getProcessTaskInstances(
 		    null, included);
@@ -881,5 +884,27 @@ public class DefaultBPMProcessInstanceW implements ProcessInstanceW {
 	public TaskMgmtInstanceW getTaskMgmtInstance() {
 		
 		return taskMgmtInstance.init(this);
+	}
+
+	public User getOwner() {
+		//	TODO: add implementation for none case based processes
+		CaseManagersProvider managersProvider = ELUtil.getInstance().getBean(CaseManagersProvider.beanIdentifier);
+		if (managersProvider == null) {
+			return null;
+		}
+		
+		List<CasesRetrievalManager> retrievalManagers = managersProvider.getCaseManagers();
+		if (ListUtil.isEmpty(retrievalManagers)) {
+			return null;
+		}
+		
+		Long id = getProcessInstanceId();
+		
+		User owner = null;
+		for (Iterator<CasesRetrievalManager> retrievalManagersIter = retrievalManagers.iterator(); (retrievalManagersIter.hasNext() && owner == null);) {
+			owner = retrievalManagersIter.next().getCaseOwner(id);
+		}
+		
+		return owner;
 	}
 }
