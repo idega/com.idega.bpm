@@ -10,6 +10,7 @@ public class CasesBPMAssetProperties {
 	private boolean allowPDFSigning = true;
 	private boolean hideEmptySection;
 	private boolean showAttachmentStatistics;
+	private boolean showOnlyCreatorInContacts;
 	
 	public String getCaseId() {
 		return caseId;
@@ -52,6 +53,12 @@ public class CasesBPMAssetProperties {
 	}
 	public void setShowAttachmentStatistics(boolean showAttachmentStatistics) {
 		this.showAttachmentStatistics = showAttachmentStatistics;
+	}
+	public boolean isShowOnlyCreatorInContacts() {
+		return showOnlyCreatorInContacts;
+	}
+	public void setShowOnlyCreatorInContacts(boolean showOnlyCreatorInContacts) {
+		this.showOnlyCreatorInContacts = showOnlyCreatorInContacts;
 	}
 
 }
