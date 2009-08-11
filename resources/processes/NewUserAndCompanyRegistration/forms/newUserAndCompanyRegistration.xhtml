@@ -93,6 +93,8 @@
                 relevant="false()" src="context:fb-afk-loginSession.user.name"/>
             <xf:instance id="fbc_14_autofill-instance"
                 relevant="false()" src="context:fb-afk-loginSession.user.personalID"/>
+            <xf:instance id="fbc_23_autofill-instance"
+                relevant="false()" src="context:fb-afk-companyInfoProvider.companyPersonalIdForCurrentUser"/>
         </xf:model>
         <xf:model id="data_model">
             <xf:instance xmlns="" id="localized_strings">
@@ -268,6 +270,9 @@
                 <xf:setvalue bind="fbc_14_bind"
                     id="fbc_14-autofill-setvalue"
                     model="submission_model" value="instance('fbc_14_autofill-instance')/fb-afk-loginSession.user.personalID"/>
+                <xf:setvalue bind="fbc_23_bind"
+                    id="fbc_23-autofill-setvalue"
+                    model="submission_model" value="instance('fbc_23_autofill-instance')/fb-afk-companyInfoProvider.companyPersonalIdForCurrentUser"/>
             </xf:action>
         </xf:model>
     </head>
@@ -442,7 +447,7 @@
                             </idega:validator>
                             <xf:alert ref="instance('error-instance')/error[@for='fbc_22']"/>
                         </xf:input>
-                        <xf:input bind="fbc_23_bind" id="fbc_23" type="fbc_text">
+                        <xf:input bind="fbc_23_bind" id="fbc_23">
                             <xf:label model="data_model" ref="instance('localized_strings')/fbc_23-label[@lang=instance('localized_strings')/current_language]"/>
                             <xf:dispatch ev:event="idega-xforms-ready"
                                 name="idega-validate" target="fbc_23"/>
