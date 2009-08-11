@@ -183,7 +183,11 @@
                     <fbc_25-required lang="is_IS">Það þarf að fylla út póstnúmer fyrirtækis</fbc_25-required>
                     <fbc_25-required lang="en">Company's postal code is required</fbc_25-required>
                     <fbc_26-label lang="is_IS">Samþykkja skilmála</fbc_26-label>
-                    <fbc_26-label lang="en">Agree to the terms</fbc_26-label>
+                    <fbc_26-label lang="en">Agree to the terms above</fbc_26-label>
+                    <fbc_26-view-terms-label lang="is_IS">Kynntu þér notkunarskilmála</fbc_26-view-terms-label>
+                    <fbc_26-view-terms-label lang="en">View terms</fbc_26-view-terms-label>
+                    <fbc_26-terms-label lang="is_IS">Notkunarskilmálar</fbc_26-terms-label>
+                    <fbc_26-terms-label lang="en">Terms</fbc_26-terms-label>
                     <fbc_26-required lang="is_IS">Það þarf að fylla út reitinn X</fbc_26-required>
                     <fbc_26-required lang="en">You must agree to the terms</fbc_26-required>
                     <fbc_25-help lang="is_IS"/>
@@ -480,6 +484,14 @@
                                 <xf:output ref="instance('localized_strings')/fbc_25-help[@lang=instance('localized_strings')/current_language]"/>
                             </xf:help>
                         </xf:input>
+                        <div class="input">
+                        	<label id="terms_link-label" class="label" for="terms_link-value">
+                        		<xf:label model="data_model" ref="instance('localized_strings')/fbc_26-view-terms-label[@lang=instance('localized_strings')/current_language]"/>
+                        	</label>
+                        	<a id="terms_link-value" class="value" href="javascript:void(0)" onclick="showLoadingMessage(Localization.LOADING_MSG);LazyLoader.loadMultiple(['/dwr/engine.js', '/dwr/interface/ProcessAgreementProvider.js'], function() {ProcessAgreementProvider.getDefaultAgreementLinkByLocale({callback: function(uri) {closeAllLoadingMessages();window.location.href=uri;}});});">
+                        		<xf:label model="data_model" ref="instance('localized_strings')/fbc_26-terms-label[@lang=instance('localized_strings')/current_language]"/>
+                        	</a>
+                        </div>
                         <xf:select appearance="full" bind="fbc_26_bind"
                             id="fbc_26" type="fbc_multiple_select">
                             <xf:label model="data_model" ref="instance('localized_strings')/fbc_26-label[@lang=instance('localized_strings')/current_language]"/>
