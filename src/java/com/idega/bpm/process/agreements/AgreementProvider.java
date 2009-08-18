@@ -10,12 +10,12 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.idega.bpm.BPMConstants;
 import com.idega.dwr.business.DWRAnnotationPersistance;
-import com.idega.idegaweb.IWBundle;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.presentation.IWContext;
+import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
+import com.idega.util.StringUtil;
 
 @Scope(BeanDefinition.SCOPE_SINGLETON)
 @Service("bpmProcessAgreementProvider")
@@ -30,7 +30,7 @@ public class AgreementProvider implements DWRAnnotationPersistance {
 	@RemoteMethod
 	public String getDefaultAgreementLink() {
 		IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
-		return iwma.getSettings().getProperty(DEFAULT_AGREEMENT_DOCUMENT, new StringBuilder(getAgreementsFolder()).append("agreement.pdf").toString());
+		return iwma.getSettings().getProperty(DEFAULT_AGREEMENT_DOCUMENT, new StringBuilder(getAgreementsFolder()).append("Agreement.pdf").toString());
 	}
 	
 	@RemoteMethod
@@ -44,16 +44,31 @@ public class AgreementProvider implements DWRAnnotationPersistance {
 		if (locale == null) {
 			return getDefaultAgreementLink();
 		}
-		
-		return new StringBuilder(getAgreementsFolder()).append(locale.toString()).append("/agreement.pdf").toString();
+				
+		return new StringBuilder(getAgreementsFolder()).append(locale.toString()).append("/Agreement.pdf").toString();
 	}
 	
-	//	TODO: make method to get agreement for specific process and locale
+	@RemoteMethod
+	public String getAgreementForProcess(String processName) {
+		if (StringUtil.isEmpty(processName)) {
+			return getDefaultAgreementLinkByLocale();
+		}
+		
+		IWContext iwc = CoreUtil.getIWContext();
+		if (iwc == null) {
+			return getDefaultAgreementLink();
+		}
+		
+		Locale locale = iwc.getCurrentLocale();
+		if (locale == null) {
+			return getDefaultAgreementLink();
+		}
+				
+		return new StringBuilder(getAgreementsFolder()).append(processName).append(CoreConstants.SLASH).append(locale.toString()).append("/Agreement.pdf")
+			.toString();
+	}
 	
 	private String getAgreementsFolder() {
-		IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
-		IWBundle bundle = iwma.getBundle(BPMConstants.IW_BUNDLE_STARTER);
-		return bundle.getVirtualPathWithFileNameString("legal/");
+		return CoreConstants.WEBDAV_SERVLET_URI + CoreConstants.PUBLIC_PATH + "/bpm/legal/";
 	}
-	
 }

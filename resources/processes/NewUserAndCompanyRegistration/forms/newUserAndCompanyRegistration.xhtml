@@ -493,7 +493,23 @@
                         	<label id="terms_link-label" class="label" for="terms_link-value">
                         		<xf:label model="data_model" ref="instance('localized_strings')/fbc_26-view-terms-label[@lang=instance('localized_strings')/current_language]"/>
                         	</label>
-                        	<a id="terms_link-value" class="value" href="javascript:void(0)" onclick="showLoadingMessage(Localization.LOADING_MSG);LazyLoader.loadMultiple(['/dwr/engine.js', '/dwr/interface/ProcessAgreementProvider.js'], function() {ProcessAgreementProvider.getDefaultAgreementLinkByLocale({callback: function(uri) {closeAllLoadingMessages();window.location.href=uri;}});});">
+                        	<a id="terms_link-value" class="value" href="javascript:void(0)" onclick="
+                            	showLoadingMessage(Localization.LOADING_MSG);
+                        		var processName = null;
+                        		if (BPMConfiguration) {
+                            		if (BPMConfiguration.processName) {
+                        				processName = BPMConfiguration.processName;
+                            		}
+                            	}
+                        		LazyLoader.loadMultiple(['/dwr/engine.js', '/dwr/interface/ProcessAgreementProvider.js'], function() {
+                            		ProcessAgreementProvider.getAgreementForProcess(processName, {
+                                		callback: function(uri) {
+	                                		closeAllLoadingMessages();
+	                                		window.open(uri,'legal','scrollbars=0,menubar=0,height=600,width=800,resizable=1,toolbar=0,location=0,status=0');
+											
+                                		}
+                                	});
+                                }, null);">
                         		<xf:label model="data_model" ref="instance('localized_strings')/fbc_26-terms-label[@lang=instance('localized_strings')/current_language]"/>
                         	</a>
                         </div>
