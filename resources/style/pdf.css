@@ -45,6 +45,10 @@ div.select1 div.selectDropdownReplacementForPDFDocument, div.input div.replaceFo
 	width: 70%;
 }
 
+table div.input div.replaceForInputStyle {
+	width: auto;
+}
+
 div.selectDropdownReplacementForPDFDocument ul {
 	margin: 0;
 	padding: 0;
@@ -133,7 +137,7 @@ table th, table td {
 	empty-cells: show;
 }
 
-table span.output label {
+table span.output label, table label {
 	display: inline !important;
 	width: auto !important;
 	float: none !important;
