@@ -11,6 +11,7 @@ public class CasesBPMAssetProperties {
 	private boolean hideEmptySection;
 	private boolean showAttachmentStatistics;
 	private boolean showOnlyCreatorInContacts;
+	private boolean autoShowComments;
 	
 	public String getCaseId() {
 		return caseId;
@@ -59,6 +60,12 @@ public class CasesBPMAssetProperties {
 	}
 	public void setShowOnlyCreatorInContacts(boolean showOnlyCreatorInContacts) {
 		this.showOnlyCreatorInContacts = showOnlyCreatorInContacts;
+	}
+	public boolean isAutoShowComments() {
+		return autoShowComments;
+	}
+	public void setAutoShowComments(boolean autoShowComments) {
+		this.autoShowComments = autoShowComments;
 	}
 
 }
