@@ -1,12 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:idega="http://idega.com/xforms" xmlns:xf="http://www.w3.org/2002/xforms" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:idega="http://idega.com/xforms"
+    xmlns:xf="http://www.w3.org/2002/xforms"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <head>
         <title>
             <xf:output model="data_model" ref="instance('localized_strings')/form-title[@lang=instance('localized_strings')/current_language]"/>
         </title>
         <xf:model id="submission_model" schema="#fb-schema">
-            <xf:instance xmlns="" id="data-instance">
+            <xf:instance id="data-instance" xmlns="">
                 <data>
-                    <form_id>704</form_id>
+                    <form_id>167</form_id>
                     <Mobile_fbc_6 mapping="string_ownerMobile"/>
                     <Telephone_fbc_7 mapping="string_ownerPhone"/>
                     <Address_fbc_10 mapping="string_ownerAddress"/>
@@ -15,7 +19,8 @@
                     <Name_fbc_13 mapping="string_ownerFullName"/>
                     <Personal_id_fbc_14 mapping="string_ownerPersonalId" xsi:nil="true"/>
                     <Matching_emails_2_fbc_15 xsi:nil="true"/>
-                    <Matching_emails_1_fbc_16 mapping="string_ownerEmailAddress" xsi:nil="true"/>
+                    <Matching_emails_1_fbc_16
+                        mapping="string_ownerEmailAddress" xsi:nil="true"/>
                     <Name_fbc_22 mapping="string_ownerCompanyName"/>
                     <SSN_fbc_23 mapping="string_ownerCompanySsn"/>
                     <Address_fbc_24 mapping="string_ownerCompanyAddress"/>
@@ -33,22 +38,22 @@
                     <controlsButton/>
                 </control>
             </xf:instance>
-            
-            <xf:bind id="errorsGroup" nodeset="instance('error-instance')/error" relevant="instance('control-instance')/submission = 'true' and count-non-empty(instance('error-instance')/error)!=0"/>
+            <xf:bind id="errorsGroup"
+                nodeset="instance('error-instance')/error" relevant="instance('control-instance')/submission = 'true' and count-non-empty(instance('error-instance')/error)!=0"/>
             <xf:bind id="errors" nodeset="instance('error-instance')/error[. != '']"/>
-            <xf:instance xmlns="" id="error-instance">
+            <xf:instance id="error-instance" xmlns="">
                 <data>
                     <error for=""/>
                     <sendLinkError for=""/>
                 </data>
             </xf:instance>
-            
-            <xf:bind id="bind-submissionButton" nodeset="instance('control-instance')/submissionButton" relevant="instance('control-instance')/readonly != 'true' and instance('control-instance')/generatePdf != 'true'" />
-            
-            <xf:submission action="xformsBPM:/nouri" id="submit_data_submission" method="post" replace="none">
+            <xf:bind id="bind-submissionButton"
+                nodeset="instance('control-instance')/submissionButton" relevant="instance('control-instance')/readonly != 'true' and instance('control-instance')/generatePdf != 'true'"/>
+            <xf:submission action="xformsBPM:/nouri"
+                id="submit_data_submission" method="post" replace="none">
                 <idega:toggle case="fbc_4" ev:event="xforms-submit-done"/>
             </xf:submission>
-             <xf:action ev:event="xforms-submit-error" id="submission-error">
+            <xf:action ev:event="xforms-submit-error" id="submission-error">
                 <xf:dispatch name="idega-submit-error" target="idega-submission-error"/>
             </xf:action>
             <xf:action ev:event="idega-submit-error" id="idega-submission-error">
@@ -97,7 +102,7 @@
                 relevant="false()" src="context:fb-afk-companyInfoProvider.companyPersonalIdForCurrentUser"/>
         </xf:model>
         <xf:model id="data_model">
-            <xf:instance xmlns="" id="localized_strings">
+            <xf:instance id="localized_strings" xmlns="">
                 <localized_strings>
                     <default_language>en</default_language>
                     <current_language>en</current_language>
@@ -108,13 +113,13 @@
                     <formInfo-section-1 lang="en">Please enter you details.</formInfo-section-1>
                     <formInfo-section-2 lang="en">Your access will be sent to you immediately after registration is confirmed via the email you registered</formInfo-section-2>
                     <formInfo-section-1 lang="is_IS">Vinsamlegast skráið inn kennitölu og tölvupóstfang sem og aðrar upplýsingar eftir því sem við á.</formInfo-section-1>
-                    <formInfo-section-2 lang="is_IS">Your access will be sent to you immediately after registration is confirmed via the email you registered</formInfo-section-2>
+                    <formInfo-section-2 lang="is_IS">Aðgangur þinn verður sendur þér í tölvupósti um leið og hann hefur verið samþykktur</formInfo-section-2>
                     <page-2-label lang="en">Registration received</page-2-label>
-                    <page-2-label lang="is_IS">Registration received</page-2-label>
-                    <page-1-submit-label lang="en">Submit</page-1-submit-label>
-                    <page-1-submit-label lang="is_IS">Senda formið</page-1-submit-label>
+                    <page-2-label lang="is_IS">Nýskráning móttekin</page-2-label>
+                    <page-1-submit-label lang="en">Submit registration</page-1-submit-label>
+                    <page-1-submit-label lang="is_IS">Senda nýskráningu</page-1-submit-label>
                     <page-2-info lang="en">Thank you. Your registration has been received. You will get an email with your login information after registration is confirmed.</page-2-info>
-                    <page-2-info lang="is_IS">Thank you. Your registration has been received. You will get an email with your login information after registration is confirmed.</page-2-info>
+                    <page-2-info lang="is_IS">Takk fyrir, nýskráning þín hefur verið móttekin og þú færð notandaupplýsingar sendar með tölvupósti þegar hún hefur verið samþykkt.</page-2-info>
                     <fbc_8-error lang="is_IS">Invalid email</fbc_8-error>
                     <fbc_8-error lang="en">Invalid email</fbc_8-error>
                     <fbc_6-title lang="is_IS">GSM</fbc_6-title>
@@ -190,16 +195,16 @@
                     <fbc_26-view-terms-label lang="en">View terms</fbc_26-view-terms-label>
                     <fbc_26-terms-label lang="is_IS">Notkunarskilmálar</fbc_26-terms-label>
                     <fbc_26-terms-label lang="en">Terms</fbc_26-terms-label>
-                    <fbc_26-required lang="is_IS">Það þarf að fylla út reitinn X</fbc_26-required>
+                    <fbc_26-required lang="is_IS">Það þarf að samþykkja skilmálana</fbc_26-required>
                     <fbc_26-required lang="en">You must agree to the terms</fbc_26-required>
                     <fbc_25-help lang="is_IS"/>
                     <fbc_24-help lang="is_IS"/>
                 </localized_strings>
             </xf:instance>
-            
             <xf:instance id="locale-instance" relevant="false()" src="context:fb-afk-loginSession.currentLocale"/>
             <xf:action ev:event="xforms-ready">
-                <xf:setvalue model="data_model" ref="instance('localized_strings')/current_language" value="instance('locale-instance')/fb-afk-loginSession.currentLocale"/>
+                <xf:setvalue model="data_model"
+                    ref="instance('localized_strings')/current_language" value="instance('locale-instance')/fb-afk-loginSession.currentLocale"/>
                 <idega:dispatch name="idega-xforms-ready" target="//h:body//*[starts-with(@id, 'fbc_')]"/>
             </xf:action>
             <xf:instance id="fbc_26_lds" xmlns="">
@@ -212,7 +217,7 @@
                     </localizedEntries>
                     <localizedEntries lang="is_IS">
                         <item>
-                            <itemLabel>Agree</itemLabel>
+                            <itemLabel>Samþykkja</itemLabel>
                             <itemValue>true</itemValue>
                         </item>
                     </localizedEntries>
@@ -245,7 +250,7 @@
             </xs:simpleType>
         </xs:schema>
         <xf:model id="x-autofill-model">
-         <xf:instance xmlns="" id="x-autofill-model-instance">
+            <xf:instance id="x-autofill-model-instance" xmlns="">
                 <foo/>
             </xf:instance>
             <xf:action ev:event="xforms-ready">
