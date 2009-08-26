@@ -49,7 +49,9 @@ public class AgreementProvider implements DWRAnnotationPersistance {
 			return getDefaultAgreementLink();
 		}
 				
-		return new StringBuilder(getAgreementsFolder()).append(locale.toString()).append(CoreConstants.SLASH).append(AGREEMENT_FILE_NAME).toString();
+		String uriInRepository = new StringBuilder(getAgreementsFolder()).append(locale.toString()).append(CoreConstants.SLASH).append(AGREEMENT_FILE_NAME)
+			.toString();
+		return getDownloadUri(uriInRepository);
 	}
 	
 	@RemoteMethod
@@ -70,12 +72,14 @@ public class AgreementProvider implements DWRAnnotationPersistance {
 				
 		String uriInRepository = new StringBuilder(getAgreementsFolder()).append(processName).append(CoreConstants.SLASH).append(locale.toString())
 			.append(CoreConstants.SLASH).append(AGREEMENT_FILE_NAME).toString();
-		
+		return getDownloadUri(uriInRepository);
+	}
+	
+	private String getDownloadUri(String uriInRepository) {
 		URIUtil uri = new URIUtil(IWMainApplication.getDefaultIWMainApplication().getMediaServletURI());
 		uri.setParameter(MediaWritable.PRM_WRITABLE_CLASS, IWMainApplication.getEncryptedClassName(DownloadWriter.class));
 		uri.setParameter(DownloadWriter.PRM_RELATIVE_FILE_PATH, uriInRepository);
 		uri.setParameter(DownloadWriter.PRM_FILE_NAME, AGREEMENT_FILE_NAME);
-		
 		return uri.getUri();
 	}
 	
