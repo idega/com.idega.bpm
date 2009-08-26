@@ -12,10 +12,13 @@ import org.springframework.stereotype.Service;
 
 import com.idega.dwr.business.DWRAnnotationPersistance;
 import com.idega.idegaweb.IWMainApplication;
+import com.idega.io.DownloadWriter;
+import com.idega.io.MediaWritable;
 import com.idega.presentation.IWContext;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
 import com.idega.util.StringUtil;
+import com.idega.util.URIUtil;
 
 @Scope(BeanDefinition.SCOPE_SINGLETON)
 @Service("bpmProcessAgreementProvider")
@@ -26,11 +29,12 @@ import com.idega.util.StringUtil;
 public class AgreementProvider implements DWRAnnotationPersistance {
 
 	private static final String DEFAULT_AGREEMENT_DOCUMENT = "default_agreement_document";
+	private static final String AGREEMENT_FILE_NAME = "Agreement.pdf";
 	
 	@RemoteMethod
 	public String getDefaultAgreementLink() {
 		IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
-		return iwma.getSettings().getProperty(DEFAULT_AGREEMENT_DOCUMENT, new StringBuilder(getAgreementsFolder()).append("Agreement.pdf").toString());
+		return iwma.getSettings().getProperty(DEFAULT_AGREEMENT_DOCUMENT, new StringBuilder(getAgreementsFolder()).append(AGREEMENT_FILE_NAME).toString());
 	}
 	
 	@RemoteMethod
@@ -45,7 +49,7 @@ public class AgreementProvider implements DWRAnnotationPersistance {
 			return getDefaultAgreementLink();
 		}
 				
-		return new StringBuilder(getAgreementsFolder()).append(locale.toString()).append("/Agreement.pdf").toString();
+		return new StringBuilder(getAgreementsFolder()).append(locale.toString()).append(CoreConstants.SLASH).append(AGREEMENT_FILE_NAME).toString();
 	}
 	
 	@RemoteMethod
@@ -64,8 +68,15 @@ public class AgreementProvider implements DWRAnnotationPersistance {
 			return getDefaultAgreementLink();
 		}
 				
-		return new StringBuilder(getAgreementsFolder()).append(processName).append(CoreConstants.SLASH).append(locale.toString()).append("/Agreement.pdf")
-			.toString();
+		String uriInRepository = new StringBuilder(getAgreementsFolder()).append(processName).append(CoreConstants.SLASH).append(locale.toString())
+			.append(CoreConstants.SLASH).append(AGREEMENT_FILE_NAME).toString();
+		
+		URIUtil uri = new URIUtil(IWMainApplication.getDefaultIWMainApplication().getMediaServletURI());
+		uri.setParameter(MediaWritable.PRM_WRITABLE_CLASS, IWMainApplication.getEncryptedClassName(DownloadWriter.class));
+		uri.setParameter(DownloadWriter.PRM_RELATIVE_FILE_PATH, uriInRepository);
+		uri.setParameter(DownloadWriter.PRM_FILE_NAME, AGREEMENT_FILE_NAME);
+		
+		return uri.getUri();
 	}
 	
 	private String getAgreementsFolder() {
