@@ -481,9 +481,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	public String getName(Locale locale) {
 		
 		final IWMainApplication iwma = getIWMA();
-		@SuppressWarnings("unchecked")
-		Map<Long, Map<Locale, String>> cashTaskNames = IWCacheManager2
-		        .getInstance(iwma).getCache(CASHED_TASK_NAMES);
+		Map<Long, Map<Locale, String>> cashTaskNames = IWCacheManager2.getInstance(iwma).getCache(CASHED_TASK_NAMES);
 		final Map<Locale, String> names;
 		final Long taskInstanceId = getTaskInstanceId();
 		
