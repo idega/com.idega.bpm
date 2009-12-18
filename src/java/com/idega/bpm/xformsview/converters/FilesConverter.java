@@ -7,6 +7,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Element;
@@ -27,9 +28,12 @@ import com.idega.util.xml.XPathUtil;
  *
  * Last modified: $Date: 2008/10/14 18:23:43 $ by $Author: civilis $
  */
-@Scope("singleton")
+
 @Service
+@Scope(BeanDefinition.SCOPE_SINGLETON)
 public class FilesConverter implements DataConverter {
+	
+	private static final Logger LOGGER = Logger.getLogger(FilesConverter.class.getName());
 	
 	private TmpFilesManager uploadsManager;
 	private TmpFileResolver uploadResourceResolver;
@@ -70,7 +74,7 @@ public class FilesConverter implements DataConverter {
 	private String getDescriptionByUri(String identifier, Object resource, URI uri) {
 		
 		if(!(resource instanceof Node)) {	
-			Logger.getLogger(getClass().getName()).log(Level.WARNING, "Wrong resource provided. Expected of type "+Node.class.getName()+", but got "+resource.getClass().getName());
+			LOGGER.log(Level.WARNING, "Wrong resource provided. Expected of type "+Node.class.getName()+", but got "+resource.getClass().getName());
 			return null;
 		}
 		
@@ -114,8 +118,7 @@ public class FilesConverter implements DataConverter {
 	}
 	
 	public Element revert(Object o, Element e) {
-	
-		Logger.getLogger(getClass().getName()).log(Level.WARNING, "UNSUPPORTED OPERATION");
+		LOGGER.warning("UNSUPPORTED OPERATION");
 		return e;
 	}
 	
