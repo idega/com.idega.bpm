@@ -3,6 +3,7 @@ package com.idega.bpm.xformsview.converters;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -10,16 +11,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
 import com.idega.block.process.variables.VariableDataType;
 import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
 import com.idega.jbpm.variables.BinaryVariable;
+import com.idega.jbpm.variables.BinaryVariablesHandler;
 import com.idega.jbpm.variables.impl.BinaryVariableImpl;
+import com.idega.util.ListUtil;
 import com.idega.util.xml.XPathUtil;
 
 /**
@@ -39,6 +43,9 @@ public class FilesConverter implements DataConverter {
 	private TmpFileResolver uploadResourceResolver;
 	private static final String mappingAtt = "mapping";
 	private final XPathUtil entriesXPUT;
+	
+	@Autowired
+	private BinaryVariablesHandler binaryVariablesHandler;
 	
 	public FilesConverter() {
 		entriesXPUT = new XPathUtil("./entry");
@@ -118,6 +125,58 @@ public class FilesConverter implements DataConverter {
 	}
 	
 	public Element revert(Object o, Element e) {
+		if (o instanceof String) {
+			NodeList children = e.getChildNodes();
+			if (children == null || children.getLength() == 0) {
+				return e;
+			}
+			
+			List<String> variablesRepresentation = null;
+			try {
+				variablesRepresentation = getBinaryVariablesHandler().convertToBinaryVariablesRepresentation((String) o);
+			} catch (Exception ex) {
+				LOGGER.warning("Unable to convert string " + o + " to representation of binary variables");
+			}
+			if (ListUtil.isEmpty(variablesRepresentation)) {
+				return e;
+			}
+			
+			List<Attr> files = new ArrayList<Attr>();
+			for (int i = 0; i < children.getLength(); i++) {
+				Node n = children.item(i);
+				NamedNodeMap att = n.getAttributes();
+				if (att != null) {
+					Node fileName = att.getNamedItem("filename");
+					if (fileName instanceof Attr) {
+						files.add((Attr) fileName);
+					}
+				}
+			}
+			
+			if (files.size() < variablesRepresentation.size()) {
+				return e;
+			}
+			
+			int index = 0;
+			for (String representation: variablesRepresentation) {
+				BinaryVariable variable = null;
+				try {
+					variable = getBinaryVariablesHandler().convertToBinaryVariable(representation);
+				} catch (Exception ex) {
+					LOGGER.warning("Unable to convert string " + o + " to " + BinaryVariable.class);
+				}
+					
+				if (variable != null) {
+					Attr attr = files.get(index);
+					attr.setValue(variable.getFileName());
+				}
+				
+				index++;
+			}
+			
+			return e;
+		}
+		
 		LOGGER.warning("UNSUPPORTED OPERATION");
 		return e;
 	}
@@ -142,5 +201,13 @@ public class FilesConverter implements DataConverter {
 	public void setUploadResourceResolver(@TmpFileResolverType("xformVariables")
 			TmpFileResolver uploadResourceResolver) {
 		this.uploadResourceResolver = uploadResourceResolver;
+	}
+
+	public BinaryVariablesHandler getBinaryVariablesHandler() {
+		return binaryVariablesHandler;
+	}
+
+	public void setBinaryVariablesHandler(BinaryVariablesHandler binaryVariablesHandler) {
+		this.binaryVariablesHandler = binaryVariablesHandler;
 	}
 }
