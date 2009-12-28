@@ -177,3 +177,7 @@ span.label {
 	top: 0 !important;
 	margin: 0 !important;
 }
+
+div.chibaXFormSessionKeyContainerStyle {
+	display: none !important;
+}
