@@ -20,6 +20,7 @@ import org.jbpm.graph.exe.Token;
 import org.jbpm.taskmgmt.def.Task;
 import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ import com.idega.core.cache.IWCacheManager2;
 import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
+import com.idega.core.file.util.MimeTypeUtil;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
@@ -65,7 +67,7 @@ import com.idega.util.StringUtil;
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
  * @version $Revision: 1.50 $ Last modified: $Date: 2009/05/05 09:04:30 $ by $Author: civilis $
  */
-@Scope("prototype")
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
 @Service("defaultTIW")
 @Transactional(readOnly = false)
 public class DefaultBPMTaskInstanceW implements TaskInstanceW {
@@ -108,30 +110,11 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	
 	@Transactional(readOnly = true)
 	public TaskInstance getTaskInstance() {
-		
-		if (true || (taskInstance == null && getTaskInstanceId() != null)) {
-			
-			taskInstance = getBpmContext().execute(new JbpmCallback() {
-				
-				public Object doInJbpm(JbpmContext context)
-				        throws JbpmException {
-					return context.getTaskInstance(getTaskInstanceId());
-				}
-				
-			});
-		} else if (taskInstance != null) {
-			
-			taskInstance = getBpmContext().execute(new JbpmCallback() {
-				
-				public Object doInJbpm(JbpmContext context)
-				        throws JbpmException {
-					
-					// USE CONTAINS IN THE ENTITY MANAGER
-					
-					return getBpmContext().mergeProcessEntity(taskInstance);
-				}
-			});
-		}
+		taskInstance = getBpmContext().execute(new JbpmCallback() {
+			public Object doInJbpm(JbpmContext context) throws JbpmException {
+				return context.getTaskInstance(getTaskInstanceId());
+			}
+		});
 		return taskInstance;
 	}
 	
@@ -572,21 +555,16 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 	
 	@Transactional(readOnly = false)
-	public BinaryVariable addAttachment(Variable variable, String fileName,
-	        String description, InputStream is) {
+	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is) {
 		
-		String filesFolder = getTaskInstanceId() + System.currentTimeMillis()
-		        + CoreConstants.SLASH;
+		String filesFolder = getTaskInstanceId() + System.currentTimeMillis() + CoreConstants.SLASH;
 		
-		getUploadedResourceResolver().uploadToTmpLocation(filesFolder,
-		    fileName, is);
+		getUploadedResourceResolver().uploadToTmpLocation(filesFolder, fileName, is);
 		
-		Collection<URI> uris = getFileUploadManager().getFilesUris(filesFolder,
-		    null, getUploadedResourceResolver());
+		Collection<URI> uris = getFileUploadManager().getFilesUris(filesFolder, null, getUploadedResourceResolver());
 		URI uri = uris.iterator().next();
 		
-		List<BinaryVariable> binVars = getVariablesHandler()
-		        .resolveBinaryVariables(getTaskInstanceId(), variable);
+		List<BinaryVariable> binVars = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId(), variable);
 		
 		if (binVars == null)
 			binVars = new ArrayList<BinaryVariable>(1);
@@ -597,14 +575,14 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		final BinaryVariableImpl binVar = new BinaryVariableImpl();
 		binVar.setUri(uri);
 		binVar.setDescription(description);
+		String mimeType = MimeTypeUtil.resolveMimeTypeFromFileName(fileName);
+		binVar.setMimeType(mimeType);
 		
 		binVars.add(binVar);
 		vars.put(variableName, binVars);
-		vars = getVariablesHandler().submitVariablesExplicitly(vars,
-		    getTaskInstanceId());
+		vars = getVariablesHandler().submitVariablesExplicitly(vars, getTaskInstanceId());
 		
-		getFileUploadManager().cleanup(filesFolder, null,
-		    getUploadedResourceResolver());
+		getFileUploadManager().cleanup(filesFolder, null, getUploadedResourceResolver());
 		
 		return binVar;
 	}
