@@ -61,6 +61,8 @@ import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
+import com.idega.util.ListUtil;
+import com.idega.util.StringHandler;
 import com.idega.util.StringUtil;
 
 /**
@@ -556,12 +558,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	
 	@Transactional(readOnly = false)
 	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is) {
-		
 		String filesFolder = getTaskInstanceId() + System.currentTimeMillis() + CoreConstants.SLASH;
 		
-		getUploadedResourceResolver().uploadToTmpLocation(filesFolder, fileName, is);
-		
-		Collection<URI> uris = getFileUploadManager().getFilesUris(filesFolder, null, getUploadedResourceResolver());
+		Collection<URI> uris = getLinksToVariables(is, filesFolder, fileName);
 		URI uri = uris.iterator().next();
 		
 		List<BinaryVariable> binVars = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId(), variable);
@@ -585,6 +584,22 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		getFileUploadManager().cleanup(filesFolder, null, getUploadedResourceResolver());
 		
 		return binVar;
+	}
+	
+	private Collection<URI> getLinksToVariables(InputStream is, String folder, String name) {
+		getUploadedResourceResolver().uploadToTmpLocation(folder, name, is, false);
+		Collection<URI> uris = getFileUploadManager().getFilesUris(folder, null, getUploadedResourceResolver());
+		if (ListUtil.isEmpty(uris)) {
+			String fixedFileName = StringHandler.removeWhiteSpace(name);
+			fixedFileName = StringHandler.stripNonRomanCharacters(fixedFileName, new char[] {'.', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'});
+			if (fixedFileName.equals(name)) {
+				return null;
+			}
+			
+			return getLinksToVariables(is, folder, fixedFileName);
+		}
+		
+		return uris;
 	}
 	
 	TmpFilesManager getFileUploadManager() {
