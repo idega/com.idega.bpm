@@ -45,11 +45,10 @@ import com.idega.util.CoreConstants;
 @Service("defaultPDW")
 public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	
+	private static Logger LOGGER;
+	
 	private Long processDefinitionId;
 	private ProcessDefinition processDefinition;
-	
-	protected static final Logger logger = Logger
-	        .getLogger(ProcessDefinitionW.class.getName());
 	
 	@Autowired
 	private BPMFactory bpmFactory;
@@ -57,6 +56,13 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	private BPMContext bpmContext;
 	@Autowired
 	private VariablesHandler variablesHandler;
+	
+	protected Logger getLogger() {
+		if (LOGGER == null) {
+			LOGGER = Logger.getLogger(this.getClass().getName());
+		}
+		return LOGGER;
+	}
 	
 	@Transactional(readOnly = true)
 	public List<Variable> getTaskVariableList(final String taskName) {
@@ -132,12 +138,12 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			        "View submission was for different process definition id than tried to submit to");
 		}
 		
-		logger.finer("Starting process for process definition id = "
+		getLogger().finer("Starting process for process definition id = "
 		        + processDefinitionId);
 		
 		Map<String, String> parameters = viewSubmission.resolveParameters();
 		
-		logger.finer("Params " + parameters);
+		getLogger().finer("Params " + parameters);
 		
 		try {
 			getBpmContext().execute(new JbpmCallback() {
@@ -156,9 +162,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 					// binding view to task instance
 					view.getViewToTask().bind(view, ti);
 					
-					logger.log(Level.INFO,
-					    "New process instance created for the process "
-					            + pd.getName());
+					getLogger().log(Level.INFO, "New process instance created for the process " + pd.getName());
 					
 					pi.setStart(new Date());
 					
