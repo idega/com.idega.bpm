@@ -11,18 +11,27 @@ package com.idega.bpm.xformsview.converters;
 public enum ConverterDataType {
 	
 	DATE {
+		@Override
 		public DataConverter getConverter() { 
 			return new DateConverter();
 		}
 	},	
 	STRING {
+		@Override
 		public DataConverter getConverter() { 
 			return new StringConverter();
 		}
 	},	
 	LIST {
+		@Override
 		public DataConverter getConverter() { 
 			return new CollectionConverter();
+		}
+	},
+	LONG {
+		@Override
+		public DataConverter getConverter() {
+			return new LongConverter();
 		}
 	};
 	
