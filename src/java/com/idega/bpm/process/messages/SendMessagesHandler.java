@@ -37,6 +37,7 @@ public class SendMessagesHandler implements ActionHandler {
 	private String messageValues;
 	private String messagesBundle;
 	private String sendToRoles;
+	private String fromAddress;
 	
 	private List<String> sendToEmails, attachFiles;
 	
@@ -57,6 +58,7 @@ public class SendMessagesHandler implements ActionHandler {
 		
 		LocalizedMessages msg = getLocalizedMessages();
 		
+		msg.setFrom(getFromAddress());
 		msg.setSendToRoles(sendToRoles);
 		msg.setSendToEmails(sendToEmails);
 		msg.setAttachFiles(getAttachFiles());
@@ -211,5 +213,13 @@ public class SendMessagesHandler implements ActionHandler {
 
 	public void setAttachFiles(List<String> attachFiles) {
 		this.attachFiles = attachFiles;
-	}	
+	}
+
+	public String getFromAddress() {
+		return fromAddress;
+	}
+
+	public void setFromAddress(String fromAddress) {
+		this.fromAddress = fromAddress;
+	}
 }
