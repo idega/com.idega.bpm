@@ -30,14 +30,18 @@ import com.idega.presentation.IWContext;
 public class SendMessagesHandler implements ActionHandler {
 
 	private static final long serialVersionUID = -7421283155844789254L;
+	
 	private String subjectKey;
 	private String subjectValues;
 	private String messageKey;
 	private String messageValues;
 	private String messagesBundle;
 	private String sendToRoles;
-	private List<String> sendToEmails;
+	
+	private List<String> sendToEmails, attachFiles;
+	
 	private UserPersonalData userData;
+	
  	private Map<String, String> inlineSubject;
 	private Map<String, String> inlineMessage;
 	
@@ -55,6 +59,7 @@ public class SendMessagesHandler implements ActionHandler {
 		
 		msg.setSendToRoles(sendToRoles);
 		msg.setSendToEmails(sendToEmails);
+		msg.setAttachFiles(getAttachFiles());
 		
 		getSendMessage().send(null, upd, ectx.getProcessInstance(), msg, tkn);
 	}
@@ -199,4 +204,12 @@ public class SendMessagesHandler implements ActionHandler {
 	public void setUserData(UserPersonalData userData) {
 		this.userData = userData;
 	}
+
+	public List<String> getAttachFiles() {
+		return attachFiles;
+	}
+
+	public void setAttachFiles(List<String> attachFiles) {
+		this.attachFiles = attachFiles;
+	}	
 }

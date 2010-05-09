@@ -21,7 +21,7 @@ public class LocalizedMessages {
 	
 	private String from;
 	private String sendToRoles;
-	private List<String> sendToEmails;
+	private List<String> sendToEmails, attachFiles;
 	private String subjectValuesExp;
 	private String messageValuesExp;
 	private LocalizedMessageTransformator subjectTransformator;
@@ -159,4 +159,13 @@ public class LocalizedMessages {
 		
 		return (inlineMessages != null && !inlineMessages.isEmpty()) || (msgKey != null && msgKey.length() != 0);
 	}
+	
+	public List<String> getAttachFiles() {
+		return attachFiles;
+	}
+	
+	public void setAttachFiles(List<String> attachFiles) {
+		this.attachFiles = attachFiles;
+	}
+	
 }
