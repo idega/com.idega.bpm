@@ -22,6 +22,7 @@ import com.idega.idegaweb.IWMainApplication;
 import com.idega.io.DownloadWriter;
 import com.idega.io.MediaWritable;
 import com.idega.jbpm.exe.BPMFactory;
+import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessManager;
 import com.idega.jbpm.exe.TaskInstanceW;
 import com.idega.presentation.IWContext;
@@ -47,7 +48,6 @@ import com.idega.xformsmanager.component.beans.LocalizedStringBean;
 public class XFormToPDFWriter extends DownloadWriter implements MediaWritable { 
 	
 	public static final String XFORM_ID_PARAMETER = "XFormIdToDownload";
-	public static final String TASK_INSTANCE_ID_PARAMETER = "taskInstanceId";
 	public static final String PATH_IN_SLIDE_PARAMETER = "pathInSlideForXFormPDF";
 	public static final String XFORM_SUBMISSION_ID_PARAMETER = "XFormSubmitionId";
 	public static final String XFORM_SUBMISSION_UNIQUE_ID_PARAMETER = "XFormSubmissionUniqueId";
@@ -75,7 +75,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	
 	@Override
 	public void init(HttpServletRequest req, IWContext iwc) {
-		String taskInstanceId = iwc.getParameter(TASK_INSTANCE_ID_PARAMETER);
+		String taskInstanceId = iwc.getParameter(ProcessConstants.TASK_INSTANCE_ID);
 		String formId = iwc.getParameter(XFORM_ID_PARAMETER);
 		String formSubmissionId = iwc.getParameter(XFORM_SUBMISSION_ID_PARAMETER);
 		String formSubmissionUniqueId = iwc.getParameter(XFORM_SUBMISSION_UNIQUE_ID_PARAMETER);
