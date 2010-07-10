@@ -21,6 +21,7 @@ import org.jbpm.taskmgmt.def.Task;
 import org.jbpm.taskmgmt.def.TaskController;
 import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,13 +30,14 @@ import com.idega.block.process.variables.Variable;
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
+import com.idega.jbpm.events.VariableCreatedEvent;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessDefinitionW;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewSubmission;
-import com.idega.util.CoreConstants;
+import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
@@ -242,11 +244,8 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	}
 	
 	@Transactional(readOnly = false)
-	protected void submitVariablesAndProceedProcess(TaskInstance ti,
-	        Map<String, Object> variables, boolean proceed) {
-		
-		Integer usrId = getBpmFactory().getBpmUserFactory().getCurrentBPMUser()
-		        .getIdToUse();
+	protected void submitVariablesAndProceedProcess(TaskInstance ti, Map<String, Object> variables, boolean proceed) {
+		Integer usrId = getBpmFactory().getBpmUserFactory().getCurrentBPMUser().getIdToUse();
 		
 		if (usrId != null)
 			ti.setActorId(usrId.toString());
@@ -254,19 +253,18 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		getVariablesHandler().submitVariables(variables, ti.getId(), true);
 		
 		if (proceed) {
-			
-			String actionTaken = (String) ti
-			        .getVariable(ProcessConstants.actionTakenVariableName);
-			
-			if (actionTaken != null && !CoreConstants.EMPTY.equals(actionTaken)
-			        && false)
-				ti.end(actionTaken);
-			else
+//			String actionTaken = (String) ti.getVariable(ProcessConstants.actionTakenVariableName);
+//			
+//			if (actionTaken != null && !CoreConstants.EMPTY.equals(actionTaken) && false)
+//				ti.end(actionTaken);
+//			else
 				ti.end();
 		} else {
 			ti.setEnd(new Date());
 		}
 		
+		ApplicationContext appContext = ELUtil.getInstance().getApplicationContext();
+		appContext.publishEvent(new VariableCreatedEvent(this, ti.getProcessInstance().getProcessDefinition().getName()));
 	}
 	
 	@Transactional(readOnly = true)
@@ -337,35 +335,16 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	
 	@Transactional(readOnly = true)
 	public ProcessDefinition getProcessDefinition() {
-		
-		if (true || (processDefinition == null && getProcessDefinitionId() != null)) {
-			
-			processDefinition = getBpmContext().execute(new JbpmCallback() {
-				
-				public Object doInJbpm(JbpmContext context)
-				        throws JbpmException {
-					return context.getGraphSession().getProcessDefinition(
-					    getProcessDefinitionId());
-				}
-			});
-		} else if (processDefinition != null) {
-			
-			processDefinition = getBpmContext().execute(new JbpmCallback() {
-				
-				public Object doInJbpm(JbpmContext context)
-				        throws JbpmException {
-					
-					return getBpmContext()
-					        .mergeProcessEntity(processDefinition);
-				}
-			});
-		}
+		processDefinition = getBpmContext().execute(new JbpmCallback() {
+			public Object doInJbpm(JbpmContext context) throws JbpmException {
+				return context.getGraphSession().getProcessDefinition(getProcessDefinitionId());
+			}
+		});
 		
 		return processDefinition;
 	}
 	
 	public String getProcessName(Locale locale) {
-		
 		return getProcessDefinition().getName();
 	}
 }
