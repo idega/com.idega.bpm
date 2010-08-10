@@ -21,6 +21,7 @@ import org.jbpm.taskmgmt.def.Task;
 import org.jbpm.taskmgmt.def.TaskController;
 import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -37,15 +38,15 @@ import com.idega.jbpm.exe.ProcessDefinitionW;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewSubmission;
-import com.idega.util.CoreConstants;
+import com.idega.util.StringUtil;
 import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
  * @version $Revision: 1.17 $ Last modified: $Date: 2009/02/16 22:02:37 $ by $Author: donatas $
  */
-@Scope("prototype")
 @Service("defaultPDW")
+@Scope(BeanDefinition.SCOPE_PROTOTYPE)
 public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	
 	private static Logger LOGGER;
@@ -69,9 +70,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	
 	@Transactional(readOnly = true)
 	public List<Variable> getTaskVariableList(final String taskName) {
-		
 		return getBpmContext().execute(new JbpmCallback() {
-			
 			public Object doInJbpm(JbpmContext context) throws JbpmException {
 				ProcessDefinition pdef = getProcessDefinition();
 				Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
@@ -81,16 +80,11 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 					return null;
 				
 				@SuppressWarnings("unchecked")
-				List<VariableAccess> variableAccesses = tiController
-				        .getVariableAccesses();
-				ArrayList<Variable> variables = new ArrayList<Variable>(
-				        variableAccesses.size());
+				List<VariableAccess> variableAccesses = tiController.getVariableAccesses();
+				ArrayList<Variable> variables = new ArrayList<Variable>(variableAccesses.size());
 				
 				for (VariableAccess variableAccess : variableAccesses) {
-					
-					Variable variable = Variable
-					        .parseDefaultStringRepresentation(variableAccess
-					                .getVariableName());
+					Variable variable = Variable.parseDefaultStringRepresentation(variableAccess.getVariableName());
 					variables.add(variable);
 				}
 				
@@ -101,9 +95,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	
 	@Transactional(readOnly = true)
 	public List<Variable> getTaskVariableWithAccessesList(final String taskName) {
-		
 		return getBpmContext().execute(new JbpmCallback() {
-			
 			public Object doInJbpm(JbpmContext context) throws JbpmException {
 				ProcessDefinition pdef = getProcessDefinition();
 				Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
@@ -113,16 +105,11 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 					return null;
 				
 				@SuppressWarnings("unchecked")
-				List<VariableAccess> variableAccesses = tiController
-				        .getVariableAccesses();
-				ArrayList<Variable> variables = new ArrayList<Variable>(
-				        variableAccesses.size());
+				List<VariableAccess> variableAccesses = tiController.getVariableAccesses();
+				ArrayList<Variable> variables = new ArrayList<Variable>(variableAccesses.size());
 				
 				for (VariableAccess variableAccess : variableAccesses) {
-					
-					Variable variable = Variable
-					        .parseDefaultStringRepresentationWithAccess(variableAccess
-					                .getVariableName(), variableAccess.getAccess().toString());
+					Variable variable = Variable.parseDefaultStringRepresentationWithAccess(variableAccess.getVariableName(), variableAccess.getAccess().toString());
 					variables.add(variable);
 				}
 				
@@ -133,16 +120,13 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	
 	@Transactional(readOnly = false)
 	public void startProcess(final ViewSubmission viewSubmission) {
-		
 		Long processDefinitionId = viewSubmission.getProcessDefinitionId();
 		
 		if (!processDefinitionId.equals(getProcessDefinitionId())) {
-			throw new IllegalArgumentException(
-			        "View submission was for different process definition id than tried to submit to");
+			throw new IllegalArgumentException("View submission was for different process definition id than tried to submit to");
 		}
 		
-		getLogger().finer("Starting process for process definition id = "
-		        + processDefinitionId);
+		getLogger().finer("Starting process for process definition id = " + processDefinitionId);
 		
 		Map<String, String> parameters = viewSubmission.resolveParameters();
 		
@@ -150,33 +134,25 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		
 		try {
 			getBpmContext().execute(new JbpmCallback() {
-				
-				public Object doInJbpm(JbpmContext context)
-				        throws JbpmException {
+				public Object doInJbpm(JbpmContext context) throws JbpmException {
 					ProcessDefinition pd = getProcessDefinition();
 					ProcessInstance pi = new ProcessInstance(pd);
-					TaskInstance ti = pi.getTaskMgmtInstance()
-					        .createStartTaskInstance();
+					TaskInstance ti = pi.getTaskMgmtInstance().createStartTaskInstance();
 					
-					View view = getBpmFactory().getView(
-					    viewSubmission.getViewId(),
-					    viewSubmission.getViewType(), false);
+					View view = getBpmFactory().getView( viewSubmission.getViewId(), viewSubmission.getViewType(), false);
 					
 					// binding view to task instance
 					view.getViewToTask().bind(view, ti);
 					
-					getLogger().log(Level.INFO, "New process instance created for the process " + pd.getName());
+					getLogger().info("New process instance created for the process " + pd.getName());
 					
 					pi.setStart(new Date());
 					
-					submitVariablesAndProceedProcess(ti, viewSubmission
-					        .resolveVariables(), true);
+					submitVariablesAndProceedProcess(ti, viewSubmission.resolveVariables(), true);
 					
 					return null;
 				}
-				
 			});
-			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -184,42 +160,29 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	
 	@Transactional(readOnly = false)
 	public View loadInitView(Integer initiatorId) {
-		
 		try {
 			return getBpmContext().execute(new JbpmCallback() {
-				
-				public Object doInJbpm(JbpmContext context)
-				        throws JbpmException {
-					
+				public Object doInJbpm(JbpmContext context) throws JbpmException {
 					Long processDefinitionId = getProcessDefinitionId();
 					ProcessDefinition pd = getProcessDefinition();
 					
-					Long startTaskId = pd.getTaskMgmtDefinition()
-					        .getStartTask().getId();
+					Long startTaskId = pd.getTaskMgmtDefinition().getStartTask().getId();
 					
-					List<String> preferred = new ArrayList<String>(1);
+					List<String> preferred = new ArrayList<String>();
 					preferred.add(XFormsView.VIEW_TYPE);
-					View view = getBpmFactory().getViewByTask(startTaskId,
-					    true, preferred);
+					View view = getBpmFactory().getViewByTask(startTaskId, true, preferred);
 					view.takeView();
 					
-					Map<String, String> parameters = new HashMap<String, String>(
-					        2);
-					
-					parameters.put(ProcessConstants.START_PROCESS,
-					    ProcessConstants.START_PROCESS);
-					parameters.put(ProcessConstants.PROCESS_DEFINITION_ID,
-					    String.valueOf(processDefinitionId));
+					Map<String, String> parameters = new HashMap<String, String>();
+					parameters.put(ProcessConstants.START_PROCESS, ProcessConstants.START_PROCESS);
+					parameters.put(ProcessConstants.PROCESS_DEFINITION_ID, String.valueOf(processDefinitionId));
 					parameters.put(ProcessConstants.VIEW_ID, view.getViewId());
-					parameters.put(ProcessConstants.VIEW_TYPE, view
-					        .getViewType());
-					
+					parameters.put(ProcessConstants.VIEW_TYPE, view.getViewType());
 					view.populateParameters(parameters);
 					
 					return view;
 				}
 			});
-			
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
@@ -228,7 +191,6 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	}
 	
 	public List<String> getRolesCanStartProcess(Object context) {
-		
 		return null;
 	}
 	
@@ -255,10 +217,13 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		
 		if (proceed) {
 			String actionTaken = (String) ti.getVariable(ProcessConstants.actionTakenVariableName);
+			if (!StringUtil.isEmpty(actionTaken)) {
+				getLogger().fine("Taken action: " + actionTaken);
+			}
 			
-			if (actionTaken != null && !CoreConstants.EMPTY.equals(actionTaken) && false)
-				ti.end(actionTaken);
-			else
+//			if (actionTaken != null && !CoreConstants.EMPTY.equals(actionTaken) && false)
+//				ti.end(actionTaken);
+//			else
 				ti.end();
 		} else {
 			ti.setEnd(new Date());
@@ -274,12 +239,10 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	
 	@Transactional(readOnly = true)
 	public String getStartTaskName() {
-		
 		List<String> preferred = new ArrayList<String>(1);
 		preferred.add(XFormsView.VIEW_TYPE);
 		
-		Long taskId = getProcessDefinition().getTaskMgmtDefinition()
-		        .getStartTask().getId();
+		Long taskId = getProcessDefinition().getTaskMgmtDefinition().getStartTask().getId();
 		
 		View view = getBpmFactory().getViewByTask(taskId, false, preferred);
 		
@@ -288,19 +251,14 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	
 	@Transactional(readOnly = true)
 	public Collection<String> getTaskNodeTransitionsNames(String taskName) {
-		
 		ProcessDefinition pdef = getProcessDefinition();
 		Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
 		
 		TaskNode taskNode = task.getTaskNode();
-		
 		if (taskNode != null) {
-			
 			@SuppressWarnings("unchecked")
-			Map<String, Transition> leavingTransitions = taskNode
-			        .getLeavingTransitionsMap();
-			return leavingTransitions != null ? leavingTransitions.keySet()
-			        : null;
+			Map<String, Transition> leavingTransitions = taskNode.getLeavingTransitionsMap();
+			return leavingTransitions != null ? leavingTransitions.keySet() : null;
 		} else
 			// task node is null, when task in start node
 			return null;
@@ -338,14 +296,13 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		this.variablesHandler = variablesHandler;
 	}
 	
-	@Transactional(readOnly = true)
+	@Transactional(readOnly = false)
 	public ProcessDefinition getProcessDefinition() {
 		processDefinition = getBpmContext().execute(new JbpmCallback() {
 			public Object doInJbpm(JbpmContext context) throws JbpmException {
 				return context.getGraphSession().getProcessDefinition(getProcessDefinitionId());
 			}
 		});
-		
 		return processDefinition;
 	}
 	
