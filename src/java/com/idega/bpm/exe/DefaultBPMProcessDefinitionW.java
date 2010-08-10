@@ -37,6 +37,7 @@ import com.idega.jbpm.exe.ProcessDefinitionW;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewSubmission;
+import com.idega.util.CoreConstants;
 import com.idega.util.expression.ELUtil;
 
 /**
@@ -253,18 +254,22 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		getVariablesHandler().submitVariables(variables, ti.getId(), true);
 		
 		if (proceed) {
-//			String actionTaken = (String) ti.getVariable(ProcessConstants.actionTakenVariableName);
-//			
-//			if (actionTaken != null && !CoreConstants.EMPTY.equals(actionTaken) && false)
-//				ti.end(actionTaken);
-//			else
+			String actionTaken = (String) ti.getVariable(ProcessConstants.actionTakenVariableName);
+			
+			if (actionTaken != null && !CoreConstants.EMPTY.equals(actionTaken) && false)
+				ti.end(actionTaken);
+			else
 				ti.end();
 		} else {
 			ti.setEnd(new Date());
 		}
 		
-		ApplicationContext appContext = ELUtil.getInstance().getApplicationContext();
-		appContext.publishEvent(new VariableCreatedEvent(this, ti.getProcessInstance().getProcessDefinition().getName()));
+		try {
+			ApplicationContext appContext = ELUtil.getInstance().getApplicationContext();
+			appContext.publishEvent(new VariableCreatedEvent(this, ti.getProcessInstance().getProcessDefinition().getName()));
+		} catch (Exception e) {
+			getLogger().log(Level.WARNING, "Error publishing VariableCreatedEvent for task instance: " + ti, e);
+		}
 	}
 	
 	@Transactional(readOnly = true)
