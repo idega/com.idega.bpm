@@ -3,6 +3,7 @@ package com.idega.bpm.image;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.idega.block.image.business.ImagesProviderGeneric;
 import com.idega.block.image.presentation.AdvancedImage;
 import com.idega.jbpm.variables.BinaryVariable;
+import com.idega.slide.business.IWSlideService;
 import com.idega.slide.util.WebdavExtendedResource;
 
 /**
@@ -30,24 +32,29 @@ public class ImageProviderBPMBinaryVarsImpl implements ImagesProviderGeneric {
 		return getBinaryVariables().size();
 	}
 	
-	public List<AdvancedImage> getImagesFromTo(int startPosition,
-	        int endPosition) {
-		
+	public List<AdvancedImage> getImagesFromTo(int startPosition, int endPosition) {
 		List<BinaryVariable> binaryVariables = getBinaryVariables();
-		ArrayList<AdvancedImage> result = new ArrayList<AdvancedImage>(
-		        binaryVariables.size());
+		List<AdvancedImage> result = new ArrayList<AdvancedImage>(binaryVariables.size());
 		
 		int realEnd = Math.min(endPosition, binaryVariables.size());
 		
 		for (int i = (startPosition - 1); i < realEnd; i++) {
+			AdvancedImage image = null;
+			BinaryVariable var = binaryVariables.get(i);
+			Object persistentResource = var.getPersistentResource();
 			
-			// TODO: we could add new interface for advancedImage, so it doesn't rely on
-			// webdavResource directly
+			if (persistentResource instanceof WebdavExtendedResource) {
+				WebdavExtendedResource variableResource = (WebdavExtendedResource) persistentResource;
+				image = new AdvancedImage(variableResource);
+			} else if (persistentResource instanceof IWSlideService) {
+				image = new AdvancedImage(var.getIdentifier());
+			} else {
+				Logger.getLogger(ImageProviderBPMBinaryVarsImpl.class.getName()).warning("Unkown persistent resource: " + persistentResource);
+			}
 			
-			WebdavExtendedResource variableResource = (WebdavExtendedResource) binaryVariables
-			        .get(i).getPersistentResource();
-			AdvancedImage image = new AdvancedImage(variableResource);
-			result.add(image);
+			if (image != null) {
+				result.add(image);
+			}
 		}
 		
 		return result;
