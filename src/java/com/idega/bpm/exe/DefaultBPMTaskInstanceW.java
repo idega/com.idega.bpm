@@ -725,4 +725,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		getVariablesHandler().submitVariablesExplicitly(variables,
 		    getTaskInstanceId());
 	}
+	
+	@Override
+	public String toString() {
+		return "Task instance, ID: " + getTaskInstanceId();
+	}
 }
