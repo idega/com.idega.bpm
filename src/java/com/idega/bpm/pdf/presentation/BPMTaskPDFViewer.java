@@ -87,7 +87,7 @@ public class BPMTaskPDFViewer extends IWBaseComponent implements BPMCapableJSFCo
 
 //		TODO: resolve from process (in view, not here)
 		
-		return locale.equals(new Locale("en")) ? "Issued Parking Card for printing" : "Útgefið íbúakort til prentunar";
+		return locale.toString().equals(Locale.ENGLISH.toString()) ? "Issued Parking Card for printing" : "Útgefið íbúakort til prentunar";
 //		
 //		
 //		return IWMainApplication.getDefaultIWMainApplication()
