@@ -16,9 +16,7 @@ import com.idega.block.process.variables.VariableDataType;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
- * @version $Revision: 1.2 $
- *
- * Last modified: $Date: 2008/09/17 13:09:39 $ by $Author: civilis $
+ * @version $Revision: 1.2 $ Last modified: $Date: 2008/09/17 13:09:39 $ by $Author: civilis $
  */
 @Scope("singleton")
 @Service
@@ -27,29 +25,33 @@ public class DateConverter implements DataConverter {
 	private SimpleDateFormat dateFormatter;
 	private static final String dateFormat = "yyyy-MM-dd";
 	
-	
 	public DateConverter() {
 		dateFormatter = new SimpleDateFormat(dateFormat);
 	}
-
+	
 	public Object convert(Element o) {
-
+		
 		String dateStr = o.getTextContent();
 		
-		if(dateStr == null || dateStr.trim().equals(""))
+		if (dateStr == null || dateStr.trim().equals(""))
 			return null;
 		
 		try {
 			return dateFormatter.parse(dateStr);
 			
 		} catch (ParseException e) {
-			throw new RuntimeException("Exception while parsing date string ("+dateStr+") for format: "+dateFormat, e);
+			throw new RuntimeException("Exception while parsing date string ("
+			        + dateStr + ") for format: " + dateFormat, e);
 		}
 	}
+	
 	public Element revert(Object o, Element e) {
-
-		if(!(o instanceof Date))
-			throw new IllegalArgumentException("Wrong class object provided for DateConverter: "+o.getClass().getName()+". Should be java.util.Date");
+		
+		if (!(o instanceof Date))
+			throw new IllegalArgumentException(
+			        "Wrong class object provided for DateConverter: "
+			                + o.getClass().getName()
+			                + ". Should be java.util.Date");
 		
 		NodeList childNodes = e.getChildNodes();
 		
@@ -59,17 +61,25 @@ public class DateConverter implements DataConverter {
 			
 			Node child = childNodes.item(i);
 			
-			if(child != null && (child.getNodeType() == Node.TEXT_NODE || child.getNodeType() == Node.ELEMENT_NODE))
+			if (child != null
+			        && (child.getNodeType() == Node.TEXT_NODE || child
+			                .getNodeType() == Node.ELEMENT_NODE))
 				childs2Remove.add(child);
 		}
 		
 		for (Node node : childs2Remove)
 			e.removeChild(node);
 		
-		Node txtNode = e.getOwnerDocument().createTextNode(dateFormatter.format((Date)o));
+		Node txtNode = e.getOwnerDocument().createTextNode(
+		    convertDateToComplyWithXForms((Date) o));
 		e.appendChild(txtNode);
 		
 		return e;
+	}
+	
+	public String convertDateToComplyWithXForms(Date date) {
+		
+		return dateFormatter.format(date);
 	}
 	
 	public VariableDataType getDataType() {
