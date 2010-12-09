@@ -82,6 +82,12 @@ public class DateConverter implements DataConverter {
 		return dateFormatter.format(date);
 	}
 	
+	public Date convertStringFromXFormsToDate(String dateStr)
+	        throws ParseException {
+		
+		return dateFormatter.parse(dateStr);
+	}
+	
 	public VariableDataType getDataType() {
 		return VariableDataType.DATE;
 	}
