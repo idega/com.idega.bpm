@@ -362,17 +362,22 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			// removing hidden, ended task instances, and task instances of ended
 			// processes (i.e. subprocesses), also leaving on task for taskName, if taskName
 			// provided
+			Long id = null;
 			try {
 				if (ti == null) {
 					getLogger().warning("Task instance is null in a collection of task instances: " + taskInstances);
 					iterator.remove();
-				} else if (ti.hasEnded()
-				        || prioritiesToFilterList.contains(ti.getPriority())
-				        || ti.getProcessInstance().hasEnded()
-				        || (filterByTaskName && !taskName.equals(ti.getTask().getName())))
-					iterator.remove();
+				} else {
+					id = ti.getId();
+					if (ti.hasEnded()
+							|| prioritiesToFilterList.contains(ti.getPriority())
+					        || ti.getProcessInstance().hasEnded()
+					        || (filterByTaskName && !taskName.equals(ti.getTask().getName())))
+						iterator.remove();
+				}
 			} catch (Exception e) {
-				getLogger().log(Level.WARNING, "Error while getting unfinished tasks for task: " + taskName, e);
+				getLogger().log(Level.WARNING, "Error while getting unfinished tasks for the task (name=" + taskName + "). Unable to resolve if a task (id=" + id +
+						") is unfinished - removing it!", e);
 				iterator.remove();
 			}
 		}
