@@ -126,11 +126,11 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			throw new IllegalArgumentException("View submission was for different process definition id than tried to submit to");
 		}
 		
-		getLogger().finer("Starting process for process definition id = " + processDefinitionId);
+		getLogger().info("Starting process for process definition id = " + processDefinitionId);
 		
 		Map<String, String> parameters = viewSubmission.resolveParameters();
 		
-		getLogger().finer("Params " + parameters);
+		getLogger().info("Params " + parameters);
 		
 		try {
 			getBpmContext().execute(new JbpmCallback() {
@@ -208,26 +208,29 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	
 	@Transactional(readOnly = false)
 	protected void submitVariablesAndProceedProcess(TaskInstance ti, Map<String, Object> variables, boolean proceed) {
-		Integer usrId = getBpmFactory().getBpmUserFactory().getCurrentBPMUser().getIdToUse();
-		
+		Integer usrId = null;
+		try {
+			usrId = getBpmFactory().getBpmUserFactory().getCurrentBPMUser().getIdToUse();
+		} catch (Exception e) {
+			getLogger().log(Level.WARNING, "Error getting ID of a current user", e);
+		}
 		if (usrId != null)
 			ti.setActorId(usrId.toString());
 		
 		getVariablesHandler().submitVariables(variables, ti.getId(), true);
+		getLogger().info("Variables were submitted");
 		
 		if (proceed) {
 			String actionTaken = (String) ti.getVariable(ProcessConstants.actionTakenVariableName);
 			if (!StringUtil.isEmpty(actionTaken)) {
-				getLogger().fine("Taken action: " + actionTaken);
+				getLogger().info("Taken action: " + actionTaken);
 			}
 			
-//			if (actionTaken != null && !CoreConstants.EMPTY.equals(actionTaken) && false)
-//				ti.end(actionTaken);
-//			else
-				ti.end();
+			ti.end();
 		} else {
 			ti.setEnd(new Date());
 		}
+		getLogger().info("Task instance (name=" + ti.getName() + ", ID=" + ti.getId() + ") was executed");
 		
 		try {
 			ApplicationContext appContext = ELUtil.getInstance().getApplicationContext();
