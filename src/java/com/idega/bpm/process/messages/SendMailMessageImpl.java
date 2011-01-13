@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
+
 import org.apache.commons.validator.EmailValidator;
 import org.jbpm.graph.exe.ProcessInstance;
 import org.jbpm.graph.exe.Token;
@@ -86,9 +87,9 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		// TODO: get default email
 		String from = msgs.getFrom();
 		if (StringUtil.isEmpty(from) || !EmailValidator.getInstance().isValid(from)) {
-			from = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_SYSTEM_MAIL_FROM_ADDRESS, "staff@idega.is");
+			from = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_SYSTEM_MAIL_FROM_ADDRESS, CoreConstants.EMAIL_DEFAULT_FROM);
 		}
-		String host = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_SYSTEM_SMTP_MAILSERVER, "smtp.emailsrvr.com");
+		String host = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_SYSTEM_SMTP_MAILSERVER, CoreConstants.EMAIL_DEFAULT_HOST);
 
 		// TODO: if upd contains userId, we can get User here and add to message value context
 
