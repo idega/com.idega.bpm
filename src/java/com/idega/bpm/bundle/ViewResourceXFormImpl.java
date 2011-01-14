@@ -30,6 +30,7 @@ public class ViewResourceXFormImpl implements ViewResource {
 	private String pathWithinBundle;
 	private DocumentManagerFactory documentManagerFactory;
 	private ProcessBundleResources bundleResources;
+	private Integer order;
 
 	public void store(IWMainApplication iwma) throws IOException {
 
@@ -114,5 +115,15 @@ public class ViewResourceXFormImpl implements ViewResource {
 
 	public String getViewId() {
 		return viewId;
+	}
+
+	@Override
+	public void setOrder(Integer order) {
+		this.order = order;
+	}
+
+	@Override
+	public int getOrder() {
+		return order;
 	}
 }
