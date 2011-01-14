@@ -307,8 +307,6 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 				assignedTo = CoreConstants.EMPTY;
 			}
 			
-			// string representation of end date, if any
-			
 			bpmDoc.setTaskInstanceId(ti.getId());
 			bpmDoc.setAssignedToName(assignedTo);
 			bpmDoc.setSubmittedByName(submittedBy);
@@ -316,11 +314,10 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			bpmDoc.setCreateDate(ti.getCreate());
 			bpmDoc.setEndDate(ti.getEnd());
 			bpmDoc.setSignable(tiw.isSignable());
+			bpmDoc.setOrder(tiw.getOrder());
 			
 			View view = tiw.getView();
-			
-			if (!view.hasViewForDisplay())
-				bpmDoc.setHasViewUI(false);
+			bpmDoc.setHasViewUI(view.hasViewForDisplay());
 			
 			documents.add(bpmDoc);
 		}

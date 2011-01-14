@@ -39,6 +39,7 @@ import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
 import com.idega.jbpm.data.Actor;
+import com.idega.jbpm.data.ViewTaskBind;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessException;
@@ -724,6 +725,27 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		variables.put(variable.getName(), value);
 		getVariablesHandler().submitVariablesExplicitly(variables,
 		    getTaskInstanceId());
+	}
+	
+	private Integer order;
+	private boolean orderLoaded;
+	public Integer getOrder() {
+		if (!orderLoaded) {
+			try {
+				List<ViewTaskBind> viewTaskBinds = getBpmFactory().getBPMDAO().getViewTaskBindsByTaskId(getTaskInstance().getTask().getId());
+				if (ListUtil.isEmpty(viewTaskBinds)) {
+					return order;
+				}
+				
+				for (ViewTaskBind bind: viewTaskBinds) {
+					order = bind.getViewOrder();
+				}
+			} finally {
+				orderLoaded = Boolean.TRUE;
+			}
+		}
+		
+		return order;
 	}
 	
 	@Override
