@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.ejb.FinderException;
+
 import org.jbpm.JbpmContext;
 import org.jbpm.JbpmException;
 import org.jbpm.graph.def.Transition;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.block.process.variables.Variable;
+import com.idega.bpm.BPMConstants;
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.business.IBOLookup;
 import com.idega.business.IBOLookupException;
@@ -35,6 +38,9 @@ import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
 import com.idega.core.file.util.MimeTypeUtil;
+import com.idega.data.IDOLookup;
+import com.idega.data.MetaData;
+import com.idega.data.MetaDataHome;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
@@ -61,7 +67,6 @@ import com.idega.presentation.IWContext;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.util.CoreConstants;
-import com.idega.util.CoreUtil;
 import com.idega.util.ListUtil;
 import com.idega.util.StringHandler;
 import com.idega.util.StringUtil;
@@ -109,7 +114,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Autowired
 	private PermissionsFactory permissionsFactory;
 	
-	private static final String CASHED_TASK_NAMES = "defaultBPM_taskinstance_names";
+	private static final String CACHED_TASK_NAMES = "defaultBPM_taskinstance_names";
 	
 	@Transactional(readOnly = true)
 	public TaskInstance getTaskInstance() {
@@ -457,45 +462,53 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	
 	protected UserBusiness getUserBusiness() {
 		try {
-			return (UserBusiness) IBOLookup.getServiceInstance(CoreUtil
-			        .getIWContext(), UserBusiness.class);
+			return IBOLookup.getServiceInstance(IWMainApplication.getDefaultIWApplicationContext(), UserBusiness.class);
 		} catch (IBOLookupException ile) {
 			throw new IBORuntimeException(ile);
 		}
 	}
 	
 	public String getName(Locale locale) {
-		
 		final IWMainApplication iwma = getIWMA();
-		Map<Long, Map<Locale, String>> cashTaskNames = IWCacheManager2.getInstance(iwma).getCache(CASHED_TASK_NAMES);
+		Map<Long, Map<Locale, String>> cachedTaskNames = IWCacheManager2.getInstance(iwma).getCache(CACHED_TASK_NAMES);
 		final Map<Locale, String> names;
 		final Long taskInstanceId = getTaskInstanceId();
 		
 		// synchronized (cashTaskNames) {
 		// synchronizing on CASHED_TASK_NAMES map, as it's accessed from
 		// multiple threads
-		
-		if (cashTaskNames.containsKey(taskInstanceId)) {
-			
-			names = cashTaskNames.get(getTaskInstanceId());
+		if (cachedTaskNames.containsKey(taskInstanceId)) {
+			names = cachedTaskNames.get(getTaskInstanceId());
 		} else {
-			
 			names = new HashMap<Locale, String>(5);
-			cashTaskNames.put(taskInstanceId, names);
+			cachedTaskNames.put(taskInstanceId, names);
 		}
 		// }
 		
-		final String name;
-		
-		if (names.containsKey(locale))
+		String name = null;
+		if (names.containsKey(locale)) {
 			name = names.get(locale);
-		else {
-			
+		} else if (!StringUtil.isEmpty(name = getNameFromMetaData(taskInstanceId))) {
+			names.put(locale, name);
+		} else {
 			name = getNameFromView(locale);
 			names.put(locale, name);
 		}
 		
 		return name;
+	}
+	
+	private String getNameFromMetaData(Long taskInstanceId) {
+		try {
+			MetaDataHome metaDataHome = (MetaDataHome) IDOLookup.getHome(MetaData.class);
+			Collection<MetaData> data = metaDataHome.findAllByMetaDataNameAndType(BPMConstants.TASK_CUSTOM_NAME_META_DATA.concat(BPMConstants.TASK_CUSTOM_NAME_SEPARATOR)
+					.concat(String.valueOf(taskInstanceId)), String.class.getName());
+			return ListUtil.isEmpty(data) ? null : data.iterator().next().getMetaDataValue();
+		} catch (FinderException e) {
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	@Transactional(readOnly = true)
