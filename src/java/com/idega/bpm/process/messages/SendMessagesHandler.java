@@ -16,8 +16,8 @@ import org.springframework.stereotype.Service;
 
 import com.idega.core.localisation.business.ICLocaleBusiness;
 import com.idega.idegaweb.IWBundle;
+import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.identity.UserPersonalData;
-import com.idega.presentation.IWContext;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
@@ -49,7 +49,6 @@ public class SendMessagesHandler implements ActionHandler {
 	private SendMessage sendMessage;
 	
 	public void execute(ExecutionContext ectx) throws Exception {
-	
 		final String sendToRoles = getSendToRoles();
 		final List<String> sendToEmails = getSendToEmails();
 		final UserPersonalData upd = getUserData();
@@ -66,50 +65,51 @@ public class SendMessagesHandler implements ActionHandler {
 		getSendMessage().send(null, upd, ectx.getProcessInstance(), msg, tkn);
 	}
 	
+	protected Locale getLocale(String key, Map<String, Locale> knownLocales) {
+		if (knownLocales.containsKey(key))
+    		return knownLocales.get(key);
+    	
+    	Locale locale = ICLocaleBusiness.getLocaleFromLocaleString(key);
+    	knownLocales.put(key, locale);
+    	return locale;
+	}
+	
 	protected LocalizedMessages getLocalizedMessages() {
-		
 		final LocalizedMessages msgs = new LocalizedMessages();
 		
 		msgs.setSubjectValuesExp(getSubjectValues());
 		msgs.setMessageValuesExp(getMessageValues());
 		
-		if(getMessageKey() == null && getSubjectKey() == null) {
-//			using inline messages
-			
-			if(getInlineSubject() != null && !getInlineSubject().isEmpty()) {
-			
-				HashMap<Locale, String> subjects = new HashMap<Locale, String>(getInlineSubject().size());
-				
+		Map<String, Locale> resolvedLocales = new HashMap<String, Locale>();
+		if (getMessageKey() == null && getSubjectKey() == null) {
+			//	Using inline messages
+			if (getInlineSubject() != null && !getInlineSubject().isEmpty()) {
+				Map<Locale, String> subjects = new HashMap<Locale, String>(getInlineSubject().size());
 				for (Entry<String, String> entry : getInlineSubject().entrySet()) {
-				    
-				    	Locale subjectLocale = ICLocaleBusiness.getLocaleFromLocaleString(entry.getKey());
-				    	subjects.put(subjectLocale, entry.getValue());
+			    	Locale subjectLocale = getLocale(entry.getKey(), resolvedLocales);
+			    	subjects.put(subjectLocale, entry.getValue());
 				}
 				
 				msgs.setInlineSubjects(subjects);
 			}
 			
-			if(getInlineMessage() != null && !getInlineMessage().isEmpty()) {
-				
-				HashMap<Locale, String> messages = new HashMap<Locale, String>(getInlineMessage().size());
-				
+			if (getInlineMessage() != null && !getInlineMessage().isEmpty()) {
+				Map<Locale, String> messages = new HashMap<Locale, String>(getInlineMessage().size());
 				for (Entry<String, String> entry : getInlineMessage().entrySet()) {
-					Locale msgLocale = ICLocaleBusiness.getLocaleFromLocaleString(entry.getKey());
+					Locale msgLocale = getLocale(entry.getKey(), resolvedLocales);
 					messages.put(msgLocale, entry.getValue());
 				}
 				
 				msgs.setInlineMessages(messages);
 			}
-
 		} else {
-//			using message keys
-			
+			//	Using message keys
 			String bundleIdentifier = getMessagesBundle();
 		
-			if(bundleIdentifier == null)
+			if (bundleIdentifier == null)
 				bundleIdentifier = "com.idega.bpm";
 			
-			final IWBundle iwb = IWContext.getCurrentInstance().getIWMainApplication().getBundle(bundleIdentifier);
+			final IWBundle iwb = IWMainApplication.getDefaultIWMainApplication().getBundle(bundleIdentifier);
 			msgs.setIwb(iwb);
 			msgs.setSubjectKey(getSubjectKey());
 			msgs.setMsgKey(getMessageKey());
