@@ -13,14 +13,15 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.idega.block.process.variables.VariableDataType;
+import com.idega.chiba.web.xml.xforms.util.XFormsDateConverter;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
  * @version $Revision: 1.2 $ Last modified: $Date: 2008/09/17 13:09:39 $ by $Author: civilis $
  */
 @Scope("singleton")
-@Service
-public class DateConverter implements DataConverter {
+@Service("xFormsDateConverter")
+public class DateConverter implements DataConverter, XFormsDateConverter {
 	
 	private SimpleDateFormat dateFormatter;
 	private static final String dateFormat = "yyyy-MM-dd";
