@@ -31,6 +31,7 @@ import com.idega.block.process.variables.Variable;
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
+import com.idega.jbpm.events.ProcessInstanceCreatedEvent;
 import com.idega.jbpm.events.VariableCreatedEvent;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
@@ -66,6 +67,17 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			LOGGER = Logger.getLogger(this.getClass().getName());
 		}
 		return LOGGER;
+	}
+	
+	protected void notifyAboutNewProcess(final String procDefName, final Long procInstId) {
+		Thread processNotifier = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				ProcessInstanceCreatedEvent procInstCreatedEvent = new ProcessInstanceCreatedEvent(procDefName, procInstId);
+				ELUtil.getInstance().publishEvent(procInstCreatedEvent);
+			}
+		});
+		processNotifier.start();
 	}
 	
 	@Transactional(readOnly = true)
@@ -150,6 +162,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 					
 					submitVariablesAndProceedProcess(ti, viewSubmission.resolveVariables(), true);
 					
+					notifyAboutNewProcess(pd.getName(), pi.getId());
 					return null;
 				}
 			});
