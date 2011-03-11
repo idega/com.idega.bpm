@@ -134,8 +134,8 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		}
 	}
 	
-	private File getAttachedFile(List<String> attachFiles, ProcessInstanceW piw) {
-		if (ListUtil.isEmpty(attachFiles)) {
+	private File getAttachedFile(List<String> filesToAttach, ProcessInstanceW piw) {
+		if (ListUtil.isEmpty(filesToAttach)) {
 			return null;
 		}
 		
@@ -148,7 +148,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		for (BinaryVariable bv: attachments) {
 			try {
 				String name = "files_".concat(bv.getVariable().getName());
-				if (!attachFiles.contains(name)) {
+				if (!filesToAttach.contains(name)) {
 					continue;
 				}
 				

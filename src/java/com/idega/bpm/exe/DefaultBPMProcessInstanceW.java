@@ -687,7 +687,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	 */
 	@Transactional(readOnly = true)
 	public List<BinaryVariable> getAttachments() {
-		List<TaskInstanceW> taskInstances = getSubmittedTaskInstances();
+		List<TaskInstanceW> taskInstances = getAllTaskInstances();
 		List<BinaryVariable> attachments = new ArrayList<BinaryVariable>();
 		
 		for (Iterator<TaskInstanceW> iterator = taskInstances.iterator(); iterator.hasNext();) {

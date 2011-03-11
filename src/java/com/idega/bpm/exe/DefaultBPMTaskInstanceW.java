@@ -626,20 +626,16 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	
 	@Transactional(readOnly = true)
 	public List<BinaryVariable> getAttachments() {
-		
-		List<BinaryVariable> variableList = getVariablesHandler()
-		        .resolveBinaryVariables(getTaskInstanceId());
+		List<BinaryVariable> variableList = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId());
 		List<BinaryVariable> returnList = new ArrayList<BinaryVariable>();
-		if (variableList == null || variableList.size() == 0)
+		if (ListUtil.isEmpty(variableList))
 			return returnList;
 		
 		RolesManager rolesManager = getBpmFactory().getRolesManager();
 		
 		for (BinaryVariable variable : variableList) {
 			try {
-				Permission permission = getPermissionsFactory()
-				        .getTaskInstanceVariableViewPermission(true,
-				            getTaskInstance(), variable.getHash().toString());
+				Permission permission = getPermissionsFactory().getTaskInstanceVariableViewPermission(true, getTaskInstance(), variable.getHash().toString());
 				rolesManager.checkPermission(permission);
 				returnList.add(variable);
 			} catch (BPMAccessControlException e) {
