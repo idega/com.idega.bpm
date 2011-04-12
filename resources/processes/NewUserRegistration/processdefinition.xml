@@ -66,6 +66,7 @@
 			        		Map subjectMap = new HashMap();
 			        		subjectMap.put("en", "Registration successful");
 			        		subjectMap.put("is_IS", "N\u00fdskr\u00e1ning m\u00f3ttekin");
+			        		subjectMap.put("sv_SE", "Registrering framg\u00E5ngsrika");
 			        		return subjectMap;
 			        		}
                 		</value>
@@ -77,6 +78,7 @@
 			        		Map messageMap = new HashMap();
 			        		messageMap.put("en", "Hello, {0}. \n\nYour registration was successful. You can login with your login name {1} and password {2} by going to {3}");
 			        		messageMap.put("is_IS", "S\u00e6l/ll, {0}. \n\nN\u00fdskr\u00e1ning \u00fe\u00edn t\u00f3kst og \u00fe\u00fa getur n\u00fa innskr\u00e1\u00f0 \u00feig me\u00f0 notandanafninu {1} og lykilor\u00f0inu {2} \u00e1 sl\u00f3\u00f0inni {3}");
+			        		messageMap.put("sv_SE", "Hej, {0}. \n\nDin registrering var framg\u00E5ngsrik. Du kan logga in med ditt inloggningsnamn {1} och l\u00F6senord {2} genom att g\u00E5 till {3}");
 			        		return messageMap;
 			        		}
                 		</value>
