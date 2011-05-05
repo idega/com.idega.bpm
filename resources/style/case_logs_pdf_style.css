@@ -1,0 +1,14 @@
+@CHARSET "UTF-8";
+
+ .caseNavigation {
+	display:none;
+}
+
+.massageDelete {
+	display:none;
+}
+
+a {
+	color:black;
+	text-decoration: none;
+}
