@@ -12,7 +12,15 @@ public class CasesBPMAssetProperties {
 	private boolean showAttachmentStatistics;
 	private boolean showOnlyCreatorInContacts;
 	private boolean autoShowComments;
+	private boolean showLogExportButton;
 	
+	
+	public boolean isShowLogExportButton() {
+		return showLogExportButton;
+	}
+	public void setShowLogExportButton(boolean showLogExportButton) {
+		this.showLogExportButton = showLogExportButton;
+	}
 	public String getCaseId() {
 		return caseId;
 	}
