@@ -33,6 +33,7 @@ import com.idega.presentation.IWContext;
 import com.idega.presentation.Layer;
 import com.idega.util.FileUtil;
 import com.idega.util.ListUtil;
+import com.idega.util.StringUtil;
 import com.idega.util.expression.ELUtil;
 
 
@@ -55,11 +56,8 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 
 	private byte[] pdfBytes = null;
 
-
-
 	@Override
 	public String getMimeType() {
-		// TODO Auto-generated method stub
 		return MimeTypeUtil.MIME_TYPE_PDF_1;
 	}
 
@@ -69,8 +67,8 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 
 		this.caseId = iwc.getParameter(CASE_ID_PARAMETER);
 
-		if (this.caseId == null) {
-			LOGGER.log(Level.SEVERE, "Do not know what to download: taskInstanceId, caseId is null");
+		if (StringUtil.isEmpty(caseId)) {
+			LOGGER.log(Level.SEVERE, "Do not know what to download: caseId is null");
 			return;
 		}
 
@@ -96,21 +94,19 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 	private Collection<Message> getMessages(IWContext iwc) {
 		try {
 			MessageBusiness msgBusiness = IBOLookup.getServiceInstance(iwc, MessageBusiness.class);
-			return msgBusiness.findMessages( iwc.getCurrentUser(),"SYMEDAN", caseId);
+			return msgBusiness.findMessages(iwc.getCurrentUser(), "SYMEDAN", caseId);
 		}
 		catch (FinderException fe) {
-			LOGGER.log(Level.SEVERE, fe.getMessage());
+			LOGGER.log(Level.SEVERE, fe.getMessage(), fe);
 		}
 		catch (RemoteException re) {
-			LOGGER.log(Level.SEVERE, re.getMessage());
+			LOGGER.log(Level.SEVERE, re.getMessage(), re);
 		}
 		return Collections.emptyList();
 	}
 
 	@Override
 	public void writeTo(OutputStream out) throws IOException {
-		// TODO Auto-generated method stub
-
 		InputStream streamIn = new ByteArrayInputStream(pdfBytes);
 		FileUtil.streamToOutputStream(streamIn, out);
 
@@ -118,7 +114,6 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 		out.close();
 		out.close();
 		streamIn.close();
-
 	}
 
 	@Override
@@ -129,11 +124,11 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 			Case theCase = caseBusines.getCase(caseId);
 			return "Case_" + theCase.getCaseIdentifier() + "_logs.pdf";
 		} catch (IBOLookupException e) {
-			e.printStackTrace();
+			LOGGER.log(Level.WARNING, "Error getting instance of " + CaseBusiness.class, e);
 		} catch (RemoteException e) {
-			e.printStackTrace();
+			LOGGER.log(Level.WARNING, "Error communicating with EJB bean: " + CaseBusiness.class, e);
 		} catch (FinderException e) {
-			e.printStackTrace();
+			LOGGER.warning("Case by ID: " + caseId + " was not found!");
 		}
 
 		return "Case_default_name_logs.pdf";
