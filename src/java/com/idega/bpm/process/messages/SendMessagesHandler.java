@@ -37,6 +37,7 @@ public class SendMessagesHandler implements ActionHandler {
 	private String messageValues;
 	private String messagesBundle;
 	private String sendToRoles;
+	private Integer recipientUserID;
 	private String fromAddress;
 	
 	private List<String> sendToEmails, attachFiles;
@@ -52,6 +53,7 @@ public class SendMessagesHandler implements ActionHandler {
 		final String sendToRoles = getSendToRoles();
 		final List<String> sendToEmails = getSendToEmails();
 		final UserPersonalData upd = getUserData();
+		final Integer recipientUserId = getRecipientUserID();
 		
 		final Token tkn = ectx.getToken();
 		
@@ -61,6 +63,7 @@ public class SendMessagesHandler implements ActionHandler {
 		msg.setSendToRoles(sendToRoles);
 		msg.setSendToEmails(sendToEmails);
 		msg.setAttachFiles(getAttachFiles());
+		msg.setRecipientUserId(recipientUserId);
 		
 		getSendMessage().send(null, upd, ectx.getProcessInstance(), msg, tkn);
 	}
@@ -193,6 +196,14 @@ public class SendMessagesHandler implements ActionHandler {
 
 	public String getSendToRoles() {
 		return sendToRoles;
+	}
+
+	public Integer getRecipientUserID() {
+		return recipientUserID;
+	}
+
+	public void setRecipientUserID(Integer recipientUserID) {
+		this.recipientUserID = recipientUserID;
 	}
 
 	public void setSendToRoles(String sendToRoles) {

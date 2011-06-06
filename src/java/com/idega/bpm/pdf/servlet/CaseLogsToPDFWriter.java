@@ -16,25 +16,32 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.idega.block.process.business.CaseBusiness;
+import com.idega.block.process.business.CaseCodeManager;
 import com.idega.block.process.data.Case;
-import com.idega.block.process.message.business.MessageBusiness;
-import com.idega.block.process.message.data.Message;
-import com.idega.block.process.message.presentation.MessageViewer;
+import com.idega.block.process.data.CaseLog;
 import com.idega.bpm.BPMConstants;
 import com.idega.business.IBOLookup;
-import com.idega.business.IBOLookupException;
+import com.idega.business.IBORuntimeException;
 import com.idega.core.file.util.MimeTypeUtil;
 import com.idega.graphics.generator.business.PDFGenerator;
 import com.idega.idegaweb.IWBundle;
-import com.idega.idegaweb.IWMainApplication;
 import com.idega.idegaweb.IWResourceBundle;
 import com.idega.io.DownloadWriter;
 import com.idega.presentation.IWContext;
 import com.idega.presentation.Layer;
+import com.idega.presentation.Table2;
+import com.idega.presentation.TableCell2;
+import com.idega.presentation.TableRow;
+import com.idega.presentation.TableRowGroup;
+import com.idega.presentation.text.Heading1;
+import com.idega.presentation.text.Text;
+import com.idega.user.data.User;
 import com.idega.util.FileUtil;
+import com.idega.util.IWTimestamp;
 import com.idega.util.ListUtil;
 import com.idega.util.StringUtil;
 import com.idega.util.expression.ELUtil;
+import com.idega.util.text.Name;
 
 
 /**
@@ -49,7 +56,7 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 
 	private static final Logger LOGGER = Logger.getLogger(CaseLogsToPDFWriter.class.getName());
 
-	private String caseId;
+	private Case theCase;
 
 	@Autowired
 	private PDFGenerator pdfGenerator;
@@ -63,38 +70,89 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 
 	@Override
 	public void init(HttpServletRequest req, IWContext iwc) {
-		ELUtil.getInstance().autowire(this);
-
-		this.caseId = iwc.getParameter(CASE_ID_PARAMETER);
-
-		if (StringUtil.isEmpty(caseId)) {
-			LOGGER.log(Level.SEVERE, "Do not know what to download: caseId is null");
-			return;
-		}
-
-		IWBundle bundle = iwc.getIWMainApplication().getBundle(BPMConstants.IW_BUNDLE_STARTER);
-		IWResourceBundle iwrb = bundle.getResourceBundle(iwc);
-		Layer container = new Layer();
-		container.add("<link href=\"" + bundle.getVirtualPathWithFileNameString("style/case_logs_pdf_style.css") +"\" type=\"text/css\" />");
-
-		Collection<Message> messages = this.getMessages(iwc);
-		if(ListUtil.isEmpty(messages)){
-			container.add(iwrb.getLocalizedString("no_messages_found", "There are no messages"));
-		} else {
-			for (Message msg: messages) {
-				container.add(new MessageViewer(msg));
+		try {
+			ELUtil.getInstance().autowire(this);
+	
+			String caseId = iwc.getParameter(CASE_ID_PARAMETER);
+	
+			if (StringUtil.isEmpty(caseId)) {
+				LOGGER.log(Level.SEVERE, "Do not know what to download: caseId is null");
+				return;
 			}
+			theCase = getCaseBusiness(iwc).getCase(new Integer(caseId));
+			CaseBusiness caseBusiness = CaseCodeManager.getInstance().getCaseBusinessOrDefault(theCase.getCaseCode(), iwc);
+			
+			IWBundle bundle = iwc.getIWMainApplication().getBundle(BPMConstants.IW_BUNDLE_STARTER);
+			IWResourceBundle iwrb = bundle.getResourceBundle(iwc);
+			Layer container = new Layer();
+			container.add("<link href=\"" + bundle.getVirtualPathWithFileNameString("style/case_logs_pdf_style.css") +"\" type=\"text/css\" />");
+			container.add(new Heading1(theCase.getCaseIdentifier() + " - " + theCase.getSubject()));
+	
+			Table2 table = new Table2();
+			table.setWidth("100%");
+			container.add(table);
+			
+			TableRowGroup group = table.createHeaderRowGroup();
+			TableRow row = group.createRow();
+			
+			TableCell2 cell = row.createHeaderCell();
+			cell.add(new Text(iwrb.getLocalizedString("case.status_before", "Status before")));
+			
+			cell = row.createHeaderCell();
+			cell.add(new Text(iwrb.getLocalizedString("case.status_after", "Status after")));
+			
+			cell = row.createHeaderCell();
+			cell.add(new Text(iwrb.getLocalizedString("case.timestamp", "Timestamp")));
+			
+			cell = row.createHeaderCell();
+			cell.add(new Text(iwrb.getLocalizedString("case.performer", "Performer")));
+			
+			cell = row.createHeaderCell();
+			cell.add(new Text(iwrb.getLocalizedString("case.comment", "Comment")));
+			
+			group = table.createBodyRowGroup();
+			
+			Collection<CaseLog> logs = this.getLogs(iwc);
+			if(ListUtil.isEmpty(logs)){
+				container.add(iwrb.getLocalizedString("no_logs_found", "There are no logs"));
+			} else {
+				for (CaseLog log: logs) {
+					row = group.createRow();
+					User performer = log.getPerformer();
+					
+					cell = row.createCell();
+					cell.add(new Text(caseBusiness.getLocalizedCaseStatusDescription(theCase, log.getCaseStatusBefore(), iwc.getCurrentLocale())));
+					
+					cell = row.createCell();
+					cell.add(new Text(caseBusiness.getLocalizedCaseStatusDescription(theCase, log.getCaseStatusAfter(), iwc.getCurrentLocale())));
+					
+					cell = row.createCell();
+					cell.add(new Text(new IWTimestamp(log.getTimeStamp()).getLocaleDateAndTime(iwc.getCurrentLocale())));
+					
+					cell = row.createCell();
+					cell.add(new Text(performer != null ? new Name(performer.getFirstName(), performer.getMiddleName(), performer.getLastName()).getName(iwc.getCurrentLocale()) : ""));
+					
+					cell = row.createCell();
+					cell.add(new Text(log.getComment() != null ? log.getComment() : ""));
+				}
+			}
+	
+			pdfBytes = this.pdfGenerator.getBytesOfGeneratedPDF(iwc, container, true, true);
+	
+			setAsDownload(iwc, this.getFileName(), this.pdfBytes.length);
 		}
-
-		pdfBytes = this.pdfGenerator.getBytesOfGeneratedPDF(iwc, container, true, true);
-
-		setAsDownload(iwc, this.getFileName(), this.pdfBytes.length);
+		catch (RemoteException re) {
+			throw new IBORuntimeException(re);
+		}
+		catch (FinderException fe) {
+			fe.printStackTrace();
+		}
 	}
 
-	private Collection<Message> getMessages(IWContext iwc) {
+	private Collection<CaseLog> getLogs(IWContext iwc) {
 		try {
-			MessageBusiness msgBusiness = IBOLookup.getServiceInstance(iwc, MessageBusiness.class);
-			return msgBusiness.findMessages(iwc.getCurrentUser(), "SYMEDAN", caseId);
+			CaseBusiness caseBusiness = IBOLookup.getServiceInstance(iwc, CaseBusiness.class);
+			return caseBusiness.getCaseLogsByCase(theCase);
 		}
 		catch (FinderException fe) {
 			LOGGER.log(Level.SEVERE, fe.getMessage(), fe);
@@ -103,6 +161,15 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 			LOGGER.log(Level.SEVERE, re.getMessage(), re);
 		}
 		return Collections.emptyList();
+	}
+	
+	private CaseBusiness getCaseBusiness(IWContext iwc) {
+		try {
+			return IBOLookup.getServiceInstance(iwc, CaseBusiness.class);
+		}
+		catch (RemoteException re) {
+			throw new IBORuntimeException(re);
+		}
 	}
 
 	@Override
@@ -118,20 +185,6 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 
 	@Override
 	public String getFileName() {
-		CaseBusiness caseBusines;
-		try {
-			caseBusines = IBOLookup.getServiceInstance(IWMainApplication.getDefaultIWApplicationContext(), CaseBusiness.class);
-			Case theCase = caseBusines.getCase(caseId);
-			return "Case_" + theCase.getCaseIdentifier() + "_logs.pdf";
-		} catch (IBOLookupException e) {
-			LOGGER.log(Level.WARNING, "Error getting instance of " + CaseBusiness.class, e);
-		} catch (RemoteException e) {
-			LOGGER.log(Level.WARNING, "Error communicating with EJB bean: " + CaseBusiness.class, e);
-		} catch (FinderException e) {
-			LOGGER.warning("Case by ID: " + caseId + " was not found!");
-		}
-
-		return "Case_default_name_logs.pdf";
+		return "Case_" + theCase.getCaseIdentifier() + "_logs.pdf";
 	}
-
 }

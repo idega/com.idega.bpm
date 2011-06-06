@@ -21,6 +21,7 @@ public class LocalizedMessages {
 	
 	private String from;
 	private String sendToRoles;
+	private Integer recipientUserId;
 	private List<String> sendToEmails, attachFiles;
 	private String subjectValuesExp;
 	private String messageValuesExp;
@@ -126,8 +127,14 @@ public class LocalizedMessages {
 	public String getSendToRoles() {
 		return sendToRoles;
 	}
+	public Integer getRecipientUserId() {
+		return recipientUserId;
+	}
 	public void setSendToRoles(String sendToRoles) {
 		this.sendToRoles = sendToRoles;
+	}
+	public void setRecipientUserId(Integer recipientUserId) {
+		this.recipientUserId = recipientUserId;
 	}
 	public List<String> getSendToEmails() {
 		return sendToEmails;
