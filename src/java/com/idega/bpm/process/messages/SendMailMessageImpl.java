@@ -2,6 +2,7 @@ package com.idega.bpm.process.messages;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.idega.block.email.business.EmailSenderHelper;
+import com.idega.builder.bean.AdvancedProperty;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.core.converter.util.StringConverterUtility;
 import com.idega.idegaweb.IWApplicationContext;
@@ -82,7 +84,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		long pid = pi.getId();
 		ProcessInstanceW piw = getBpmFactory().getProcessManagerByProcessInstanceId(pid).getProcessInstance(pid);
 
-		HashMap<Locale, String[]> unformattedForLocales = new HashMap<Locale, String[]>(5);
+		Map<Locale, String[]> unformattedForLocales = new HashMap<Locale, String[]>(5);
 
 		// TODO: get default email
 		String from = msgs.getFrom();
@@ -94,7 +96,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		// TODO: if upd contains userId, we can get User here and add to message value context
 
 		Locale preferredLocale = iwc != null ? iwc.getCurrentLocale() : defaultLocale;
-		final ArrayList<SendMailMessageValue> messageValuesToSend = new ArrayList<SendMailMessageValue>(emailAddresses.size());
+		final List<SendMailMessageValue> messageValuesToSend = new ArrayList<SendMailMessageValue>(emailAddresses.size());
 
 		if (mvCtx == null)
 			mvCtx = new MessageValueContext(3);
@@ -110,7 +112,9 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			String subject = subjAndMsg[0];
 			String text = subjAndMsg[1];
 
-			messageValuesToSend.add(new SendMailMessageValue(attachedFile, null, null, from, host, subject, text, email, null));
+			SendMailMessageValue mail = new SendMailMessageValue(attachedFile, null, null, from, host, subject, text, email, null);
+			mail.setHeaders(getMailHeaders());
+			messageValuesToSend.add(mail);
 		}
 
 		if (!ListUtil.isEmpty(messageValuesToSend)) {
@@ -132,6 +136,10 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 				}
 			}).start();
 		}
+	}
+	
+	protected List<AdvancedProperty> getMailHeaders() {
+		return Arrays.asList(new AdvancedProperty(SendMail.HEADER_AUTO_SUBMITTED, "auto-generated"), new AdvancedProperty(SendMail.HEADER_PRECEDENCE, "bulk"));
 	}
 	
 	private File getAttachedFile(List<String> filesToAttach, ProcessInstanceW piw) {
