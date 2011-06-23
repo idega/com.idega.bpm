@@ -118,14 +118,14 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	 * @return
 	 */
 	@Transactional(readOnly = true)
-	Collection<TaskInstance> getProcessTaskInstances(final List<String> excludedSubProcessesNames, final List<String> includedOnlySubProcessesNames) {
+	List<TaskInstance> getProcessTaskInstances(final List<String> excludedSubProcessesNames, final List<String> includedOnlySubProcessesNames) {
 		return getBpmContext().execute(new JbpmCallback() {
 			
 			@SuppressWarnings("unchecked")
 			public Object doInJbpm(JbpmContext context) throws JbpmException {
 				ProcessInstance processInstance = getProcessInstance();
 				
-				final Collection<TaskInstance> taskInstances;
+				final List<TaskInstance> taskInstances;
 				if (includedOnlySubProcessesNames != null) {
 					// only inserting task instances from subprocesses
 					taskInstances = new ArrayList<TaskInstance>();
@@ -628,7 +628,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	public List<BPMEmailDocument> getAttachedEmails(User user) {
 		List<String> included = new ArrayList<String>(1);
 		included.add(email_fetch_process_name);
-		Collection<TaskInstance> emailsTaskInstances = getProcessTaskInstances(null, included);
+		List<TaskInstance> emailsTaskInstances = getProcessTaskInstances(null, included);
 		
 		emailsTaskInstances = filterEmailsTaskInstances(emailsTaskInstances);
 		
@@ -655,7 +655,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return bpmEmailDocs;
 	}
 	
-	Collection<TaskInstance> filterEmailsTaskInstances(Collection<TaskInstance> emailsTaskInstances) {
+	List<TaskInstance> filterEmailsTaskInstances(List<TaskInstance> emailsTaskInstances) {
 		for (Iterator<TaskInstance> iterator = emailsTaskInstances.iterator(); iterator.hasNext();) {
 			TaskInstance taskInstance = iterator.next();
 			
@@ -673,7 +673,8 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 					}
 				}
 			} catch (Exception e) {
-				getLogger().log(Level.WARNING, "Error getting emails from: " + emailsTaskInstances, e);
+				getLogger().log(Level.WARNING, "Error getting emails from the list of task instances: (" +
+						(emailsTaskInstances.size() > 10 ? emailsTaskInstances.subList(0, 9) : emailsTaskInstances) + "). Total number of tasks: " + emailsTaskInstances.size(), e);
 				iterator.remove();
 			}
 		}
