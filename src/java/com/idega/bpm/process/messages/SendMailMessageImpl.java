@@ -69,8 +69,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		final IWApplicationContext iwac = iwma.getIWApplicationContext();
 
 		List<String> sendToEmails = msgs.getSendToEmails();
-		final ArrayList<String> emailAddresses;
-
+		final List<String> emailAddresses;
 		if (sendToEmails != null)
 			emailAddresses = new ArrayList<String>(sendToEmails);
 		else
