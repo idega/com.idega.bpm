@@ -102,7 +102,7 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		Object o = iwc
 		        .getSessionAttribute(PresentationUtil.ATTRIBUTE_CSS_SOURCE_LINE_FOR_HEADER);
 		if (o instanceof List) {
-			resources = (List) o;
+			resources = (List<String>) o;
 		} else {
 			resources = new ArrayList<String>();
 		}
