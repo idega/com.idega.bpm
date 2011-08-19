@@ -6,12 +6,12 @@
 				<variable access="write" name="string_ownerPhone"></variable>
 				<variable access="write" name="string_ownerMobile"></variable>
 				<variable access="write,required" name="string_ownerEmailAddress"></variable>
-				<variable access="write,required" name="string_ownerAddress"></variable>
-				<variable access="write,required" name="string_ownerPostalCode"></variable>
-				<variable access="write,required" name="string_ownerMunicipality"></variable>
+				<variable access="write" name="string_ownerAddress"></variable>
+				<variable access="write" name="string_ownerPostalCode"></variable>
+				<variable access="write" name="string_ownerMunicipality"></variable>
 				<variable access="write,required" name="string_ownerFullName"></variable>
 				<variable access="write,required" name="string_ownerPersonalId"></variable>
-				<variable access="write,required" name="string_ownerGender"></variable>
+				<variable access="write" name="string_ownerGender"></variable>
 			</controller>
 		</task>
 		<event type="node-leave">
