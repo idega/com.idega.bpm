@@ -1,6 +1,7 @@
 package com.idega.bpm.process.messages;
 
 import java.io.File;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,6 +35,7 @@ import com.idega.jbpm.process.business.messages.MessageValueHandler;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.presentation.IWContext;
 import com.idega.user.business.UserBusiness;
+import com.idega.user.data.Group;
 import com.idega.user.data.User;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
@@ -224,6 +226,32 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 				rolesNamesSet.add(rolesNames[i]);
 
 			allUsers = getBpmFactory().getRolesManager().getAllUsersForRoles(rolesNamesSet, pi.getId());
+			
+			/* Override so that users that are not directly related to the case can also receive email */
+			if (allUsers.isEmpty()) {
+				allUsers = new ArrayList<User>();
+				
+				IWApplicationContext iwac = IWMainApplication.getDefaultIWApplicationContext();
+				IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
+				
+				for (String role : rolesNamesSet) {
+					Collection<Group> groups = iwma.getAccessController().getAllGroupsForRoleKey(role, iwac);
+					for (Group group : groups) {
+						try {
+							Collection<User> users = getUserBusiness(iwac).getUsersInGroup(group);
+							for (User user : users) {
+								if (!allUsers.contains(user)) {
+									allUsers.add(user);
+								}
+							}
+						}
+						catch (RemoteException e) {
+							e.printStackTrace();
+						}
+						
+					}
+				}
+			}
 		} else {
 			allUsers = Collections.emptyList();
 		}
