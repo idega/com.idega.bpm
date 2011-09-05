@@ -216,43 +216,44 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	}
 
 	public Collection<User> getUsersToSendMessageTo(String rolesNamesAggr, ProcessInstance pi) {
-		Collection<User> allUsers;
+		Collection<User> allUsers = new ArrayList<User>();
 		if (rolesNamesAggr != null) {
 			String[] rolesNames = rolesNamesAggr.trim().split(CoreConstants.SPACE);
 
-			HashSet<String> rolesNamesSet = new HashSet<String>(rolesNames.length);
-
-			for (int i = 0; i < rolesNames.length; i++)
-				rolesNamesSet.add(rolesNames[i]);
-
-			allUsers = getBpmFactory().getRolesManager().getAllUsersForRoles(rolesNamesSet, pi.getId());
-			
-			/* Override so that users that are not directly related to the case can also receive email */
-			if (allUsers.isEmpty()) {
-				allUsers = new ArrayList<User>();
+			for (String string : rolesNames) {
+				HashSet<String> rolesNamesSet = new HashSet<String>(rolesNames.length);
+				rolesNamesSet.add(string);
 				
-				IWApplicationContext iwac = IWMainApplication.getDefaultIWApplicationContext();
-				IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
-				
-				for (String role : rolesNamesSet) {
-					Collection<Group> groups = iwma.getAccessController().getAllGroupsForRoleKey(role, iwac);
-					for (Group group : groups) {
-						try {
-							Collection<User> users = getUserBusiness(iwac).getUsersInGroup(group);
-							for (User user : users) {
-								if (!allUsers.contains(user)) {
-									allUsers.add(user);
+				Collection<User> users = getBpmFactory().getRolesManager().getAllUsersForRoles(rolesNamesSet, pi.getId());
+
+				/* Override so that users that are not directly related to the case can also receive email */
+				if (users.isEmpty()) {
+					IWApplicationContext iwac = IWMainApplication.getDefaultIWApplicationContext();
+					IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
+					
+					for (String role : rolesNamesSet) {
+						Collection<Group> groups = iwma.getAccessController().getAllGroupsForRoleKey(role, iwac);
+						for (Group group : groups) {
+							try {
+								users = getUserBusiness(iwac).getUsersInGroup(group);
+								for (User user : users) {
+									if (!allUsers.contains(user)) {
+										allUsers.add(user);
+									}
 								}
 							}
+							catch (RemoteException e) {
+								e.printStackTrace();
+							}
 						}
-						catch (RemoteException e) {
-							e.printStackTrace();
-						}
-						
 					}
 				}
+				else {
+					allUsers.addAll(users);
+				}
 			}
-		} else {
+		}
+		else {
 			allUsers = Collections.emptyList();
 		}
 

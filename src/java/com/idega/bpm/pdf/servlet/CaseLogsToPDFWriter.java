@@ -96,16 +96,13 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 			TableRow row = group.createRow();
 			
 			TableCell2 cell = row.createHeaderCell();
-			cell.add(new Text(iwrb.getLocalizedString("case.status_before", "Status before")));
+			cell.add(new Text(iwrb.getLocalizedString("case.performer", "Performer")));
 			
 			cell = row.createHeaderCell();
 			cell.add(new Text(iwrb.getLocalizedString("case.status_after", "Status after")));
 			
 			cell = row.createHeaderCell();
 			cell.add(new Text(iwrb.getLocalizedString("case.timestamp", "Timestamp")));
-			
-			cell = row.createHeaderCell();
-			cell.add(new Text(iwrb.getLocalizedString("case.performer", "Performer")));
 			
 			cell = row.createHeaderCell();
 			cell.add(new Text(iwrb.getLocalizedString("case.comment", "Comment")));
@@ -121,16 +118,13 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 					User performer = log.getPerformer();
 					
 					cell = row.createCell();
-					cell.add(new Text(caseBusiness.getLocalizedCaseStatusDescription(theCase, log.getCaseStatusBefore(), iwc.getCurrentLocale())));
+					cell.add(new Text(performer != null ? new Name(performer.getFirstName(), performer.getMiddleName(), performer.getLastName()).getName(iwc.getCurrentLocale()) : ""));
 					
 					cell = row.createCell();
 					cell.add(new Text(caseBusiness.getLocalizedCaseStatusDescription(theCase, log.getCaseStatusAfter(), iwc.getCurrentLocale())));
 					
 					cell = row.createCell();
-					cell.add(new Text(new IWTimestamp(log.getTimeStamp()).getLocaleDateAndTime(iwc.getCurrentLocale())));
-					
-					cell = row.createCell();
-					cell.add(new Text(performer != null ? new Name(performer.getFirstName(), performer.getMiddleName(), performer.getLastName()).getName(iwc.getCurrentLocale()) : ""));
+					cell.add(new Text(new IWTimestamp(log.getTimeStamp()).getLocaleDateAndTime(iwc.getCurrentLocale(), IWTimestamp.SHORT, IWTimestamp.SHORT)));
 					
 					cell = row.createCell();
 					cell.add(new Text(log.getComment() != null ? log.getComment() : ""));
