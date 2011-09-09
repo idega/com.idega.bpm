@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -99,6 +101,9 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 			cell.add(new Text(iwrb.getLocalizedString("case.performer", "Performer")));
 			
 			cell = row.createHeaderCell();
+			cell.add(new Text(iwrb.getLocalizedString("case.action", "Action")));
+			
+			cell = row.createHeaderCell();
 			cell.add(new Text(iwrb.getLocalizedString("case.status_after", "Status after")));
 			
 			cell = row.createHeaderCell();
@@ -109,16 +114,28 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 			
 			group = table.createBodyRowGroup();
 			
-			Collection<CaseLog> logs = this.getLogs(iwc);
+			List<CaseLog> logs = new ArrayList(this.getLogs(iwc));
 			if(ListUtil.isEmpty(logs)){
 				container.add(iwrb.getLocalizedString("no_logs_found", "There are no logs"));
 			} else {
+				Collections.reverse(logs);
 				for (CaseLog log: logs) {
 					row = group.createRow();
 					User performer = log.getPerformer();
 					
+					String action = "";
+					String comment = log.getComment() != null ? log.getComment() : "";
+					
+					if (comment.indexOf(": ") != -1) {
+						action = comment.substring(0, comment.indexOf(": "));
+						comment = comment.substring(comment.indexOf(": ") + 2);
+					}
+					
 					cell = row.createCell();
 					cell.add(new Text(performer != null ? new Name(performer.getFirstName(), performer.getMiddleName(), performer.getLastName()).getName(iwc.getCurrentLocale()) : ""));
+					
+					cell = row.createCell();
+					cell.add(new Text(action));
 					
 					cell = row.createCell();
 					cell.add(new Text(caseBusiness.getLocalizedCaseStatusDescription(theCase, log.getCaseStatusAfter(), iwc.getCurrentLocale())));
@@ -127,7 +144,7 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 					cell.add(new Text(new IWTimestamp(log.getTimeStamp()).getLocaleDateAndTime(iwc.getCurrentLocale(), IWTimestamp.SHORT, IWTimestamp.SHORT)));
 					
 					cell = row.createCell();
-					cell.add(new Text(log.getComment() != null ? log.getComment() : ""));
+					cell.add(new Text(comment));
 				}
 			}
 	
