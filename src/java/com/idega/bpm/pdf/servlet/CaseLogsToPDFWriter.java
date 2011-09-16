@@ -128,7 +128,7 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 					
 					if (comment.indexOf(": ") != -1) {
 						action = comment.substring(0, comment.indexOf(": "));
-						comment = comment.substring(comment.indexOf(": ") + 2);
+						comment = action.length() < comment.length() ? comment.substring(comment.indexOf(": ") + 2) : "";
 					}
 					
 					cell = row.createCell();
