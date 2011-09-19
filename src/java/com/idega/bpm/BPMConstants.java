@@ -12,5 +12,7 @@ public class BPMConstants {
 	public static final String TASK_CUSTOM_NAME_META_DATA = "BPM_TASK_CUSTOM_NAME",
 								TASK_CUSTOM_NAME_SEPARATOR = "@BPM_TASK_CUSTOM_NAME@",
 								
-								BPM_PROCESS_HANDLER_VARIABLE = "bpm_process_handler_variable";
+								BPM_PROCESS_HANDLER_VARIABLE = "bpm_process_handler_variable",
+								
+								PUBLIC_PROCESS = "string_processIsPublic";
 }

@@ -151,7 +151,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 					ProcessInstance pi = new ProcessInstance(pd);
 					TaskInstance ti = pi.getTaskMgmtInstance().createStartTaskInstance();
 					
-					View view = getBpmFactory().getView( viewSubmission.getViewId(), viewSubmission.getViewType(), false);
+					View view = getBpmFactory().getView(viewSubmission.getViewId(), viewSubmission.getViewType(), false);
 					
 					// binding view to task instance
 					view.getViewToTask().bind(view, ti);
