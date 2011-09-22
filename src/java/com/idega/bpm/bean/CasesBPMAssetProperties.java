@@ -5,6 +5,7 @@ public class CasesBPMAssetProperties {
 	private String caseId;
 	private String processorType;
 	private String commentsPersistenceManagerIdentifier;
+	private String specialBackPage;
 	
 	private boolean usePDFDownloadColumn = true;
 	private boolean allowPDFSigning = true;
@@ -74,6 +75,12 @@ public class CasesBPMAssetProperties {
 	}
 	public void setAutoShowComments(boolean autoShowComments) {
 		this.autoShowComments = autoShowComments;
+	}
+	public String getSpecialBackPage() {
+		return specialBackPage;
+	}
+	public void setSpecialBackPage(String specialBackPage) {
+		this.specialBackPage = specialBackPage;
 	}
 
 }
