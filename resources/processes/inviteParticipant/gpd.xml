@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<root-container name="participantInvitation" width="1026" height="662">
+<root-container name="participantInvitation" width="1134" height="578">
   <node name="start" x="226" y="35" width="23" height="24">
     <edge>
       <label x="5" y="-10"/>
@@ -16,6 +16,6 @@
       <label x="5" y="-10"/>
     </edge>
   </node>
-  <node name="assignRoleToBpmUser" x="0" y="0" width="132" height="36"/>
-  <node name="end1" x="0" y="0" width="132" height="36"/>
+  <node name="assignRoleToBpmUser" x="430" y="136" width="132" height="36"/>
+  <node name="end1" x="179" y="240" width="132" height="36"/>
 </root-container>
