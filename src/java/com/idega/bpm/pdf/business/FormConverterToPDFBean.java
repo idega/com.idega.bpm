@@ -10,8 +10,8 @@ import java.util.logging.Logger;
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
 
-import org.apache.webdav.lib.WebdavResource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -20,40 +20,37 @@ import com.idega.block.form.presentation.FormViewer;
 import com.idega.block.process.variables.Variable;
 import com.idega.block.process.variables.VariableDataType;
 import com.idega.bpm.BPMConstants;
-import com.idega.business.IBOLookup;
-import com.idega.business.IBOLookupException;
-import com.idega.business.IBORuntimeException;
+import com.idega.core.business.DefaultSpringBean;
 import com.idega.graphics.generator.business.PDFGenerator;
 import com.idega.idegaweb.IWBundle;
-import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.artifacts.presentation.ProcessArtifacts;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.TaskInstanceW;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.presentation.IWContext;
 import com.idega.presentation.PDFRenderedComponent;
-import com.idega.slide.business.IWSlideService;
+import com.idega.repository.bean.RepositoryItem;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
 import com.idega.util.PresentationUtil;
 import com.idega.util.StringUtil;
 
-@Scope("singleton")
+@Scope(BeanDefinition.SCOPE_SINGLETON)
 @Service(FormConverterToPDF.STRING_BEAN_IDENTIFIER)
-public class FormConverterToPDFBean implements FormConverterToPDF {
-	
-	private static final Logger LOGGER = Logger
-	        .getLogger(FormConverterToPDFBean.class.getName());
-	
+public class FormConverterToPDFBean extends DefaultSpringBean implements FormConverterToPDF {
+
+	private static final Logger LOGGER = Logger.getLogger(FormConverterToPDFBean.class.getName());
+
 	@Autowired
 	private PDFGenerator generator;
-	
+
 	@Autowired
 	private BPMFactory bpmFactory;
-	
+
 	@Autowired
 	private ProcessArtifacts processArtifacts;
-	
+
+	@Override
 	public String getGeneratedPDFFromXForm(String taskInstanceId,
 	        String formId, String formSubmissionId, String uploadPath,
 	        String pdfName, boolean checkExistence) {
@@ -71,15 +68,15 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		if (!uploadPath.endsWith(CoreConstants.SLASH)) {
 			uploadPath += CoreConstants.SLASH;
 		}
-		
+
 		IWContext iwc = CoreUtil.getIWContext();
 		if (iwc == null) {
 			LOGGER.log(Level.SEVERE, "IWContext is unavailable!");
 			return null;
 		}
-		
+
 		addStyleSheetsForPDF(iwc);
-		
+
 		String xformInPDF = getXFormInPDF(iwc, taskInstanceId, formId,
 		    formSubmissionId, uploadPath, pdfName, checkExistence);
 		if (StringUtil.isEmpty(xformInPDF)) {
@@ -91,7 +88,7 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		}
 		return xformInPDF;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void addStyleSheetsForPDF(IWContext iwc) {
 		IWBundle bundle = iwc.getIWMainApplication().getBundle(
@@ -115,7 +112,8 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		iwc.setSessionAttribute(PresentationUtil.ATTRIBUTE_ADD_CSS_DIRECTLY,
 		    Boolean.TRUE);
 	}
-	
+
+	@Override
 	public String getHashValueForGeneratedPDFFromXForm(String taskInstanceId,
 	        boolean checkExistence, String pdfName) {
 		if (StringUtil.isEmpty(taskInstanceId)) {
@@ -133,7 +131,7 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		if (taskId == null) {
 			return null;
 		}
-		
+
 		TaskInstanceW taskInstance = null;
 		try {
 			taskInstance = getBpmFactory().getProcessManagerByTaskInstanceId(
@@ -145,14 +143,14 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		if (taskInstance == null) {
 			return null;
 		}
-		
+
 		IWContext iwc = CoreUtil.getIWContext();
 		if (iwc == null) {
 			return null;
 		}
-		
+
 		addStyleSheetsForPDF(iwc);
-		
+
 		UIComponent viewer = getComponentToRender(iwc, taskInstanceId, null,
 		    null);
 		if (viewer == null) {
@@ -169,18 +167,18 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		if (streamToPDF == null) {
 			return null;
 		}
-		
+
 		if (pdfName != null && !pdfName.endsWith(".pdf")) {
 			pdfName = new StringBuilder(pdfName).append(".pdf").toString();
 		}
-		
+
 		String fileName = pdfName != null ? pdfName : getProcessArtifacts()
 		        .getFileNameForGeneratedPDFFromTaskInstance(taskInstanceId);
 		String description = iwc.getIWMainApplication().getBundle(
 		    BPMConstants.IW_BUNDLE_STARTER).getResourceBundle(iwc)
 		        .getLocalizedString("auto_generated_pdf",
 		            "Generated PDF from document");
-		
+
 		BinaryVariable newAttachment = null;
 		Variable variable = new Variable("generated_pdf_from_document_task",
 		        VariableDataType.FILE);
@@ -195,46 +193,33 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		} finally {
 			closeInputStream(streamToPDF);
 		}
-		
+
 		return newAttachment == null ? null : String.valueOf(newAttachment
 		        .getHash());
 	}
-	
+
+	@Override
 	public String getHashValueForGeneratedPDFFromXForm(String taskInstanceId,
 	        boolean checkExistence) {
 		return getHashValueForGeneratedPDFFromXForm(taskInstanceId,
 		    checkExistence, null);
 	}
-	
+
 	private void closeInputStream(InputStream stream) {
 		if (stream == null) {
 			return;
 		}
-		
+
 		try {
 			stream.close();
 		} catch (IOException e) {
 		}
 	}
-	
-	private IWSlideService getSlideService() {
-		try {
-			return IBOLookup.getServiceInstance(
-			    IWMainApplication.getDefaultIWApplicationContext(),
-			    IWSlideService.class);
-		} catch (IBOLookupException e) {
-			throw new IBORuntimeException(e);
-		}
-	}
-	
+
 	private String getXFormInPDF(IWContext iwc, String taskInstanceId,
 	        String formId, String formSubmitionId, String pathInSlide,
 	        String pdfName, boolean checkExistence) {
-		IWSlideService slide = getSlideService();
-		if (slide == null) {
-			return null;
-		}
-		
+
 		String prefix = formId == null ? taskInstanceId : formId;
 		prefix = prefix == null ? String.valueOf(System.currentTimeMillis())
 		        : prefix;
@@ -246,37 +231,36 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		pdfName = StringUtil.escapeFileNameSpecialCharacters(pdfName);
 		String pathToForm = new StringBuilder(pathInSlide).append(pdfName)
 		        .toString();
-		
+
 		boolean needToGenerate = true;
 		if (checkExistence) {
-			WebdavResource xformInPDF = getXFormInPDFResource(slide, pathToForm);
+			RepositoryItem xformInPDF = getXFormInPDFResource(pathToForm);
 			needToGenerate = xformInPDF == null || !xformInPDF.exists();
 		}
 		if (needToGenerate) {
-			return generatePDF(iwc, slide, taskInstanceId, formId,
+			return generatePDF(iwc, taskInstanceId, formId,
 			    formSubmitionId, pathInSlide, pdfName, pathToForm);
 		}
-		
+
 		return pathToForm;
 	}
-	
-	private WebdavResource getXFormInPDFResource(IWSlideService slide,
-	        String pathToForm) {
-		if (slide == null || StringUtil.isEmpty(pathToForm)) {
+
+	private RepositoryItem getXFormInPDFResource(String pathToForm) {
+		if (StringUtil.isEmpty(pathToForm)) {
 			return null;
 		}
-		
-		WebdavResource xformInPDF = null;
+
+		RepositoryItem xformInPDF = null;
 		try {
-			xformInPDF = slide.getWebdavResourceAuthenticatedAsRoot(pathToForm);
+			xformInPDF = getRepositoryService().getRepositoryItemAsRootUser(pathToForm);
 		} catch (Exception e) {
 			LOGGER.log(Level.SEVERE, "Error getting resource from: "
 			        + pathToForm);
 		}
-		
+
 		return xformInPDF;
 	}
-	
+
 	private UIComponent getComponentToRender(IWContext iwc,
 	        String taskInstanceId, String formId, String formSubmitionId) {
 		UIComponent component = null;
@@ -292,7 +276,7 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 			if (component == null) {
 				return null;
 			}
-			
+
 			if (component instanceof PDFRenderedComponent) {
 				((PDFRenderedComponent) component).setPdfViewer(true);
 			}
@@ -301,21 +285,21 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 			Application application = iwc.getApplication();
 			FormViewer viewer = (FormViewer) application
 			        .createComponent(FormViewer.COMPONENT_TYPE);
-			
+
 			if (!StringUtil.isEmpty(formId)) {
 				viewer.setFormId(formId);
 			} else {
 				viewer.setSubmissionId(formSubmitionId);
 			}
 			viewer.setPdfViewer(true);
-			
+
 			component = viewer;
 		}
-		
+
 		return component;
 	}
-	
-	private String generatePDF(IWContext iwc, IWSlideService slide,
+
+	private String generatePDF(IWContext iwc,
 	        String taskInstanceId, String formId, String formSubmitionId,
 	        String pathInSlide, String pdfName, String pathToForm) {
 		UIComponent viewer = getComponentToRender(iwc, taskInstanceId, formId,
@@ -330,40 +314,40 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		if (isFormViewer) {
 			((FormViewer) viewer).setPdfViewer(true);
 		}
-		
+
 		if (getGenerator().generatePDF(iwc, viewer, pdfName, pathInSlide, true,
 		    isFormViewer)) {
 			return pathToForm;
 		}
-		
+
 		LOGGER.log(Level.SEVERE,
 		    "Unable to generate PDF for " + taskInstanceId == null ? "xform: "
 		            + formId : "taskInstance: " + taskInstanceId);
 		return null;
 	}
-	
+
 	public BPMFactory getBpmFactory() {
 		return bpmFactory;
 	}
-	
+
 	public void setBpmFactory(BPMFactory bpmFactory) {
 		this.bpmFactory = bpmFactory;
 	}
-	
+
 	public PDFGenerator getGenerator() {
 		return generator;
 	}
-	
+
 	public void setGenerator(PDFGenerator generator) {
 		this.generator = generator;
 	}
-	
+
 	public ProcessArtifacts getProcessArtifacts() {
 		return processArtifacts;
 	}
-	
+
 	public void setProcessArtifacts(ProcessArtifacts processArtifacts) {
 		this.processArtifacts = processArtifacts;
 	}
-	
+
 }

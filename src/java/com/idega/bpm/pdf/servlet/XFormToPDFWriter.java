@@ -9,14 +9,11 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.webdav.lib.WebdavResource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.idega.block.form.business.FormConverterToPDF;
 import com.idega.block.form.data.dao.XFormsDAO;
 import com.idega.bpm.BPMConstants;
-import com.idega.business.IBOLookup;
-import com.idega.business.IBOLookupException;
 import com.idega.core.file.util.MimeTypeUtil;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.io.DownloadWriter;
@@ -26,7 +23,7 @@ import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessManager;
 import com.idega.jbpm.exe.TaskInstanceW;
 import com.idega.presentation.IWContext;
-import com.idega.slide.business.IWSlideService;
+import com.idega.repository.bean.RepositoryItem;
 import com.idega.util.CoreConstants;
 import com.idega.util.FileUtil;
 import com.idega.util.StringUtil;
@@ -55,9 +52,9 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 
 	private static final Logger LOGGER = Logger.getLogger(XFormToPDFWriter.class.getName());
 
-	private WebdavResource resourceInPDF = null;
+	private RepositoryItem resourceInPDF = null;
 	private boolean showPDF;
-	
+
 	@Autowired(required = false)
 	@XFormPersistenceType("slide")
 	private transient PersistenceManager persistenceManager;
@@ -78,7 +75,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	public void init(HttpServletRequest req, IWContext iwc) {
 		String paramShowPDF = iwc.getParameter("showPDF");
 		showPDF = !StringUtil.isEmpty(paramShowPDF) && Boolean.TRUE.toString().equals(paramShowPDF);
-		
+
 		String taskInstanceId = iwc.getParameter(ProcessConstants.TASK_INSTANCE_ID);
 		String formId = iwc.getParameter(XFORM_ID_PARAMETER);
 		String formSubmissionId = iwc.getParameter(XFORM_SUBMISSION_ID_PARAMETER);
@@ -141,36 +138,26 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			return;
 		}
 
-		IWSlideService slide = null;
-		try {
-			slide = IBOLookup.getServiceInstance(iwc, IWSlideService.class);
-		} catch (IBOLookupException e) {
-			LOGGER.log(Level.SEVERE, "Error getting IWSlideService!", e);
-		}
-		if (slide == null) {
-			return;
-		}
-
-		if (!setResource(slide, pathToPdf)) {
+		if (!setResource(pathToPdf)) {
 			LOGGER.log(Level.SEVERE, "Error reading PDF document: " + pathToPdf);
 			return;
 		}
 		if (resourceInPDF == null || !resourceInPDF.exists()) {
 			return;
 		}
-		
+
 		if (showPDF) {
 			//	Setting inline attribute - we don't want to force download of PDF file
-			iwc.getResponse().setHeader("Content-Disposition", "inline;filename=\"" + resourceInPDF.getDisplayName() + "\"");
+			iwc.getResponse().setHeader("Content-Disposition", "inline;filename=\"" + resourceInPDF.getName() + "\"");
 		} else {
-			Long length = Long.valueOf(resourceInPDF.getGetContentLength());
-			setAsDownload(iwc, resourceInPDF.getDisplayName(), length.intValue());
+			Long length = Long.valueOf(resourceInPDF.getLength());
+			setAsDownload(iwc, resourceInPDF.getName(), length.intValue());
 		}
 	}
 
-	private boolean setResource(IWSlideService slide, String pathToPDF) {
+	private boolean setResource(String pathToPDF) {
 		try {
-			resourceInPDF = slide.getWebdavResourceAuthenticatedAsRoot(pathToPDF);
+			resourceInPDF = getRepositoryService().getRepositoryItemAsRootUser(pathToPDF);
 		} catch (Exception e) {
 			LOGGER.log(Level.SEVERE, "Error getting resource: " + pathToPDF, e);
 		}
@@ -185,9 +172,9 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			return;
 		}
 
-		InputStream streamIn = resourceInPDF.getMethodData();
+		InputStream streamIn = resourceInPDF.getInputStream();
 		FileUtil.streamToOutputStream(streamIn, streamOut);
-		
+
 		streamOut.flush();
 		streamOut.close();
 		streamIn.close();
