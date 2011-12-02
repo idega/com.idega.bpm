@@ -5,8 +5,10 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.chiba.xml.dom.DOMUtil;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Element;
@@ -14,6 +16,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.idega.block.process.variables.VariableDataType;
+import com.idega.core.business.DefaultSpringBean;
+import com.idega.util.CoreConstants;
+import com.idega.util.StringHandler;
+import com.idega.util.StringUtil;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 
@@ -23,9 +29,10 @@ import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
  * 
  * Last modified: $Date: 2008/09/17 13:09:39 $ by $Author: civilis $
  */
-@Scope("singleton")
+
 @Service
-public class ObjectCollectionConverter implements DataConverter {
+@Scope(BeanDefinition.SCOPE_SINGLETON)
+public class ObjectCollectionConverter extends DefaultSpringBean implements DataConverter {
 
 	private static final String listElName = "list";
 	private static final String rowElName = "row";
@@ -101,6 +108,25 @@ public class ObjectCollectionConverter implements DataConverter {
 	private String ObjToJSON(Map<String, String> obj) {
 		XStream xstream = new XStream(new JettisonMappedXmlDriver());
 		String jsonOut = xstream.toXML(obj);
+		
+		try {
+			Map<String, String> object = JSONToObj(jsonOut);
+			if (object != null) {
+				for (String key: object.keySet()) {
+					String parsedValue = object.get(key);
+					String originalValue = obj.get(key);
+					if (!StringUtil.isEmpty(parsedValue) && !StringUtil.isEmpty(originalValue) && !originalValue.equals(parsedValue)) {
+						getLogger().info("Replacing incorrectly parsed value '" + parsedValue + "' with original one '" + originalValue + "'");
+						if (StringHandler.isNaturalNumber(originalValue.substring(0, 1)))
+							originalValue = CoreConstants.QOUTE_MARK.concat(originalValue).concat(CoreConstants.QOUTE_MARK);
+						jsonOut = StringHandler.replace(jsonOut, parsedValue, originalValue);
+					}
+				}
+			}
+		} catch (Exception e) {
+			getLogger().log(Level.WARNING, "Error while ensuring that values (" + obj + ") were correctly parsed into the JSON format:\n" + jsonOut, e); 
+		}
+		
 		return jsonOut;
 	}
 
@@ -108,6 +134,37 @@ public class ObjectCollectionConverter implements DataConverter {
 		XStream xstream = new XStream(new JettisonMappedXmlDriver());
 		@SuppressWarnings("unchecked")
 		Map<String, String> obj = (Map<String, String>) xstream.fromXML(jsonIn);
+		
+		try {
+			if (obj != null) {
+				for (String key: obj.keySet()) {
+					String parsedValue = obj.get(key);
+					if (!StringUtil.isEmpty(parsedValue)) {
+						int index = jsonIn.indexOf(parsedValue);
+						if (index <= 0)
+							continue;
+						
+						index--;
+						int length = parsedValue.length() + 1;
+						String tmp = jsonIn.substring(index, index + length);
+						while (index > 0 && !tmp.startsWith(CoreConstants.COMMA) && !tmp.startsWith(CoreConstants.QOUTE_MARK)) {
+							index--;
+							length++;
+							tmp = jsonIn.substring(index, index + length);
+						}
+						
+						tmp = tmp.substring(1);
+						if (!tmp.equals(parsedValue)) {
+							getLogger().info("Value was parsed from JSON string ('" + jsonIn + "') incorrectly! Using value '" + tmp + "' instead of '" + parsedValue + "'");
+							obj.put(key, tmp);
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			getLogger().log(Level.WARNING, "Error while ensuring that object (" + obj + ") was re-constructed correctly from the JSON string:\n" + jsonIn, e);
+		}
+		
 		return obj;
 	}
 
