@@ -14,6 +14,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.idega.block.process.variables.VariableDataType;
+import com.idega.chiba.ChibaConstants;
 import com.idega.jbpm.variables.Converter;
 import com.idega.util.CoreConstants;
 import com.idega.util.xml.XPathUtil;
@@ -29,7 +30,7 @@ import com.idega.util.xml.XPathUtil;
 public class XFormsConverter implements Converter {
 
 //	TODO: move this mapping att to some public place
-	private static final String MAPPING_ATT = "mapping";
+	private static final String MAPPING_ATT = ChibaConstants.MAPPING;
 	private DataConvertersFactory convertersFactory;
 	final private XPathUtil mappingXPUT = new XPathUtil("//*[@mapping]");
 	

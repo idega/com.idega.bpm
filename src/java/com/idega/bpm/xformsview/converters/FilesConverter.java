@@ -16,7 +16,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
 import com.idega.block.process.variables.VariableDataType;
+import com.idega.chiba.ChibaConstants;
 import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
@@ -41,7 +43,7 @@ public class FilesConverter implements DataConverter {
 	
 	private TmpFilesManager uploadsManager;
 	private TmpFileResolver uploadResourceResolver;
-	private static final String mappingAtt = "mapping";
+	private static final String mappingAtt = ChibaConstants.MAPPING;
 	private final XPathUtil entriesXPUT;
 	
 	@Autowired
@@ -117,7 +119,7 @@ public class FilesConverter implements DataConverter {
 	}
 	
 	protected Element getUploadsElement(String identifier, Node context) {
-		if(context instanceof Element && identifier.equals(((Element)context).getAttribute("mapping"))) {	
+		if(context instanceof Element && identifier.equals(((Element)context).getAttribute(ChibaConstants.MAPPING))) {	
 			return (Element)context;
 		} else {
 			return null;

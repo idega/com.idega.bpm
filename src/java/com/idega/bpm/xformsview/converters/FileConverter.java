@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.w3c.dom.Element;
 
 import com.idega.block.process.variables.VariableDataType;
+import com.idega.chiba.ChibaConstants;
 import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
@@ -30,7 +31,7 @@ public class FileConverter implements DataConverter {
 	
 	private TmpFilesManager uploadsManager;
 	private TmpFileResolver uploadResourceResolver;
-	private static final String mappingAtt = "mapping";
+	private static final String mappingAtt = ChibaConstants.MAPPING;
 
 	public Object convert(Element ctx) {
 		
