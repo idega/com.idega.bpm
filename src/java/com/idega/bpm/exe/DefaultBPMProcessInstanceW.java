@@ -528,56 +528,6 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return null;
 	}
 	
-	/*
-	 * public String getName(Locale locale) { final IWMainApplication iwma =
-	 * getIWma();
-	 * 
-	 * @SuppressWarnings("unchecked") Map<Long, Map<Locale, String>>
-	 * cashTaskNames = IWCacheManager2
-	 * .getInstance(iwma).getCache(CASHED_TASK_NAMES); final Map<Locale, String>
-	 * names; final Long taskInstanceId = getProcessDefinitionW()
-	 * .getProcessDefinition().getTaskMgmtDefinition().getStartTask() .getId();
-	 * 
-	 * if (cashTaskNames.containsKey(taskInstanceId)) { names =
-	 * cashTaskNames.get(taskInstanceId); } else { names = new HashMap<Locale,
-	 * String>(5); cashTaskNames.put(taskInstanceId, names); } final String
-	 * name;
-	 * 
-	 * if (names.containsKey(locale)) name = names.get(locale); else { View
-	 * taskInstanceView = loadView(); name =
-	 * taskInstanceView.getDisplayName(locale); names.put(locale, name); }
-	 * 
-	 * return name; }
-	 */
-
-	/*
-	 * private IWMainApplication getIWma() { final IWContext iwc =
-	 * CoreUtil.getIWContext(); final IWMainApplication iwma;
-	 * 
-	 * if (iwc != null) { iwma = iwc.getIWMainApplication(); } else { iwma =
-	 * IWMainApplication.getDefaultIWMainApplication(); }
-	 * 
-	 * return iwma; }
-	 */
-
-	/*
-	 * public View loadView() { Long taskId =
-	 * getProcessDefinitionW().getProcessDefinition()
-	 * .getTaskMgmtDefinition().getStartTask().getId(); JbpmContext ctx =
-	 * getIdegaJbpmContext().createJbpmContext();
-	 * 
-	 * try { List<String> preferred = new ArrayList<String>(1);
-	 * preferred.add(XFormsView.VIEW_TYPE);
-	 * 
-	 * View view = getBpmFactory().getViewByTask(taskId, false, preferred);
-	 * 
-	 * return view;
-	 * 
-	 * } catch (RuntimeException e) { throw e; } catch (Exception e) { throw new
-	 * RuntimeException(e); } finally {
-	 * getIdegaJbpmContext().closeAndCommit(ctx); } }
-	 */
-
 	/**
 	 * checks right for process instance and current logged in user
 	 * 
