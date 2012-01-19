@@ -6,6 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.chiba.xml.dom.DOMUtil;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -21,6 +23,7 @@ import com.idega.util.CoreConstants;
 import com.idega.util.StringHandler;
 import com.idega.util.StringUtil;
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.StreamException;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 
 /**
@@ -130,34 +133,61 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		return jsonOut;
 	}
 
+	private Map<String, String> getObject(String json) {
+		try {
+			XStream xstream = new XStream(new JettisonMappedXmlDriver());
+			@SuppressWarnings("unchecked")
+			Map<String, String> obj = (Map<String, String>) xstream.fromXML(json);
+			return obj;
+		} catch (StreamException e) {
+			getLogger().log(Level.WARNING, "Error loading JSON stream: " + json, e);
+		}
+		return null;
+	}
+	
 	private Map<String, String> JSONToObj(String jsonIn) {
-		XStream xstream = new XStream(new JettisonMappedXmlDriver());
-		@SuppressWarnings("unchecked")
-		Map<String, String> obj = (Map<String, String>) xstream.fromXML(jsonIn);
+		Map<String, String> obj = getObject(jsonIn);
+		
+		if (obj == null) {
+			String regularExpression = "\"\\d+\"\\d+";
+			Pattern pattern = Pattern.compile(regularExpression);
+			Matcher matcher = pattern.matcher(jsonIn);
+			while (matcher.find()) {
+				String errorCausingSection = jsonIn.substring(matcher.start(), matcher.end());
+				String fixedSextion = StringHandler.replace(errorCausingSection, CoreConstants.QOUTE_MARK, CoreConstants.EMPTY);
+				jsonIn = StringHandler.replace(jsonIn, errorCausingSection, fixedSextion);
+				matcher = pattern.matcher(jsonIn);
+			}
+			
+			obj = getObject(jsonIn);
+		}
+		
+		if (obj == null) {
+			getLogger().warning("Unable to transform JSON string '" + jsonIn + "' into the object");
+			return null;
+		}
 		
 		try {
-			if (obj != null) {
-				for (String key: obj.keySet()) {
-					String parsedValue = obj.get(key);
-					if (!StringUtil.isEmpty(parsedValue)) {
-						int index = jsonIn.indexOf(parsedValue);
-						if (index <= 0)
-							continue;
-						
+			for (String key: obj.keySet()) {
+				String parsedValue = obj.get(key);
+				if (!StringUtil.isEmpty(parsedValue)) {
+					int index = jsonIn.indexOf(parsedValue);
+					if (index <= 0)
+						continue;
+					
+					index--;
+					int length = parsedValue.length() + 1;
+					String tmp = jsonIn.substring(index, index + length);
+					while (index > 0 && !tmp.startsWith(CoreConstants.COMMA) && !tmp.startsWith(CoreConstants.QOUTE_MARK)) {
 						index--;
-						int length = parsedValue.length() + 1;
-						String tmp = jsonIn.substring(index, index + length);
-						while (index > 0 && !tmp.startsWith(CoreConstants.COMMA) && !tmp.startsWith(CoreConstants.QOUTE_MARK)) {
-							index--;
-							length++;
-							tmp = jsonIn.substring(index, index + length);
-						}
-						
-						tmp = tmp.substring(1);
-						if (!tmp.equals(parsedValue)) {
-							getLogger().info("Value was parsed from JSON string ('" + jsonIn + "') incorrectly! Using value '" + tmp + "' instead of '" + parsedValue + "'");
-							obj.put(key, tmp);
-						}
+						length++;
+						tmp = jsonIn.substring(index, index + length);
+					}
+					
+					tmp = tmp.substring(1);
+					if (!tmp.equals(parsedValue)) {
+						getLogger().info("Value was parsed from JSON string ('" + jsonIn + "') incorrectly! Using value '" + tmp + "' instead of '" + parsedValue + "'");
+						obj.put(key, tmp);
 					}
 				}
 			}
