@@ -13,6 +13,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 
+import javax.mail.MessagingException;
+
 import org.apache.commons.validator.EmailValidator;
 import org.jbpm.graph.exe.ProcessInstance;
 import org.jbpm.graph.exe.Token;
@@ -47,7 +49,7 @@ import com.idega.util.StringUtil;
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
  * @version $Revision: 1.7 $
- * 
+ *
  *          Last modified: $Date: 2009/01/10 12:34:20 $ by $Author: civilis $
  */
 @Service
@@ -61,7 +63,8 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	private MessageValueHandler messageValueHandler;
 	@Autowired
 	private EmailSenderHelper emailSenderHelper;
-	
+
+	@Override
 	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
 
 		final UserPersonalData upd = (UserPersonalData) context;
@@ -107,7 +110,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		mvCtx.setValue(MessageValueContext.iwcBean, iwc);
 
 		final File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw);
-		
+
 		for (String email : emailAddresses) {
 			String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
 			String subject = subjAndMsg[0];
@@ -118,41 +121,39 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			messageValuesToSend.add(mail);
 		}
 
-		if (!ListUtil.isEmpty(messageValuesToSend)) {
-			new Thread(new Runnable() {
-				public void run() {
-					for (SendMailMessageValue mv : messageValuesToSend) {
-						try {
-							SendMail.send(mv);
-						} catch (javax.mail.MessagingException me) {
-							getLogger().log(Level.SEVERE, "Exception while sending email message", me);
-						}
-					}
-					
-					if (attachedFile != null) {
-						try {
-							attachedFile.delete();
-						} catch (SecurityException e) {}
+		sendMails(messageValuesToSend);
+	}
+
+	protected void sendMails(final List<SendMailMessageValue> messages) {
+		if (ListUtil.isEmpty(messages))
+			return;
+
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				for (SendMailMessageValue mv : messages) {
+					try {
+						SendMail.send(mv);
+					} catch (MessagingException me) {
+						getLogger().log(Level.SEVERE, "Exception while sending email message", me);
 					}
 				}
-			}).start();
-		}
+			}
+		}).start();
 	}
-	
+
 	protected List<AdvancedProperty> getMailHeaders() {
 		return Arrays.asList(new AdvancedProperty(SendMail.HEADER_AUTO_SUBMITTED, "auto-generated"), new AdvancedProperty(SendMail.HEADER_PRECEDENCE, "bulk"));
 	}
-	
+
 	private File getAttachedFile(List<String> filesToAttach, ProcessInstanceW piw) {
-		if (ListUtil.isEmpty(filesToAttach)) {
+		if (ListUtil.isEmpty(filesToAttach))
 			return null;
-		}
-		
+
 		List<BinaryVariable> attachments = piw.getAttachments();
-		if (ListUtil.isEmpty(attachments)) {
+		if (ListUtil.isEmpty(attachments))
 			return null;
-		}
-		
+
 		List<String> filesInSlide = new ArrayList<String>();
 		for (BinaryVariable bv: attachments) {
 			try {
@@ -160,13 +161,13 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 				if (!filesToAttach.contains(name)) {
 					continue;
 				}
-				
+
 				filesInSlide.add(bv.getIdentifier());
 			} catch (Exception e) {
 				getLogger().log(Level.WARNING, "Unable to attach file: " + bv, e);
 			}
 		}
-		
+
 		return getEmailSenderHelper().getFileToAttach(filesInSlide);
 	}
 
@@ -223,14 +224,14 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			for (String string : rolesNames) {
 				HashSet<String> rolesNamesSet = new HashSet<String>(rolesNames.length);
 				rolesNamesSet.add(string);
-				
+
 				Collection<User> users = getBpmFactory().getRolesManager().getAllUsersForRoles(rolesNamesSet, pi.getId());
 
 				/* Override so that users that are not directly related to the case can also receive email */
 				if (users.isEmpty()) {
 					IWApplicationContext iwac = IWMainApplication.getDefaultIWApplicationContext();
 					IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
-					
+
 					for (String role : rolesNamesSet) {
 						Collection<Group> groups = iwma.getAccessController().getAllGroupsForRoleKey(role, iwac);
 						for (Group group : groups) {
@@ -275,5 +276,5 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	public void setEmailSenderHelper(EmailSenderHelper emailSenderHelper) {
 		this.emailSenderHelper = emailSenderHelper;
 	}
-	
+
 }
