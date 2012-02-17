@@ -23,13 +23,12 @@ import com.idega.util.CoreConstants;
 import com.idega.util.StringHandler;
 import com.idega.util.StringUtil;
 import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.StreamException;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 
 /**
  * @author <a href="mailto:anton@idega.com">Anton Makarov</a>
  * @version $Revision: 1.2 $
- * 
+ *
  * Last modified: $Date: 2008/09/17 13:09:39 $ by $Author: civilis $
  */
 
@@ -40,6 +39,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 	private static final String listElName = "list";
 	private static final String rowElName = "row";
 
+	@Override
 	public Object convert(Element o) {
 
 		Element listEl = DOMUtil.getChildElement(o, listElName);
@@ -62,6 +62,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		return rowList;
 	}
 
+	@Override
 	public Element revert(Object o, Element e) {
 
 		if (!(o instanceof List))
@@ -111,7 +112,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 	private String ObjToJSON(Map<String, String> obj) {
 		XStream xstream = new XStream(new JettisonMappedXmlDriver());
 		String jsonOut = xstream.toXML(obj);
-		
+
 		try {
 			Map<String, String> object = JSONToObj(jsonOut);
 			if (object != null) {
@@ -127,9 +128,9 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 				}
 			}
 		} catch (Exception e) {
-			getLogger().log(Level.WARNING, "Error while ensuring that values (" + obj + ") were correctly parsed into the JSON format:\n" + jsonOut, e); 
+			getLogger().log(Level.WARNING, "Error while ensuring that values (" + obj + ") were correctly parsed into the JSON format:\n" + jsonOut, e);
 		}
-		
+
 		return jsonOut;
 	}
 
@@ -139,15 +140,15 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 			@SuppressWarnings("unchecked")
 			Map<String, String> obj = (Map<String, String>) xstream.fromXML(json);
 			return obj;
-		} catch (StreamException e) {
+		} catch (Exception e) {
 			getLogger().log(Level.WARNING, "Error loading JSON stream: " + json, e);
 		}
 		return null;
 	}
-	
+
 	private Map<String, String> JSONToObj(String jsonIn) {
 		Map<String, String> obj = getObject(jsonIn);
-		
+
 		if (obj == null) {
 			String regularExpression = "\"\\d+\"\\d+";
 			Pattern pattern = Pattern.compile(regularExpression);
@@ -158,15 +159,15 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 				jsonIn = StringHandler.replace(jsonIn, errorCausingSection, fixedSextion);
 				matcher = pattern.matcher(jsonIn);
 			}
-			
+
 			obj = getObject(jsonIn);
 		}
-		
+
 		if (obj == null) {
 			getLogger().warning("Unable to transform JSON string '" + jsonIn + "' into the object");
 			return null;
 		}
-		
+
 		try {
 			for (String key: obj.keySet()) {
 				String parsedValue = obj.get(key);
@@ -174,7 +175,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 					int index = jsonIn.indexOf(parsedValue);
 					if (index <= 0)
 						continue;
-					
+
 					index--;
 					int length = parsedValue.length() + 1;
 					String tmp = jsonIn.substring(index, index + length);
@@ -183,7 +184,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 						length++;
 						tmp = jsonIn.substring(index, index + length);
 					}
-					
+
 					tmp = tmp.substring(1);
 					if (!tmp.equals(parsedValue)) {
 						getLogger().info("Value was parsed from JSON string ('" + jsonIn + "') incorrectly! Using value '" + tmp + "' instead of '" + parsedValue + "'");
@@ -194,10 +195,11 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		} catch (Exception e) {
 			getLogger().log(Level.WARNING, "Error while ensuring that object (" + obj + ") was re-constructed correctly from the JSON string:\n" + jsonIn, e);
 		}
-		
+
 		return obj;
 	}
 
+	@Override
 	public VariableDataType getDataType() {
 		return VariableDataType.OBJLIST;
 	}
