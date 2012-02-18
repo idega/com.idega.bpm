@@ -145,6 +145,8 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		Map<String, String> obj = getObject(jsonIn);
 
 		if (obj == null) {
+			//	Trying to fix invalid JSON
+
 			List<JSONFixer> fixers = Arrays.asList(
 					new JSONFixer("\"\\d+\"\\d+", CoreConstants.QOUTE_MARK, CoreConstants.EMPTY),
 					new JSONFixer("\"-hash-map\"", "\"-hash-map\"", "\"linked-hash-map\"")
@@ -153,6 +155,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 			for (Iterator<JSONFixer> fixersIter = fixers.iterator(); (fixersIter.hasNext() && obj == null);) {
 				JSONFixer fixer = fixersIter.next();
 
+				boolean ableToMofidyJSON = false;
 				Pattern pattern = Pattern.compile(fixer.expression);
 				Matcher matcher = pattern.matcher(jsonIn);
 				while (matcher.find()) {
@@ -160,9 +163,11 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 					String fixedSextion = StringHandler.replace(errorCausingSection, fixer.pattern, fixer.replace);
 					jsonIn = StringHandler.replace(jsonIn, errorCausingSection, fixedSextion);
 					matcher = pattern.matcher(jsonIn);
+					ableToMofidyJSON = true;
 				}
 
-				obj = getObject(jsonIn);
+				if (ableToMofidyJSON)
+					obj = getObject(jsonIn);
 			}
 		}
 
@@ -172,27 +177,29 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		}
 
 		try {
+			//	Checking the parsed object
 			for (String key: obj.keySet()) {
 				String parsedValue = obj.get(key);
-				if (!StringUtil.isEmpty(parsedValue)) {
-					int index = jsonIn.indexOf(parsedValue);
-					if (index <= 0)
-						continue;
+				if (StringUtil.isEmpty(parsedValue) || CoreConstants.MINUS.equals(parsedValue))
+					continue;
 
+				int index = jsonIn.indexOf(parsedValue);
+				if (index <= 0)
+					continue;
+
+				index--;
+				int length = parsedValue.length() + 1;
+				String tmp = jsonIn.substring(index, index + length);
+				while (index > 0 && !tmp.startsWith(CoreConstants.COMMA) && !tmp.startsWith(CoreConstants.QOUTE_MARK)) {
 					index--;
-					int length = parsedValue.length() + 1;
-					String tmp = jsonIn.substring(index, index + length);
-					while (index > 0 && !tmp.startsWith(CoreConstants.COMMA) && !tmp.startsWith(CoreConstants.QOUTE_MARK)) {
-						index--;
-						length++;
-						tmp = jsonIn.substring(index, index + length);
-					}
+					length++;
+					tmp = jsonIn.substring(index, index + length);
+				}
 
-					tmp = tmp.substring(1);
-					if (!tmp.equals(parsedValue)) {
-						getLogger().info("Value was parsed from JSON string ('" + jsonIn + "') incorrectly! Using value '" + tmp + "' instead of '" + parsedValue + "'");
-						obj.put(key, tmp);
-					}
+				tmp = tmp.substring(1);
+				if (!tmp.equals(parsedValue)) {
+					getLogger().info("Value was parsed from JSON string ('" + jsonIn + "') incorrectly! Using value '" + tmp + "' instead of '" + parsedValue + "'");
+					obj.put(key, tmp);
 				}
 			}
 		} catch (Exception e) {
