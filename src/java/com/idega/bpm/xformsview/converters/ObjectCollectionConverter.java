@@ -149,7 +149,8 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 
 			List<JSONFixer> fixers = Arrays.asList(
 					new JSONFixer("\"\\d+\"\\d+", CoreConstants.QOUTE_MARK, CoreConstants.EMPTY),
-					new JSONFixer("\"-hash-map\"", "\"-hash-map\"", "\"linked-hash-map\"")
+					new JSONFixer("\"-hash-map\"", "\"-hash-map\"", "\"linked-hash-map\""),
+					new JSONFixer("\"ash-map\"", "\"ash-map\"", "\"linked-hash-map\"")
 			);
 
 			for (Iterator<JSONFixer> fixersIter = fixers.iterator(); (fixersIter.hasNext() && obj == null);) {
