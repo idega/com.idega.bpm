@@ -1,7 +1,9 @@
 package com.idega.bpm.xformsview.converters;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +66,6 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 
 	@Override
 	public Element revert(Object o, Element e) {
-
 		if (!(o instanceof List))
 			throw new IllegalArgumentException(
 					"Wrong class object provided for ObjCollectionConverter: "
@@ -75,14 +76,9 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		NodeList childNodes = e.getChildNodes();
 
 		List<Node> childs2Remove = new ArrayList<Node>();
-
 		for (int i = 0; i < childNodes.getLength(); i++) {
-
 			Node child = childNodes.item(i);
-
-			if (child != null
-					&& (child.getNodeType() == Node.TEXT_NODE || child
-							.getNodeType() == Node.ELEMENT_NODE))
+			if (child != null && (child.getNodeType() == Node.TEXT_NODE || child.getNodeType() == Node.ELEMENT_NODE))
 				childs2Remove.add(child);
 		}
 
@@ -98,8 +94,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 			Element rowElem = e.getOwnerDocument().createElement(rowElName);
 
 			for (String column : columnMap.keySet()) {
-				Element columnEl = rowElem.getOwnerDocument().createElement(
-						column);
+				Element columnEl = rowElem.getOwnerDocument().createElement(column);
 				columnEl.setTextContent(columnMap.get(column));
 				rowElem.appendChild(columnEl);
 			}
@@ -150,17 +145,25 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		Map<String, String> obj = getObject(jsonIn);
 
 		if (obj == null) {
-			String regularExpression = "\"\\d+\"\\d+";
-			Pattern pattern = Pattern.compile(regularExpression);
-			Matcher matcher = pattern.matcher(jsonIn);
-			while (matcher.find()) {
-				String errorCausingSection = jsonIn.substring(matcher.start(), matcher.end());
-				String fixedSextion = StringHandler.replace(errorCausingSection, CoreConstants.QOUTE_MARK, CoreConstants.EMPTY);
-				jsonIn = StringHandler.replace(jsonIn, errorCausingSection, fixedSextion);
-				matcher = pattern.matcher(jsonIn);
-			}
+			List<JSONFixer> fixers = Arrays.asList(
+					new JSONFixer("\"\\d+\"\\d+", CoreConstants.QOUTE_MARK, CoreConstants.EMPTY),
+					new JSONFixer("\"-hash-map\"", "\"-hash-map\"", "\"linked-hash-map\"")
+			);
 
-			obj = getObject(jsonIn);
+			for (Iterator<JSONFixer> fixersIter = fixers.iterator(); (fixersIter.hasNext() && obj == null);) {
+				JSONFixer fixer = fixersIter.next();
+
+				Pattern pattern = Pattern.compile(fixer.expression);
+				Matcher matcher = pattern.matcher(jsonIn);
+				while (matcher.find()) {
+					String errorCausingSection = jsonIn.substring(matcher.start(), matcher.end());
+					String fixedSextion = StringHandler.replace(errorCausingSection, fixer.pattern, fixer.replace);
+					jsonIn = StringHandler.replace(jsonIn, errorCausingSection, fixedSextion);
+					matcher = pattern.matcher(jsonIn);
+				}
+
+				obj = getObject(jsonIn);
+			}
 		}
 
 		if (obj == null) {
@@ -202,5 +205,15 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 	@Override
 	public VariableDataType getDataType() {
 		return VariableDataType.OBJLIST;
+	}
+
+	private class JSONFixer {
+		private String expression, pattern, replace;
+
+		private JSONFixer(String expression, String pattern, String replace) {
+			this.expression = expression;
+			this.pattern = pattern;
+			this.replace = replace;
+		}
 	}
 }
