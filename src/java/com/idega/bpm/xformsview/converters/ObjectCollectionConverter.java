@@ -20,6 +20,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.idega.block.process.variables.VariableDataType;
+import com.idega.builder.bean.AdvancedProperty;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.util.CoreConstants;
 import com.idega.util.StringHandler;
@@ -150,7 +151,12 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 			List<JSONFixer> fixers = Arrays.asList(
 					new JSONFixer("\"\\d+\"\\d+", CoreConstants.QOUTE_MARK, CoreConstants.EMPTY),
 					new JSONFixer("\".\\w+-map\"", null, "\"linked-hash-map\""),
-					new JSONFixer("\"\\w+.\\w+-map\"", null, "\"linked-hash-map\"")
+					new JSONFixer("\"\\w+.\\w+-map\"", null, "\"linked-hash-map\""),
+					new JSONFixer("\"*\\w+\"\"]}", "\"\"]}", "\"]}"),
+					new JSONFixer("\\,\".......\"\\d ..\"]}", "\"", CoreConstants.EMPTY,
+							new AdvancedProperty("1", "\""),
+							new AdvancedProperty("13", "\"")
+					)
 			);
 
 			int i = 0;
@@ -162,12 +168,30 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 				Matcher matcher = pattern.matcher(jsonIn);
 				while (matcher.find()) {
 					String errorCausingSection = jsonIn.substring(matcher.start(), matcher.end());
-					String fixedSextion = StringHandler.replace(errorCausingSection, fixer.pattern == null ? errorCausingSection : fixer.pattern, fixer.replace);
-					if (!StringUtil.isEmpty(errorCausingSection) && !StringUtil.isEmpty(fixedSextion)) {
-						if (errorCausingSection.equals(fixedSextion))
+					String fixedSection = StringHandler.replace(errorCausingSection, fixer.pattern == null ?
+							errorCausingSection :
+							fixer.pattern,
+					fixer.replace);
+					if (!StringUtil.isEmpty(errorCausingSection) && !StringUtil.isEmpty(fixedSection)) {
+						if (errorCausingSection.equals(fixedSection))
 							break;
 
-						jsonIn = StringHandler.replace(jsonIn, errorCausingSection, fixedSextion);
+						if (fixer.injections != null) {
+							try {
+								int lastStart = 0;
+								for (AdvancedProperty injection: fixer.injections) {
+									int index = Integer.valueOf(injection.getId());
+									fixedSection = fixedSection.substring(lastStart, index).concat(injection.getValue()).concat(fixedSection.substring(index));
+									if (injection.isSelected())
+										lastStart = index + injection.getValue().length();
+								}
+							} catch (Exception e) {
+								getLogger().log(Level.WARNING, "Error while trying to inject additional symbols (" + fixer.injections +
+										") to almost fixed section: " + fixedSection, e);
+							}
+						}
+
+						jsonIn = StringHandler.replace(jsonIn, errorCausingSection, fixedSection);
 						matcher = pattern.matcher(jsonIn);
 						ableToMofidyJSON = true;
 						checkParsedObject = i == 0;
@@ -229,11 +253,18 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 
 	private class JSONFixer {
 		private String expression, pattern, replace;
+		private AdvancedProperty[] injections;
 
 		private JSONFixer(String expression, String pattern, String replace) {
 			this.expression = expression;
 			this.pattern = pattern;
 			this.replace = replace;
+		}
+
+		private JSONFixer(String expression, String pattern, String replace, AdvancedProperty... injections) {
+			this(expression, pattern, replace);
+
+			this.injections = injections;
 		}
 	}
 }
