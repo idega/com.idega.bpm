@@ -23,9 +23,12 @@ import com.idega.block.process.variables.VariableDataType;
 import com.idega.builder.bean.AdvancedProperty;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.util.CoreConstants;
+import com.idega.util.CoreUtil;
 import com.idega.util.StringHandler;
 import com.idega.util.StringUtil;
+import com.idega.util.datastructures.map.MapUtil;
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.HierarchicalStreamDriver;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 
 /**
@@ -44,22 +47,21 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 
 	@Override
 	public Object convert(Element o) {
-
 		Element listEl = DOMUtil.getChildElement(o, listElName);
 		@SuppressWarnings("unchecked")
 		List<Element> rowNodes = DOMUtil.getChildElements(listEl);
 		List<String> rowList = new ArrayList<String>();
 
+		HierarchicalStreamDriver driver = new JettisonMappedXmlDriver();
 		for (Element rowElem : rowNodes) {
 			@SuppressWarnings("unchecked")
 			List<Element> columns = DOMUtil.getChildElements(rowElem);
 			Map<String, String> columnMap = new LinkedHashMap<String, String>();
 
 			for (Element columnElem : columns) {
-				columnMap.put(columnElem.getNodeName(), columnElem
-						.getTextContent());
+				columnMap.put(columnElem.getNodeName(), columnElem.getTextContent());
 			}
-			rowList.add(ObjToJSON(columnMap));
+			rowList.add(getSerializedObjectToJSON(columnMap, driver));
 		}
 
 		return rowList;
@@ -91,6 +93,8 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 
 		for (String rowStr : rowList) {
 			Map<String, String> columnMap = JSONToObj(rowStr);
+			if (MapUtil.isEmpty(columnMap))
+				throw new RuntimeException("Unable to transform provided JSON into the object:\n" + rowStr);
 
 			Element rowElem = e.getOwnerDocument().createElement(rowElName);
 
@@ -105,8 +109,11 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		return e;
 	}
 
-	private String ObjToJSON(Map<String, String> obj) {
-		XStream xstream = new XStream(new JettisonMappedXmlDriver());
+	private String getSerializedObjectToJSON(Map<String, String> obj, HierarchicalStreamDriver driver) {
+		if (driver == null)
+			driver = new JettisonMappedXmlDriver();
+
+		XStream xstream = new XStream(driver);
 		String jsonOut = xstream.toXML(obj);
 
 		try {
@@ -130,9 +137,16 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		return jsonOut;
 	}
 
-	private Map<String, String> getObject(String json) {
+	private Map<String, String> getDeserializedObjectFromJSON(String json) {
+		return getDeserializedObjectFromJSON(json, null);
+	}
+
+	private Map<String, String> getDeserializedObjectFromJSON(String json, HierarchicalStreamDriver driver) {
 		try {
-			XStream xstream = new XStream(new JettisonMappedXmlDriver());
+			if (driver == null)
+				driver = new JettisonMappedXmlDriver();
+
+			XStream xstream = new XStream(driver);
 			@SuppressWarnings("unchecked")
 			Map<String, String> obj = (Map<String, String>) xstream.fromXML(json);
 			return obj;
@@ -143,7 +157,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 	}
 
 	private Map<String, String> JSONToObj(String jsonIn) {
-		Map<String, String> obj = getObject(jsonIn);
+		Map<String, String> obj = getDeserializedObjectFromJSON(jsonIn);
 		boolean checkParsedObject = true;
 
 		if (obj == null) {
@@ -200,9 +214,20 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 				}
 
 				if (ableToMofidyJSON)
-					obj = getObject(jsonIn);
+					obj = getDeserializedObjectFromJSON(jsonIn);
 
 				i++;
+			}
+		}
+
+		if (obj == null) {
+			String cleanedJSON = null;
+			try {
+				cleanedJSON = getCleanedJSON(jsonIn);
+				obj = getDeserializedObjectFromJSON(cleanedJSON);
+				checkParsedObject = false;
+			} catch (Exception e) {
+				getLogger().log(Level.WARNING, "Failed to load object from cleaned JSON: " + cleanedJSON, e);
 			}
 		}
 
@@ -267,4 +292,36 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 			this.injections = injections;
 		}
 	}
+
+	private String getCleanedJSON(String json) {
+		try {
+			int fromIndex = 0;
+			String endPattern = "\"]}";
+			int endIndex = json.indexOf(endPattern);
+			String startPattern = "\",\"";
+			int valueIndex = json.indexOf(startPattern, fromIndex);
+			while (valueIndex != -1 && endIndex != -1) {
+				String value = json.substring(valueIndex + startPattern.length(), endIndex);
+				String fixedValue = value.trim();
+				if (!StringUtil.isEmpty(value)) {
+					//	Removing multiple " characters to avoid JSON syntax exceptions
+					fixedValue = StringHandler.replace(fixedValue, CoreConstants.QOUTE_MARK, CoreConstants.QOUTE_SINGLE_MARK);
+
+					if (!StringUtil.isEmpty(fixedValue))
+						json = StringHandler.replace(json, value, fixedValue);
+				}
+
+				fromIndex = valueIndex;
+				endIndex = json.indexOf(endPattern, fromIndex + startPattern.length() + fixedValue.length() + endPattern.length());
+				valueIndex = json.indexOf(startPattern, fromIndex + 1);
+			}
+		} catch (Exception e) {
+			String message = "Error cleaning provided JSON:\n" + json;
+			getLogger().log(Level.WARNING, message, e);
+			CoreUtil.sendExceptionNotification(message, e);
+		}
+
+		return json;
+	}
+
 }
