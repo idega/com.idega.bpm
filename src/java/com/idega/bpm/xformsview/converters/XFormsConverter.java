@@ -36,7 +36,6 @@ public class XFormsConverter implements Converter {
 	private DataConvertersFactory convertersFactory;
 	final private XPathUtil mappingXPUT = new XPathUtil("//*[@mapping]");
 
-	@Override
 	public Map<String, Object> convert(Object submissionData) {
 		Node sdNode = (Node)submissionData;
 
@@ -71,7 +70,6 @@ public class XFormsConverter implements Converter {
 		return VariableDataType.getByStringRepresentation(strRepr);
 	}
 
-	@Override
 	public Object revert(Map<String, Object> variables, Object submissionData) {
 		if (MapUtil.isEmpty(variables))
 			return submissionData;

@@ -64,7 +64,6 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	@Autowired
 	private EmailSenderHelper emailSenderHelper;
 
-	@Override
 	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
 
 		final UserPersonalData upd = (UserPersonalData) context;
@@ -129,7 +128,6 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			return;
 
 		new Thread(new Runnable() {
-			@Override
 			public void run() {
 				for (SendMailMessageValue mv : messages) {
 					try {

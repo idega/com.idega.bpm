@@ -56,7 +56,6 @@ public class XFormsView implements View {
 	@Autowired
 	private XFormsDAO xformsDAO;
 
-	@Override
 	public ViewToTask getViewToTask() {
 		if (viewToTask == null) {
 			ELUtil.getInstance().autowire(this);
@@ -76,7 +75,6 @@ public class XFormsView implements View {
 		this.converter = converter;
 	}
 
-	@Override
 	public void setViewId(String viewId) {
 		form = null;
 		parameters = null;
@@ -84,17 +82,14 @@ public class XFormsView implements View {
 		this.viewId = viewId;
 	}
 
-	@Override
 	public String getViewId() {
 		return viewId;
 	}
 
-	@Override
 	public String getViewType() {
 		return VIEW_TYPE;
 	}
 
-	@Override
 	public void setViewType(String viewType) {
 		throw new UnsupportedOperationException(
 		        "XFormsView view type cannot be changed");
@@ -109,12 +104,10 @@ public class XFormsView implements View {
 		this.documentManagerFactory = documentManagerFactory;
 	}
 
-	@Override
 	public UIComponent getViewForDisplay() {
 		return getViewForDisplay(false);
 	}
 
-	@Override
 	public UIComponent getViewForDisplay(boolean pdfViewer) {
 		FacesContext context = FacesContext.getCurrentInstance();
 		Application application = context.getApplication();
@@ -201,12 +194,10 @@ public class XFormsView implements View {
 		return form;
 	}
 
-	@Override
 	public boolean isSubmitable() {
 		return submitable;
 	}
 
-	@Override
 	public void setSubmitable(boolean submitable) {
 
 		this.submitable = submitable;
@@ -217,7 +208,6 @@ public class XFormsView implements View {
 		}
 	}
 
-	@Override
 	public void populateParameters(Map<String, String> parameters) {
 		this.parameters = parameters;
 
@@ -226,7 +216,6 @@ public class XFormsView implements View {
 		}
 	}
 
-	@Override
 	public boolean populateVariables(Map<String, Object> variables) {
 		this.variables = variables;
 
@@ -247,9 +236,7 @@ public class XFormsView implements View {
 		return true;
 	}
 
-	@Override
 	public Map<String, String> resolveParameters() {
-
 		if (parameters != null)
 			return parameters;
 
@@ -257,7 +244,6 @@ public class XFormsView implements View {
 		        "Resolving parameters from form not supported yet.");
 	}
 
-	@Override
 	public Map<String, Object> resolveVariables() {
 		if (variables != null)
 			return variables;
@@ -266,21 +252,16 @@ public class XFormsView implements View {
 		        "Resolving variables from form not supported yet.");
 	}
 
-	@Override
 	public String getDisplayName() {
 		return getDisplayName(new Locale("is", "IS"));
 	}
 
-	@Override
 	public Date getDateCreated() {
-
 		// TODO: implement
 		return new Date();
 	}
 
-	@Override
 	public void takeView() {
-
 		if (StringUtil.isEmpty(getViewId()))
 			throw new IllegalStateException(
 			        "Tried to take view, but no viewId not set");
@@ -299,19 +280,15 @@ public class XFormsView implements View {
 		setFormDocument(formDocument);
 	}
 
-	@Override
 	public Long getTaskInstanceId() {
 		return taskInstanceId;
 	}
 
-	@Override
 	public void setTaskInstanceId(Long taskInstanceId) {
 		this.taskInstanceId = taskInstanceId;
 	}
 
-	@Override
 	public String getDisplayName(Locale locale) {
-
 		// TODO: cache here by viewid
 
 		String displayName;
@@ -329,7 +306,6 @@ public class XFormsView implements View {
 		return displayName;
 	}
 
-	@Override
 	public String getDefaultDisplayName() {
 
 		if (StringUtil.isEmpty(getViewId()))
@@ -357,7 +333,6 @@ public class XFormsView implements View {
 		return variables;
 	}
 
-	@Override
 	public boolean hasViewForDisplay() {
 		return true;
 	}

@@ -117,12 +117,10 @@ public class ViewResourceXFormImpl implements ViewResource {
 		return viewId;
 	}
 
-	@Override
 	public void setOrder(Integer order) {
 		this.order = order;
 	}
 
-	@Override
 	public Integer getOrder() {
 		return order;
 	}
