@@ -20,6 +20,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.idega.block.process.variables.VariableDataType;
+import com.idega.bpm.xformsview.converters.bean.JSONFixer;
 import com.idega.builder.bean.AdvancedProperty;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.util.CoreConstants;
@@ -45,6 +46,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 	private static final String listElName = "list";
 	private static final String rowElName = "row";
 
+	@Override
 	public Object convert(Element o) {
 		Element listEl = DOMUtil.getChildElement(o, listElName);
 		@SuppressWarnings("unchecked")
@@ -66,6 +68,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		return rowList;
 	}
 
+	@Override
 	public Element revert(Object o, Element e) {
 		if (!(o instanceof List))
 			throw new IllegalArgumentException(
@@ -135,11 +138,11 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		return jsonOut;
 	}
 
-	private Map<String, String> getDeserializedObjectFromJSON(String json) {
+	private static Map<String, String> getDeserializedObjectFromJSON(String json) {
 		return getDeserializedObjectFromJSON(json, null);
 	}
 
-	private Map<String, String> getDeserializedObjectFromJSON(String json, HierarchicalStreamDriver driver) {
+	private static Map<String, String> getDeserializedObjectFromJSON(String json, HierarchicalStreamDriver driver) {
 		try {
 			if (driver == null)
 				driver = new JettisonMappedXmlDriver();
@@ -149,12 +152,12 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 			Map<String, String> obj = (Map<String, String>) xstream.fromXML(json);
 			return obj;
 		} catch (Exception e) {
-			getLogger().log(Level.WARNING, "Error loading JSON stream: " + json, e);
+			getLogger(ObjectCollectionConverter.class).log(Level.WARNING, "Error loading JSON stream: " + json, e);
 		}
 		return null;
 	}
 
-	private Map<String, String> JSONToObj(String jsonIn) {
+	public static Map<String, String> JSONToObj(String jsonIn) {
 		Map<String, String> obj = getDeserializedObjectFromJSON(jsonIn);
 		boolean checkParsedObject = true;
 
@@ -176,30 +179,31 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 				JSONFixer fixer = fixersIter.next();
 
 				boolean ableToMofidyJSON = false;
-				Pattern pattern = Pattern.compile(fixer.expression);
+				Pattern pattern = Pattern.compile(fixer.getExpression());
 				Matcher matcher = pattern.matcher(jsonIn);
 				while (matcher.find()) {
 					String errorCausingSection = jsonIn.substring(matcher.start(), matcher.end());
-					String fixedSection = StringHandler.replace(errorCausingSection, fixer.pattern == null ?
+					String fixedSection = StringHandler.replace(errorCausingSection, fixer.getPattern() == null ?
 							errorCausingSection :
-							fixer.pattern,
-					fixer.replace);
+							fixer.getPattern(),
+					fixer.getReplace());
 					if (!StringUtil.isEmpty(errorCausingSection) && !StringUtil.isEmpty(fixedSection)) {
 						if (errorCausingSection.equals(fixedSection))
 							break;
 
-						if (fixer.injections != null) {
+						if (fixer.getInjections() != null) {
 							try {
 								int lastStart = 0;
-								for (AdvancedProperty injection: fixer.injections) {
+								for (AdvancedProperty injection: fixer.getInjections()) {
 									int index = Integer.valueOf(injection.getId());
-									fixedSection = fixedSection.substring(lastStart, index).concat(injection.getValue()).concat(fixedSection.substring(index));
+									fixedSection = fixedSection.substring(lastStart, index).concat(injection.getValue())
+											.concat(fixedSection.substring(index));
 									if (injection.isSelected())
 										lastStart = index + injection.getValue().length();
 								}
 							} catch (Exception e) {
-								getLogger().log(Level.WARNING, "Error while trying to inject additional symbols (" + fixer.injections +
-										") to almost fixed section: " + fixedSection, e);
+								getLogger(ObjectCollectionConverter.class).log(Level.WARNING, "Error while trying to inject additional symbols (" +
+										fixer.getInjections() + ") to almost fixed section: " + fixedSection, e);
 							}
 						}
 
@@ -225,12 +229,12 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 				obj = getDeserializedObjectFromJSON(cleanedJSON);
 				checkParsedObject = false;
 			} catch (Exception e) {
-				getLogger().log(Level.WARNING, "Failed to load object from cleaned JSON: " + cleanedJSON, e);
+				getLogger(ObjectCollectionConverter.class).log(Level.WARNING, "Failed to load object from cleaned JSON: " + cleanedJSON, e);
 			}
 		}
 
 		if (obj == null) {
-			getLogger().warning("Unable to transform JSON string '" + jsonIn + "' into the object");
+			getLogger(ObjectCollectionConverter.class).warning("Unable to transform JSON string '" + jsonIn + "' into the object");
 			return null;
 		}
 
@@ -257,40 +261,26 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 
 					tmp = tmp.substring(1);
 					if (!tmp.equals(parsedValue)) {
-						getLogger().info("Value was parsed from JSON string ('" + jsonIn + "') incorrectly! Using value '" + tmp + "' instead of '" + parsedValue + "'");
+						getLogger(ObjectCollectionConverter.class).info("Value was parsed from JSON string ('" + jsonIn +
+								"') incorrectly! Using value '" + tmp + "' instead of '" + parsedValue + "'");
 						obj.put(key, tmp);
 					}
 				}
 			} catch (Exception e) {
-				getLogger().log(Level.WARNING, "Error while ensuring that object (" + obj + ") was re-constructed correctly from the JSON string:\n" + jsonIn, e);
+				getLogger(ObjectCollectionConverter.class).log(Level.WARNING, "Error while ensuring that object (" + obj +
+						") was re-constructed correctly from the JSON string:\n" + jsonIn, e);
 			}
 		}
 
 		return obj;
 	}
 
+	@Override
 	public VariableDataType getDataType() {
 		return VariableDataType.OBJLIST;
 	}
 
-	private class JSONFixer {
-		private String expression, pattern, replace;
-		private AdvancedProperty[] injections;
-
-		private JSONFixer(String expression, String pattern, String replace) {
-			this.expression = expression;
-			this.pattern = pattern;
-			this.replace = replace;
-		}
-
-		private JSONFixer(String expression, String pattern, String replace, AdvancedProperty... injections) {
-			this(expression, pattern, replace);
-
-			this.injections = injections;
-		}
-	}
-
-	private String getCleanedJSON(String json) {
+	private static String getCleanedJSON(String json) {
 		try {
 			int fromIndex = 0;
 			String endPattern = "\"]}";
@@ -314,7 +304,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 			}
 		} catch (Exception e) {
 			String message = "Error cleaning provided JSON:\n" + json;
-			getLogger().log(Level.WARNING, message, e);
+			getLogger(ObjectCollectionConverter.class).log(Level.WARNING, message, e);
 			CoreUtil.sendExceptionNotification(message, e);
 		}
 
