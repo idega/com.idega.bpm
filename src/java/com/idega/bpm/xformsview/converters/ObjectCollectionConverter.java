@@ -152,7 +152,9 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 			Map<String, String> obj = (Map<String, String>) xstream.fromXML(json);
 			return obj;
 		} catch (Exception e) {
-			getLogger(ObjectCollectionConverter.class).log(Level.WARNING, "Error loading JSON stream: " + json, e);
+			String message = "Error converting from JSON to object:\n" + json;
+			getLogger(ObjectCollectionConverter.class).log(Level.WARNING, message, e);
+			CoreUtil.sendExceptionNotification(message, e);
 		}
 		return null;
 	}
