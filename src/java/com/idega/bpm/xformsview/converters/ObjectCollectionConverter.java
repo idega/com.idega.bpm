@@ -132,7 +132,8 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 				}
 			}
 		} catch (Exception e) {
-			getLogger().log(Level.WARNING, "Error while ensuring that values (" + obj + ") were correctly parsed into the JSON format:\n" + jsonOut, e);
+			getLogger().log(Level.WARNING, "Error while ensuring that values (" + obj + ") were correctly parsed into the JSON format:\n" + jsonOut,
+					e);
 		}
 
 		return jsonOut;
@@ -152,9 +153,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 			Map<String, String> obj = (Map<String, String>) xstream.fromXML(json);
 			return obj;
 		} catch (Exception e) {
-			String message = "Error converting from JSON to object:\n" + json;
-			getLogger(ObjectCollectionConverter.class).log(Level.WARNING, message, e);
-			CoreUtil.sendExceptionNotification(message, e);
+			getLogger(ObjectCollectionConverter.class).log(Level.WARNING, "Error converting from JSON to object:\n" + json, e);
 		}
 		return null;
 	}
@@ -173,7 +172,9 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 					new JSONFixer("\\,\".......\"\\d ..\"]}", "\"", CoreConstants.EMPTY,
 							new AdvancedProperty("1", "\""),
 							new AdvancedProperty("13", "\"")
-					)
+					),
+					new JSONFixer(".\",\"\\d+d\"\\d+]}", "d\"", CoreConstants.EMPTY),
+					new JSONFixer(".\",\"\\d+]}", "\",\"", "\",")
 			);
 
 			int i = 0;
