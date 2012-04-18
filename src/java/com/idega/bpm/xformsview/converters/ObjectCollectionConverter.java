@@ -46,7 +46,6 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 	private static final String listElName = "list";
 	private static final String rowElName = "row";
 
-	@Override
 	public Object convert(Element o) {
 		Element listEl = DOMUtil.getChildElement(o, listElName);
 		@SuppressWarnings("unchecked")
@@ -68,7 +67,6 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		return rowList;
 	}
 
-	@Override
 	public Element revert(Object o, Element e) {
 		if (!(o instanceof List))
 			throw new IllegalArgumentException(
@@ -278,7 +276,6 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		return obj;
 	}
 
-	@Override
 	public VariableDataType getDataType() {
 		return VariableDataType.OBJLIST;
 	}
