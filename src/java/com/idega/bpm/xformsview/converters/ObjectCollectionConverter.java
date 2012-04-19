@@ -3,6 +3,7 @@ package com.idega.bpm.xformsview.converters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,6 +47,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 	private static final String listElName = "list";
 	private static final String rowElName = "row";
 
+	@Override
 	public Object convert(Element o) {
 		Element listEl = DOMUtil.getChildElement(o, listElName);
 		@SuppressWarnings("unchecked")
@@ -67,6 +69,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		return rowList;
 	}
 
+	@Override
 	public Element revert(Object o, Element e) {
 		if (!(o instanceof List))
 			throw new IllegalArgumentException(
@@ -118,14 +121,35 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		try {
 			Map<String, String> object = JSONToObj(jsonOut);
 			if (object != null) {
+				Map<String, Boolean> alreadyReplaced = new HashMap<String, Boolean>();
+
 				for (String key: object.keySet()) {
 					String parsedValue = object.get(key);
 					String originalValue = obj.get(key);
 					if (!StringUtil.isEmpty(parsedValue) && !StringUtil.isEmpty(originalValue) && !originalValue.equals(parsedValue)) {
+						boolean canReplace = true;
+						boolean addQoutes = true;
+
+						if (originalValue.indexOf(CoreConstants.DOT) != -1) {
+							Double tmpValue = null;
+							try {
+								tmpValue = Double.valueOf(parsedValue);
+							} catch (NumberFormatException e) {}
+							canReplace = tmpValue == null;
+						} else if (key.toLowerCase().indexOf("id") != -1 || key.toLowerCase().indexOf("kennitala") != -1) {
+							if (parsedValue.length() < 10 && originalValue.length() == 10)
+								addQoutes = false;
+						}
+
+						if (!canReplace || alreadyReplaced.containsKey(parsedValue))
+							continue;
+
 						getLogger().info("Replacing incorrectly parsed value '" + parsedValue + "' with original one '" + originalValue + "'");
 						if (StringHandler.isNaturalNumber(originalValue.substring(0, 1)))
-							originalValue = CoreConstants.QOUTE_MARK.concat(originalValue).concat(CoreConstants.QOUTE_MARK);
+							if (addQoutes)
+								originalValue = CoreConstants.QOUTE_MARK.concat(originalValue).concat(CoreConstants.QOUTE_MARK);
 						jsonOut = StringHandler.replace(jsonOut, parsedValue, originalValue);
+						alreadyReplaced.put(parsedValue, Boolean.TRUE);
 					}
 				}
 			}
@@ -276,6 +300,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		return obj;
 	}
 
+	@Override
 	public VariableDataType getDataType() {
 		return VariableDataType.OBJLIST;
 	}
