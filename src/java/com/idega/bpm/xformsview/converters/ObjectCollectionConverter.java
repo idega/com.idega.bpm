@@ -141,15 +141,25 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 								addQoutes = false;
 						}
 
-						if (!canReplace || alreadyReplaced.containsKey(parsedValue))
+						if (!canReplace)
 							continue;
 
-						getLogger().info("Replacing incorrectly parsed value '" + parsedValue + "' with original one '" + originalValue + "'");
 						if (StringHandler.isNaturalNumber(originalValue.substring(0, 1)))
 							if (addQoutes)
 								originalValue = CoreConstants.QOUTE_MARK.concat(originalValue).concat(CoreConstants.QOUTE_MARK);
-						jsonOut = StringHandler.replace(jsonOut, parsedValue, originalValue);
-						alreadyReplaced.put(parsedValue, Boolean.TRUE);
+
+						String replacement = CoreConstants.QOUTE_MARK.concat(key).concat(CoreConstants.QOUTE_MARK)
+								.concat(CoreConstants.COMMA);
+						String whatToReplace = replacement.concat(parsedValue);
+
+						if (alreadyReplaced.containsKey(whatToReplace))
+							continue;
+
+						String withWhatToReplace = replacement.concat(originalValue);
+
+						getLogger().info("Replacing incorrectly parsed value '" + parsedValue + "' with original one '" + originalValue + "'");
+						jsonOut = StringHandler.replace(jsonOut, whatToReplace, withWhatToReplace);
+						alreadyReplaced.put(whatToReplace, Boolean.TRUE);
 					}
 				}
 			}
