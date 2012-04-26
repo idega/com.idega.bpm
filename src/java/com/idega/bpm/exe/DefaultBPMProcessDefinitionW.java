@@ -49,28 +49,29 @@ import com.idega.util.expression.ELUtil;
 @Service("defaultPDW")
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
 public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
-	
+
 	private static Logger LOGGER;
-	
+
 	private Long processDefinitionId;
 	private ProcessDefinition processDefinition;
-	
+
 	@Autowired
 	private BPMFactory bpmFactory;
 	@Autowired
 	private BPMContext bpmContext;
 	@Autowired
 	private VariablesHandler variablesHandler;
-	
+
 	protected Logger getLogger() {
 		if (LOGGER == null) {
 			LOGGER = Logger.getLogger(this.getClass().getName());
 		}
 		return LOGGER;
 	}
-	
+
 	protected void notifyAboutNewProcess(final String procDefName, final Long procInstId) {
 		Thread processNotifier = new Thread(new Runnable() {
+			@Override
 			public void run() {
 				ProcessInstanceCreatedEvent procInstCreatedEvent = new ProcessInstanceCreatedEvent(procDefName, procInstId);
 				ELUtil.getInstance().publishEvent(procInstCreatedEvent);
@@ -78,120 +79,131 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		});
 		processNotifier.start();
 	}
-	
+
+	@Override
 	@Transactional(readOnly = true)
 	public List<Variable> getTaskVariableList(final String taskName) {
 		return getBpmContext().execute(new JbpmCallback() {
+			@Override
 			public Object doInJbpm(JbpmContext context) throws JbpmException {
 				ProcessDefinition pdef = getProcessDefinition();
 				Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
 				TaskController tiController = task.getTaskController();
-				
+
 				if (tiController == null)
 					return null;
-				
+
 				@SuppressWarnings("unchecked")
 				List<VariableAccess> variableAccesses = tiController.getVariableAccesses();
 				ArrayList<Variable> variables = new ArrayList<Variable>(variableAccesses.size());
-				
+
 				for (VariableAccess variableAccess : variableAccesses) {
 					Variable variable = Variable.parseDefaultStringRepresentation(variableAccess.getVariableName());
 					variables.add(variable);
 				}
-				
+
 				return variables;
 			}
 		});
 	}
-	
+
+	@Override
 	@Transactional(readOnly = true)
 	public List<Variable> getTaskVariableWithAccessesList(final String taskName) {
 		return getBpmContext().execute(new JbpmCallback() {
+			@Override
 			public Object doInJbpm(JbpmContext context) throws JbpmException {
 				ProcessDefinition pdef = getProcessDefinition();
 				Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
 				TaskController tiController = task.getTaskController();
-				
+
 				if (tiController == null)
 					return null;
-				
+
 				@SuppressWarnings("unchecked")
 				List<VariableAccess> variableAccesses = tiController.getVariableAccesses();
 				ArrayList<Variable> variables = new ArrayList<Variable>(variableAccesses.size());
-				
+
 				for (VariableAccess variableAccess : variableAccesses) {
 					Variable variable = Variable.parseDefaultStringRepresentationWithAccess(variableAccess.getVariableName(), variableAccess.getAccess().toString());
 					variables.add(variable);
 				}
-				
+
 				return variables;
 			}
 		});
 	}
-	
+
+	@Override
 	@Transactional(readOnly = false)
-	public void startProcess(final ViewSubmission viewSubmission) {
+	public Long startProcess(final ViewSubmission viewSubmission) {
 		Long processDefinitionId = viewSubmission.getProcessDefinitionId();
-		
-		if (!processDefinitionId.equals(getProcessDefinitionId())) {
+
+		if (!processDefinitionId.equals(getProcessDefinitionId()))
 			throw new IllegalArgumentException("View submission was for different process definition id than tried to submit to");
-		}
-		
+
 		getLogger().info("Starting process for process definition id = " + processDefinitionId);
-		
+
 		Map<String, String> parameters = viewSubmission.resolveParameters();
-		
+
 		getLogger().info("Params " + parameters);
-		
+
+		Long piId = null;
 		try {
-			getBpmContext().execute(new JbpmCallback() {
-				public Object doInJbpm(JbpmContext context) throws JbpmException {
+			piId = getBpmContext().execute(new JbpmCallback() {
+				@Override
+				public Long doInJbpm(JbpmContext context) throws JbpmException {
 					ProcessDefinition pd = getProcessDefinition();
 					ProcessInstance pi = new ProcessInstance(pd);
 					TaskInstance ti = pi.getTaskMgmtInstance().createStartTaskInstance();
-					
+
 					View view = getBpmFactory().getView(viewSubmission.getViewId(), viewSubmission.getViewType(), false);
-					
+
 					// binding view to task instance
 					view.getViewToTask().bind(view, ti);
-					
+
 					getLogger().info("New process instance created for the process " + pd.getName());
-					
+
 					pi.setStart(new Date());
-					
+
 					submitVariablesAndProceedProcess(ti, viewSubmission.resolveVariables(), true);
-					
-					notifyAboutNewProcess(pd.getName(), pi.getId());
-					return null;
+
+					Long piId = pi.getId();
+					notifyAboutNewProcess(pd.getName(), piId);
+					return piId;
 				}
 			});
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+
+		return piId;
 	}
-	
+
+	@Override
 	@Transactional(readOnly = false)
 	public View loadInitView(Integer initiatorId) {
 		try {
 			return getBpmContext().execute(new JbpmCallback() {
+				@Override
 				public Object doInJbpm(JbpmContext context) throws JbpmException {
 					Long processDefinitionId = getProcessDefinitionId();
 					ProcessDefinition pd = getProcessDefinition();
-					
+
 					Long startTaskId = pd.getTaskMgmtDefinition().getStartTask().getId();
-					
+
 					List<String> preferred = new ArrayList<String>();
 					preferred.add(XFormsView.VIEW_TYPE);
 					View view = getBpmFactory().getViewByTask(startTaskId, true, preferred);
 					view.takeView();
-					
+
 					Map<String, String> parameters = new HashMap<String, String>();
 					parameters.put(ProcessConstants.START_PROCESS, ProcessConstants.START_PROCESS);
 					parameters.put(ProcessConstants.PROCESS_DEFINITION_ID, String.valueOf(processDefinitionId));
 					parameters.put(ProcessConstants.VIEW_ID, view.getViewId());
 					parameters.put(ProcessConstants.VIEW_TYPE, view.getViewType());
 					view.populateParameters(parameters);
-					
+
 					return view;
 				}
 			});
@@ -201,23 +213,25 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
+	@Override
 	public List<String> getRolesCanStartProcess(Object context) {
 		return null;
 	}
-	
+
 	/**
 	 * sets roles, whose users can start process (and see application).
-	 * 
+	 *
 	 * @param roles
 	 *            - idega roles keys (<b>not</b> process roles)
 	 * @param context
 	 *            - some context depending implementation, e.g., roles can start process using
 	 *            applications - then context will be application id
 	 */
+	@Override
 	public void setRolesCanStartProcess(List<String> roles, Object context) {
 	}
-	
+
 	@Transactional(readOnly = false)
 	protected void submitVariablesAndProceedProcess(TaskInstance ti, Map<String, Object> variables, boolean proceed) {
 		Integer usrId = null;
@@ -228,22 +242,22 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		}
 		if (usrId != null)
 			ti.setActorId(usrId.toString());
-		
+
 		getVariablesHandler().submitVariables(variables, ti.getId(), true);
 		getLogger().info("Variables were submitted");
-		
+
 		if (proceed) {
 			String actionTaken = (String) ti.getVariable(ProcessConstants.actionTakenVariableName);
 			if (!StringUtil.isEmpty(actionTaken)) {
 				getLogger().info("Taken action: " + actionTaken);
 			}
-			
+
 			ti.end();
 		} else {
 			ti.setEnd(new Date());
 		}
 		getLogger().info("Task instance (name=" + ti.getName() + ", ID=" + ti.getId() + ") was executed");
-		
+
 		try {
 			ApplicationContext appContext = ELUtil.getInstance().getApplicationContext();
 			ProcessInstance pi = ti.getProcessInstance();
@@ -252,24 +266,26 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			getLogger().log(Level.WARNING, "Error publishing VariableCreatedEvent for task instance: " + ti, e);
 		}
 	}
-	
+
+	@Override
 	@Transactional(readOnly = true)
 	public String getStartTaskName() {
 		List<String> preferred = new ArrayList<String>(1);
 		preferred.add(XFormsView.VIEW_TYPE);
-		
+
 		Long taskId = getProcessDefinition().getTaskMgmtDefinition().getStartTask().getId();
-		
+
 		View view = getBpmFactory().getViewByTask(taskId, false, preferred);
-		
+
 		return view.getDisplayName(new Locale("is", "IS"));
 	}
-	
+
+	@Override
 	@Transactional(readOnly = true)
 	public Collection<String> getTaskNodeTransitionsNames(String taskName) {
 		ProcessDefinition pdef = getProcessDefinition();
 		Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
-		
+
 		TaskNode taskNode = task.getTaskNode();
 		if (taskNode != null) {
 			@SuppressWarnings("unchecked")
@@ -279,49 +295,54 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			// task node is null, when task in start node
 			return null;
 	}
-	
+
+	@Override
 	public Long getProcessDefinitionId() {
 		return processDefinitionId;
 	}
-	
+
+	@Override
 	public void setProcessDefinitionId(Long processDefinitionId) {
 		this.processDefinitionId = processDefinitionId;
 	}
-	
+
 	public BPMFactory getBpmFactory() {
 		return bpmFactory;
 	}
-	
+
 	public void setBpmFactory(BPMFactory bpmFactory) {
 		this.bpmFactory = bpmFactory;
 	}
-	
+
 	public BPMContext getBpmContext() {
 		return bpmContext;
 	}
-	
+
 	public void setBpmContext(BPMContext bpmContext) {
 		this.bpmContext = bpmContext;
 	}
-	
+
 	public VariablesHandler getVariablesHandler() {
 		return variablesHandler;
 	}
-	
+
 	public void setVariablesHandler(VariablesHandler variablesHandler) {
 		this.variablesHandler = variablesHandler;
 	}
-	
+
+	@Override
 	@Transactional(readOnly = false)
 	public ProcessDefinition getProcessDefinition() {
 		processDefinition = getBpmContext().execute(new JbpmCallback() {
+			@Override
 			public Object doInJbpm(JbpmContext context) throws JbpmException {
 				return context.getGraphSession().getProcessDefinition(getProcessDefinitionId());
 			}
 		});
 		return processDefinition;
 	}
-	
+
+	@Override
 	public String getProcessName(Locale locale) {
 		return getProcessDefinition().getName();
 	}
