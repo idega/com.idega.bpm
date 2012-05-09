@@ -192,7 +192,9 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 	}
 
 	public static Map<String, String> JSONToObj(String jsonIn) {
-		Map<String, String> object = getObjectFromJSON(jsonIn);
+		Serializable tmp = getObjectFromJSON(jsonIn);
+		@SuppressWarnings("unchecked")
+		Map<String, String> object = (Map<String, String>) tmp;
 		return object;
 	}
 
