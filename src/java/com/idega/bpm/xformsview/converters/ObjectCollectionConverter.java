@@ -1,5 +1,6 @@
 package com.idega.bpm.xformsview.converters;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -171,18 +172,18 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		return jsonOut;
 	}
 
-	private static Map<String, String> getDeserializedObjectFromJSON(String json) {
+	private static <T extends Serializable> T getDeserializedObjectFromJSON(String json) {
 		return getDeserializedObjectFromJSON(json, null);
 	}
 
-	private static Map<String, String> getDeserializedObjectFromJSON(String json, HierarchicalStreamDriver driver) {
+	private static <T extends Serializable> T getDeserializedObjectFromJSON(String json, HierarchicalStreamDriver driver) {
 		try {
 			if (driver == null)
 				driver = new JettisonMappedXmlDriver();
 
 			XStream xstream = new XStream(driver);
 			@SuppressWarnings("unchecked")
-			Map<String, String> obj = (Map<String, String>) xstream.fromXML(json);
+			T obj = (T) xstream.fromXML(json);
 			return obj;
 		} catch (Exception e) {
 			getLogger(ObjectCollectionConverter.class).log(Level.WARNING, "Error converting from JSON to object:\n" + json, e);
@@ -191,7 +192,13 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 	}
 
 	public static Map<String, String> JSONToObj(String jsonIn) {
-		Map<String, String> obj = getDeserializedObjectFromJSON(jsonIn);
+		Map<String, String> object = getObjectFromJSON(jsonIn);
+		return object;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T extends Serializable> T getObjectFromJSON(String jsonIn) {
+		T obj = getDeserializedObjectFromJSON(jsonIn);
 		boolean checkParsedObject = true;
 
 		if (obj == null) {
@@ -273,11 +280,13 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 			return null;
 		}
 
-		if (checkParsedObject) {
+		if (checkParsedObject && obj instanceof Map<?, ?>) {
 			try {
+				Map<String, String> object = (Map<String, String>) obj;
+
 				//	Checking the parsed object
-				for (String key: obj.keySet()) {
-					String parsedValue = obj.get(key);
+				for (String key: object.keySet()) {
+					String parsedValue = object.get(key);
 					if (StringUtil.isEmpty(parsedValue) || CoreConstants.MINUS.equals(parsedValue))
 						continue;
 
@@ -298,9 +307,11 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 					if (!tmp.equals(parsedValue)) {
 						getLogger(ObjectCollectionConverter.class).info("Value was parsed from JSON string ('" + jsonIn +
 								"') incorrectly! Using value '" + tmp + "' instead of '" + parsedValue + "'");
-						obj.put(key, tmp);
+						object.put(key, tmp);
 					}
 				}
+
+				return (T) object;
 			} catch (Exception e) {
 				getLogger(ObjectCollectionConverter.class).log(Level.WARNING, "Error while ensuring that object (" + obj +
 						") was re-constructed correctly from the JSON string:\n" + jsonIn, e);
