@@ -215,7 +215,8 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 							new AdvancedProperty("13", "\"")
 					),
 					new JSONFixer(".\",\"\\d+d\"\\d+]}", "d\"", CoreConstants.EMPTY),
-					new JSONFixer(".\",\"\\d+]}", "\",\"", "\",")
+					new JSONFixer(".\",\"\\d+]}", "\",\"", "\","),
+					new JSONFixer("\\w+\",\"\"\\d.", "\",\"\"", "\",\"")
 			);
 
 			int i = 0;
