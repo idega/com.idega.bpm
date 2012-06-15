@@ -1,21 +1,19 @@
 package com.idega.bpm.bean;
 
 public class CasesBPMAssetProperties {
-	
-	private String caseId;
-	private String processorType;
-	private String commentsPersistenceManagerIdentifier;
-	private String specialBackPage;
-	
-	private boolean usePDFDownloadColumn = true;
-	private boolean allowPDFSigning = true;
-	private boolean hideEmptySection;
-	private boolean showAttachmentStatistics;
-	private boolean showOnlyCreatorInContacts;
-	private boolean autoShowComments;
-	private boolean showLogExportButton;
-	
-	
+
+	private String caseId, processorType, commentsPersistenceManagerIdentifier,specialBackPage;
+
+	private boolean usePDFDownloadColumn = true,
+					allowPDFSigning = true,
+					hideEmptySection,
+					showAttachmentStatistics,
+					showOnlyCreatorInContacts,
+					autoShowComments,
+					showLogExportButton,
+					showComments = true,
+					showContacts = true;
+
 	public boolean isShowLogExportButton() {
 		return showLogExportButton;
 	}
@@ -81,6 +79,18 @@ public class CasesBPMAssetProperties {
 	}
 	public void setSpecialBackPage(String specialBackPage) {
 		this.specialBackPage = specialBackPage;
+	}
+	public boolean isShowComments() {
+		return showComments;
+	}
+	public void setShowComments(boolean showComments) {
+		this.showComments = showComments;
+	}
+	public boolean isShowContacts() {
+		return showContacts;
+	}
+	public void setShowContacts(boolean showContacts) {
+		this.showContacts = showContacts;
 	}
 
 }
