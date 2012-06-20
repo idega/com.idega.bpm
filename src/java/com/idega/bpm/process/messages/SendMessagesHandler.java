@@ -25,12 +25,14 @@ import com.idega.jbpm.identity.UserPersonalData;
  *
  * Last modified: $Date: 2009/06/24 08:59:39 $ by $Author: valdas $
  */
-@Service("sendMessagesHandler")
+@Service(SendMessagesHandler.BEAN_NAME)
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
 public class SendMessagesHandler implements ActionHandler {
 
 	private static final long serialVersionUID = -7421283155844789254L;
-	
+
+	public static final String BEAN_NAME = "sendMessagesHandler";
+
 	private String subjectKey;
 	private String subjectValues;
 	private String messageKey;
@@ -39,50 +41,51 @@ public class SendMessagesHandler implements ActionHandler {
 	private String sendToRoles;
 	private Integer recipientUserID;
 	private String fromAddress;
-	
+
 	private List<String> sendToEmails, attachFiles;
-	
+
 	private UserPersonalData userData;
-	
+
  	private Map<String, String> inlineSubject;
 	private Map<String, String> inlineMessage;
-	
+
 	private SendMessage sendMessage;
-	
+
+	@Override
 	public void execute(ExecutionContext ectx) throws Exception {
 		final String sendToRoles = getSendToRoles();
 		final List<String> sendToEmails = getSendToEmails();
 		final UserPersonalData upd = getUserData();
 		final Integer recipientUserId = getRecipientUserID();
-		
+
 		final Token tkn = ectx.getToken();
-		
+
 		LocalizedMessages msg = getLocalizedMessages();
-		
+
 		msg.setFrom(getFromAddress());
 		msg.setSendToRoles(sendToRoles);
 		msg.setSendToEmails(sendToEmails);
 		msg.setAttachFiles(getAttachFiles());
 		msg.setRecipientUserId(recipientUserId);
-		
+
 		getSendMessage().send(null, upd, ectx.getProcessInstance(), msg, tkn);
 	}
-	
+
 	protected Locale getLocale(String key, Map<String, Locale> knownLocales) {
 		if (knownLocales.containsKey(key))
     		return knownLocales.get(key);
-    	
+
     	Locale locale = ICLocaleBusiness.getLocaleFromLocaleString(key);
     	knownLocales.put(key, locale);
     	return locale;
 	}
-	
+
 	protected LocalizedMessages getLocalizedMessages() {
 		final LocalizedMessages msgs = new LocalizedMessages();
-		
+
 		msgs.setSubjectValuesExp(getSubjectValues());
 		msgs.setMessageValuesExp(getMessageValues());
-		
+
 		Map<String, Locale> resolvedLocales = new HashMap<String, Locale>();
 		if (getMessageKey() == null && getSubjectKey() == null) {
 			//	Using inline messages
@@ -92,35 +95,35 @@ public class SendMessagesHandler implements ActionHandler {
 			    	Locale subjectLocale = getLocale(entry.getKey(), resolvedLocales);
 			    	subjects.put(subjectLocale, entry.getValue());
 				}
-				
+
 				msgs.setInlineSubjects(subjects);
 			}
-			
+
 			if (getInlineMessage() != null && !getInlineMessage().isEmpty()) {
 				Map<Locale, String> messages = new HashMap<Locale, String>(getInlineMessage().size());
 				for (Entry<String, String> entry : getInlineMessage().entrySet()) {
 					Locale msgLocale = getLocale(entry.getKey(), resolvedLocales);
 					messages.put(msgLocale, entry.getValue());
 				}
-				
+
 				msgs.setInlineMessages(messages);
 			}
 		} else {
 			//	Using message keys
 			String bundleIdentifier = getMessagesBundle();
-		
+
 			if (bundleIdentifier == null)
 				bundleIdentifier = "com.idega.bpm";
-			
+
 			final IWBundle iwb = IWMainApplication.getDefaultIWMainApplication().getBundle(bundleIdentifier);
 			msgs.setIwb(iwb);
 			msgs.setSubjectKey(getSubjectKey());
 			msgs.setMsgKey(getMessageKey());
 		}
-		
+
 		return msgs;
 	}
-	
+
 	public String getSubjectKey() {
 		return subjectKey;
 	}
@@ -160,7 +163,7 @@ public class SendMessagesHandler implements ActionHandler {
 	public void setMessagesBundle(String messagesBundle) {
 		this.messagesBundle = messagesBundle;
 	}
-	
+
 	public SendMessage getSendMessage() {
 		return sendMessage;
 	}
