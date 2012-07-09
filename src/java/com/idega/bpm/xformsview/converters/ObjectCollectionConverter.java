@@ -216,10 +216,10 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 					),
 					new JSONFixer(".\",\"\\d+d\"\\d+]}", "d\"", CoreConstants.EMPTY),
 					new JSONFixer(".\",\"\\d+]}", "\",\"", "\","),
-					new JSONFixer("\\w+\",\"\"\\d.", "\",\"\"", "\",\"")
+					new JSONFixer("\\w+\",\"\"\\d.", "\",\"\"", "\",\""),
+					new JSONFixer(".\",\\d+\"]", "\"]", "]")
 			);
 
-			int i = 0;
 			for (Iterator<JSONFixer> fixersIter = fixers.iterator(); (fixersIter.hasNext() && obj == null);) {
 				JSONFixer fixer = fixersIter.next();
 
@@ -255,15 +255,12 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 						jsonIn = StringHandler.replace(jsonIn, errorCausingSection, fixedSection);
 						matcher = pattern.matcher(jsonIn);
 						ableToMofidyJSON = true;
-						checkParsedObject = i == 0;
 					} else
 						break;
 				}
 
 				if (ableToMofidyJSON)
 					obj = getDeserializedObjectFromJSON(jsonIn);
-
-				i++;
 			}
 		}
 
@@ -308,8 +305,8 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 
 					tmp = tmp.substring(1);
 					if (!tmp.equals(parsedValue)) {
-						getLogger(ObjectCollectionConverter.class).info("Value was parsed from JSON string ('" + jsonIn +
-								"') incorrectly! Using value '" + tmp + "' instead of '" + parsedValue + "'");
+						getLogger(ObjectCollectionConverter.class).info("Using value '" + tmp + "' instead of '" + parsedValue + "' for key " + key + ". Value was parsed from JSON string ('" + jsonIn +
+								"') incorrectly!");
 						object.put(key, tmp);
 					}
 				}
