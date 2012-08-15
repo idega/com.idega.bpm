@@ -597,6 +597,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		String filesFolder = getTaskInstanceId() + System.currentTimeMillis() + CoreConstants.SLASH;
 
 		Collection<URI> uris = getLinksToVariables(is, filesFolder, fileName);
+		if (ListUtil.isEmpty(uris))
+			return null;
+
 		URI uri = uris.iterator().next();
 
 		List<BinaryVariable> binVars = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId(), variable);
