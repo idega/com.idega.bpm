@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 
 import javax.mail.MessagingException;
@@ -64,6 +65,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	@Autowired
 	private EmailSenderHelper emailSenderHelper;
 
+	@Override
 	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
 
 		final UserPersonalData upd = (UserPersonalData) context;
@@ -128,6 +130,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			return;
 
 		new Thread(new Runnable() {
+			@Override
 			public void run() {
 				for (SendMailMessageValue mv : messages) {
 					try {
@@ -220,13 +223,13 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			String[] rolesNames = rolesNamesAggr.trim().split(CoreConstants.SPACE);
 
 			for (String string : rolesNames) {
-				HashSet<String> rolesNamesSet = new HashSet<String>(rolesNames.length);
+				Set<String> rolesNamesSet = new HashSet<String>(rolesNames.length);
 				rolesNamesSet.add(string);
 
 				Collection<User> users = getBpmFactory().getRolesManager().getAllUsersForRoles(rolesNamesSet, pi.getId());
 
 				/* Override so that users that are not directly related to the case can also receive email */
-				if (users.isEmpty()) {
+				if (ListUtil.isEmpty(users)) {
 					IWApplicationContext iwac = IWMainApplication.getDefaultIWApplicationContext();
 					IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
 
@@ -240,19 +243,16 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 										allUsers.add(user);
 									}
 								}
-							}
-							catch (RemoteException e) {
+							} catch (RemoteException e) {
 								e.printStackTrace();
 							}
 						}
 					}
-				}
-				else {
+				} else {
 					allUsers.addAll(users);
 				}
 			}
-		}
-		else {
+		} else {
 			allUsers = Collections.emptyList();
 		}
 
