@@ -1,6 +1,5 @@
 package com.idega.bpm.pdf.business;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +35,7 @@ import com.idega.presentation.PDFRenderedComponent;
 import com.idega.slide.business.IWSlideService;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
+import com.idega.util.IOUtil;
 import com.idega.util.PresentationUtil;
 import com.idega.util.StringUtil;
 
@@ -54,23 +54,19 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 	@Autowired
 	private ProcessArtifacts processArtifacts;
 
-	public String getGeneratedPDFFromXForm(String taskInstanceId,
-	        String formId, String formSubmissionId, String uploadPath,
-	        String pdfName, boolean checkExistence) {
-		if (StringUtil.isEmpty(taskInstanceId) && StringUtil.isEmpty(formId)
-		        && StringUtil.isEmpty(formSubmissionId)) {
+	@Override
+	public String getGeneratedPDFFromXForm(String taskInstanceId, String formId, String formSubmissionId, String uploadPath, String pdfName,
+			boolean checkExistence) {
+		if (StringUtil.isEmpty(taskInstanceId) && StringUtil.isEmpty(formId) && StringUtil.isEmpty(formSubmissionId)) {
 			LOGGER.log(Level.SEVERE, "Do not know what to generate!");
 			return null;
 		}
-		if (StringUtil.isEmpty(uploadPath)) {
+		if (StringUtil.isEmpty(uploadPath))
 			uploadPath = BPMConstants.PDF_OF_XFORMS_PATH_IN_SLIDE;
-		}
-		if (!uploadPath.startsWith(CoreConstants.SLASH)) {
+		if (!uploadPath.startsWith(CoreConstants.SLASH))
 			uploadPath = CoreConstants.SLASH + uploadPath;
-		}
-		if (!uploadPath.endsWith(CoreConstants.SLASH)) {
+		if (!uploadPath.endsWith(CoreConstants.SLASH))
 			uploadPath += CoreConstants.SLASH;
-		}
 
 		IWContext iwc = CoreUtil.getIWContext();
 		if (iwc == null) {
@@ -80,12 +76,9 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 
 		addStyleSheetsForPDF(iwc);
 
-		String xformInPDF = getXFormInPDF(iwc, taskInstanceId, formId,
-		    formSubmissionId, uploadPath, pdfName, checkExistence);
+		String xformInPDF = getXFormInPDF(iwc, taskInstanceId, formId, formSubmissionId, uploadPath, pdfName, checkExistence);
 		if (StringUtil.isEmpty(xformInPDF)) {
-			LOGGER.log(Level.SEVERE, new StringBuilder(
-			        "Unable to get 'XForm' with ").append(
-			    StringUtil.isEmpty(formId) ? "task instance id: "
+			LOGGER.warning(new StringBuilder("Unable to get 'XForm' with ").append(StringUtil.isEmpty(formId) ? "task instance id: "
 			            + taskInstanceId : "form id: " + formId).toString());
 			return null;
 		}
@@ -110,191 +103,146 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		iwc.setSessionAttribute(PresentationUtil.ATTRIBUTE_ADD_CSS_DIRECTLY, Boolean.TRUE);
 	}
 
-	public String getHashValueForGeneratedPDFFromXForm(String taskInstanceId,
-	        boolean checkExistence, String pdfName) {
+	@Override
+	public String getHashValueForGeneratedPDFFromXForm(String taskInstanceId, boolean checkExistence, String pdfName) {
 		if (StringUtil.isEmpty(taskInstanceId)) {
-			LOGGER.log(Level.INFO,
-			    "Only tasks instances can have binary variables!");
+			LOGGER.info("Only tasks instances can have binary variables!");
 			return null;
 		}
 		Long taskId = null;
 		try {
 			taskId = Long.valueOf(taskInstanceId);
 		} catch (NumberFormatException e) {
-			LOGGER.log(Level.SEVERE, "Invalid task instance id: "
-			        + taskInstanceId, e);
+			LOGGER.log(Level.SEVERE, "Invalid task instance id: " + taskInstanceId, e);
 		}
-		if (taskId == null) {
+		if (taskId == null)
 			return null;
-		}
 
 		TaskInstanceW taskInstance = null;
 		try {
-			taskInstance = getBpmFactory().getProcessManagerByTaskInstanceId(
-			    taskId).getTaskInstance(taskId);
+			taskInstance = getBpmFactory().getProcessManagerByTaskInstanceId(taskId).getTaskInstance(taskId);
 		} catch (Exception e) {
-			LOGGER.log(Level.SEVERE, "Error getting task instance by id: "
-			        + taskInstanceId, e);
+			LOGGER.log(Level.WARNING, "Error getting task instance by id: " + taskInstanceId, e);
 		}
-		if (taskInstance == null) {
+		if (taskInstance == null)
 			return null;
-		}
 
 		IWContext iwc = CoreUtil.getIWContext();
-		if (iwc == null) {
+		if (iwc == null)
 			return null;
-		}
 
 		addStyleSheetsForPDF(iwc);
 
-		UIComponent viewer = getComponentToRender(iwc, taskInstanceId, null,
-		    null);
+		UIComponent viewer = getComponentToRender(iwc, taskInstanceId, null, null);
 		if (viewer == null) {
-			LOGGER.log(Level.SEVERE, "Unable to get viewer for taskInstance: "
-			        + taskInstanceId);
+			LOGGER.log(Level.SEVERE, "Unable to get viewer for taskInstance: " + taskInstanceId);
 			return null;
 		}
 		boolean isFormViewer = viewer instanceof FormViewer;
-		if (isFormViewer) {
+		if (isFormViewer)
 			((FormViewer) viewer).setPdfViewer(true);
-		}
-		InputStream streamToPDF = getGenerator().getStreamToGeneratedPDF(iwc,
-		    viewer, true, isFormViewer);
-		if (streamToPDF == null) {
+
+		InputStream streamToPDF = getGenerator().getStreamToGeneratedPDF(iwc, viewer, true, isFormViewer);
+		if (streamToPDF == null)
 			return null;
-		}
 
-		if (pdfName != null && !pdfName.endsWith(".pdf")) {
+		if (pdfName != null && !pdfName.endsWith(".pdf"))
 			pdfName = new StringBuilder(pdfName).append(".pdf").toString();
-		}
 
-		String fileName = pdfName != null ? pdfName : getProcessArtifacts()
-		        .getFileNameForGeneratedPDFFromTaskInstance(taskInstanceId);
-		String description = iwc.getIWMainApplication().getBundle(
-		    BPMConstants.IW_BUNDLE_STARTER).getResourceBundle(iwc)
-		        .getLocalizedString("auto_generated_pdf",
-		            "Generated PDF from document");
+		String fileName = pdfName != null ? pdfName : getProcessArtifacts().getFileNameForGeneratedPDFFromTaskInstance(taskInstanceId);
+		String description = iwc.getIWMainApplication().getBundle(BPMConstants.IW_BUNDLE_STARTER).getResourceBundle(iwc)
+				.getLocalizedString("auto_generated_pdf", "Generated PDF from document");
 
 		BinaryVariable newAttachment = null;
-		Variable variable = new Variable("generated_pdf_from_document_task",
-		        VariableDataType.FILE);
+		Variable variable = new Variable("generated_pdf_from_document_task", VariableDataType.FILE);
 		try {
-			newAttachment = taskInstance.addAttachment(variable, fileName,
-			    description, streamToPDF);
+			newAttachment = taskInstance.addAttachment(variable, fileName, description, streamToPDF);
 		} catch (Exception e) {
-			LOGGER.log(Level.SEVERE,
-			    "Unable to set binary variable for task instance: "
-			            + taskInstanceId, e);
+			LOGGER.log(Level.WARNING, "Unable to set binary variable for task instance: " + taskInstanceId, e);
 			return null;
 		} finally {
-			closeInputStream(streamToPDF);
+			IOUtil.close(streamToPDF);
 		}
 
-		return newAttachment == null ? null : String.valueOf(newAttachment
-		        .getHash());
+		return newAttachment == null ? null : String.valueOf(newAttachment.getHash());
 	}
 
-	public String getHashValueForGeneratedPDFFromXForm(String taskInstanceId,
-	        boolean checkExistence) {
-		return getHashValueForGeneratedPDFFromXForm(taskInstanceId,
-		    checkExistence, null);
-	}
-
-	private void closeInputStream(InputStream stream) {
-		if (stream == null) {
-			return;
-		}
-
-		try {
-			stream.close();
-		} catch (IOException e) {
-		}
+	@Override
+	public String getHashValueForGeneratedPDFFromXForm(String taskInstanceId, boolean checkExistence) {
+		return getHashValueForGeneratedPDFFromXForm(taskInstanceId, checkExistence, null);
 	}
 
 	private IWSlideService getSlideService() {
 		try {
-			return IBOLookup.getServiceInstance(
-			    IWMainApplication.getDefaultIWApplicationContext(),
-			    IWSlideService.class);
+			return IBOLookup.getServiceInstance(IWMainApplication.getDefaultIWApplicationContext(), IWSlideService.class);
 		} catch (IBOLookupException e) {
 			throw new IBORuntimeException(e);
 		}
 	}
 
-	private String getXFormInPDF(IWContext iwc, String taskInstanceId,
-	        String formId, String formSubmitionId, String pathInSlide,
-	        String pdfName, boolean checkExistence) {
-		IWSlideService slide = getSlideService();
-		if (slide == null) {
-			return null;
-		}
+	private String getXFormInPDF(IWContext iwc, String taskInstanceId, String formId, String formSubmitionId, String pathInSlide, String pdfName,
+			boolean checkExistence) {
 
-		String prefix = formId == null ? taskInstanceId : formId;
-		prefix = prefix == null ? String.valueOf(System.currentTimeMillis())
-		        : prefix;
-		pdfName = StringUtil.isEmpty(pdfName) ? new StringBuilder("Form_")
-		        .append(prefix).toString() : pdfName;
-		if (!pdfName.endsWith(".pdf")) {
-			pdfName = new StringBuilder(pdfName).append(".pdf").toString();
-		}
-		pdfName = StringUtil.escapeFileNameSpecialCharacters(pdfName);
-		String pathToForm = new StringBuilder(pathInSlide).append(pdfName)
-		        .toString();
+		try {
+			if (!StringUtil.isEmpty(taskInstanceId))
+				iwc.getRequest().setAttribute(FormConverterToPDF.RENDERING_TASK_INSTANCE, taskInstanceId);
 
-		boolean needToGenerate = true;
-		if (checkExistence) {
-			WebdavResource xformInPDF = getXFormInPDFResource(slide, pathToForm);
-			needToGenerate = xformInPDF == null || !xformInPDF.exists();
-		}
-		if (needToGenerate) {
-			return generatePDF(iwc, slide, taskInstanceId, formId,
-			    formSubmitionId, pathInSlide, pdfName, pathToForm);
-		}
+			IWSlideService slide = getSlideService();
+			if (slide == null)
+				return null;
 
-		return pathToForm;
+			String prefix = formId == null ? taskInstanceId : formId;
+			prefix = prefix == null ? String.valueOf(System.currentTimeMillis()) : prefix;
+			pdfName = StringUtil.isEmpty(pdfName) ? new StringBuilder("Form_").append(prefix).toString() : pdfName;
+			if (!pdfName.endsWith(".pdf"))
+				pdfName = new StringBuilder(pdfName).append(".pdf").toString();
+			pdfName = StringUtil.escapeFileNameSpecialCharacters(pdfName);
+			String pathToForm = new StringBuilder(pathInSlide).append(pdfName).toString();
+
+			boolean needToGenerate = true;
+			if (checkExistence) {
+				WebdavResource xformInPDF = getXFormInPDFResource(slide, pathToForm);
+				needToGenerate = xformInPDF == null || !xformInPDF.exists();
+			}
+			if (needToGenerate)
+				return generatePDF(iwc, slide, taskInstanceId, formId, formSubmitionId, pathInSlide, pdfName, pathToForm);
+
+			return pathToForm;
+		} finally {
+			iwc.getRequest().removeAttribute(FormConverterToPDF.RENDERING_TASK_INSTANCE);
+		}
 	}
 
-	private WebdavResource getXFormInPDFResource(IWSlideService slide,
-	        String pathToForm) {
-		if (slide == null || StringUtil.isEmpty(pathToForm)) {
+	private WebdavResource getXFormInPDFResource(IWSlideService slide, String pathToForm) {
+		if (slide == null || StringUtil.isEmpty(pathToForm))
 			return null;
-		}
 
 		WebdavResource xformInPDF = null;
 		try {
 			xformInPDF = slide.getWebdavResourceAuthenticatedAsRoot(pathToForm);
 		} catch (Exception e) {
-			LOGGER.log(Level.SEVERE, "Error getting resource from: "
-			        + pathToForm);
+			LOGGER.log(Level.WARNING, "Error getting resource from: " + pathToForm);
 		}
 
 		return xformInPDF;
 	}
 
-	private UIComponent getComponentToRender(IWContext iwc,
-	        String taskInstanceId, String formId, String formSubmitionId) {
+	private UIComponent getComponentToRender(IWContext iwc, String taskInstanceId, String formId, String formSubmitionId) {
 		UIComponent component = null;
 		if (!StringUtil.isEmpty(taskInstanceId)) {
 			try {
-				component = getProcessArtifacts().getViewInUIComponent(
-				    Long.valueOf(taskInstanceId), true);
+				component = getProcessArtifacts().getViewInUIComponent(Long.valueOf(taskInstanceId), true);
 			} catch (Exception e) {
-				LOGGER.log(Level.SEVERE,
-				    "Error getting UIComponent for task instance: "
-				            + taskInstanceId, e);
+				LOGGER.log(Level.SEVERE, "Error getting UIComponent for task instance: " + taskInstanceId, e);
 			}
-			if (component == null) {
+			if (component == null)
 				return null;
-			}
 
-			if (component instanceof PDFRenderedComponent) {
+			if (component instanceof PDFRenderedComponent)
 				((PDFRenderedComponent) component).setPdfViewer(true);
-			}
-		} else if (!StringUtil.isEmpty(formId)
-		        || !StringUtil.isEmpty(formSubmitionId)) {
+		} else if (!StringUtil.isEmpty(formId) || !StringUtil.isEmpty(formSubmitionId)) {
 			Application application = iwc.getApplication();
-			FormViewer viewer = (FormViewer) application
-			        .createComponent(FormViewer.COMPONENT_TYPE);
+			FormViewer viewer = (FormViewer) application.createComponent(FormViewer.COMPONENT_TYPE);
 
 			if (!StringUtil.isEmpty(formId)) {
 				viewer.setFormId(formId);
@@ -309,34 +257,26 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		return component;
 	}
 
-	private String generatePDF(IWContext iwc, IWSlideService slide,
-	        String taskInstanceId, String formId, String formSubmitionId,
-	        String pathInSlide, String pdfName, String pathToForm) {
-		UIComponent viewer = getComponentToRender(iwc, taskInstanceId, formId,
-		    formSubmitionId);
+	private String generatePDF(IWContext iwc, IWSlideService slide, String taskInstanceId, String formId, String formSubmitionId, String pathInSlide,
+			String pdfName, String pathToForm) {
+		UIComponent viewer = getComponentToRender(iwc, taskInstanceId, formId, formSubmitionId);
 		if (viewer == null) {
-			LOGGER.log(Level.SEVERE, "Unable to get viewer for "
-			        + taskInstanceId == null ? "xform: " + formId
-			        : "taskInstance: " + taskInstanceId);
+			LOGGER.warning("Unable to get viewer for " + taskInstanceId == null ? "xform: " + formId : "taskInstance: " + taskInstanceId);
 			return null;
 		}
+
 		boolean isFormViewer = viewer instanceof FormViewer;
-		if (isFormViewer) {
+		if (isFormViewer)
 			((FormViewer) viewer).setPdfViewer(true);
-		}
 
-		if (getGenerator().generatePDF(iwc, viewer, pdfName, pathInSlide, true,
-		    isFormViewer)) {
+		if (getGenerator().generatePDF(iwc, viewer, pdfName, pathInSlide, true, isFormViewer))
 			return pathToForm;
-		}
 
-		LOGGER.log(Level.SEVERE,
-		    "Unable to generate PDF for " + taskInstanceId == null ? "xform: "
-		            + formId : "taskInstance: " + taskInstanceId);
+		LOGGER.warning("Unable to generate PDF for " + taskInstanceId == null ? "xform: " + formId : "taskInstance: " + taskInstanceId);
 		return null;
 	}
 
-	public BPMFactory getBpmFactory() {
+	private BPMFactory getBpmFactory() {
 		return bpmFactory;
 	}
 
@@ -344,7 +284,7 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		this.bpmFactory = bpmFactory;
 	}
 
-	public PDFGenerator getGenerator() {
+	private PDFGenerator getGenerator() {
 		return generator;
 	}
 
@@ -352,7 +292,7 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		this.generator = generator;
 	}
 
-	public ProcessArtifacts getProcessArtifacts() {
+	private ProcessArtifacts getProcessArtifacts() {
 		return processArtifacts;
 	}
 
