@@ -290,7 +290,7 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 					if (StringUtil.isEmpty(parsedValue) || CoreConstants.MINUS.equals(parsedValue))
 						continue;
 
-					String prefix = key + "\",";
+					String prefix = key.concat(CoreConstants.QOUTE_MARK).concat(CoreConstants.COMMA);
 					int index = jsonIn.indexOf(prefix + parsedValue);
 					if (index <= 0)
 						continue;
