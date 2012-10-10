@@ -629,13 +629,12 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		getUploadedResourceResolver().uploadToTmpLocation(folder, name, is, false);
 		Collection<URI> uris = getFileUploadManager().getFilesUris(folder, null, getUploadedResourceResolver());
 		if (ListUtil.isEmpty(uris)) {
-			String fixedFileName = StringHandler.removeWhiteSpace(name);
-			fixedFileName = StringHandler.stripNonRomanCharacters(fixedFileName, new char[] {'.', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'});
-			if (fixedFileName.equals(name)) {
+			String fixedName = StringHandler.removeWhiteSpace(name);
+			fixedName = StringHandler.stripNonRomanCharacters(fixedName, new char[] {'.', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'});
+			if (fixedName.equals(name))
 				return null;
-			}
 
-			return getLinksToVariables(is, folder, fixedFileName);
+			return getLinksToVariables(is, folder, fixedName);
 		}
 
 		return uris;
