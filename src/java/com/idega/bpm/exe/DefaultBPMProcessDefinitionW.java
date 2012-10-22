@@ -70,14 +70,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	}
 
 	protected void notifyAboutNewProcess(final String procDefName, final Long procInstId) {
-		Thread processNotifier = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				ProcessInstanceCreatedEvent procInstCreatedEvent = new ProcessInstanceCreatedEvent(procDefName, procInstId);
-				ELUtil.getInstance().publishEvent(procInstCreatedEvent);
-			}
-		});
-		processNotifier.start();
+		ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, procInstId));
 	}
 
 	@Override
