@@ -162,7 +162,6 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 					submitVariablesAndProceedProcess(ti, viewSubmission.resolveVariables(), true);
 
 					Long piId = pi.getId();
-					notifyAboutNewProcess(pd.getName(), piId);
 					return piId;
 				}
 			});
@@ -170,7 +169,19 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			throw new RuntimeException(e);
 		}
 
-		return piId;
+		String procDefName = null;
+		try {
+			procDefName = getProcessDefinition().getName();
+		} catch (Exception e) {
+			getLogger().log(Level.WARNING, "Error while trying to get proc. def. name for process instance " + piId, e);
+		}
+
+		try {
+			return piId;
+		} finally {
+			if (procDefName != null)
+				notifyAboutNewProcess(procDefName, piId);
+		}
 	}
 
 	@Override
