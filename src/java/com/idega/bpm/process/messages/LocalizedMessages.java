@@ -18,7 +18,7 @@ import com.idega.util.CoreConstants;
  * Last modified: $Date: 2008/10/22 14:52:21 $ by $Author: civilis $
  */
 public class LocalizedMessages {
-	
+
 	private String from;
 	private String sendToRoles;
 	private Integer recipientUserId;
@@ -27,15 +27,15 @@ public class LocalizedMessages {
 	private String messageValuesExp;
 	private LocalizedMessageTransformator subjectTransformator;
 	private LocalizedMessageTransformator messageTransformator;
-	
+
 	private IWBundle iwb;
-	
+
 	private String subjectKey;
 	private String msgKey;
-	
+
 	private Map<Locale, String> inlineSubjects;
 	private Map<Locale, String> inlineMessages;
-	
+
 	public void setSubjectKey(String subjectKey) {
 		this.subjectKey = subjectKey;
 	}
@@ -46,17 +46,16 @@ public class LocalizedMessages {
 		this.inlineSubjects = inlineSubjects;
 	}
 	public void setInlineSubject(Locale locale, String msg) {
-		
-		if(inlineSubjects == null)
+		if (inlineSubjects == null)
 			inlineSubjects = new HashMap<Locale, String>(1);
-		
+
 		inlineSubjects.put(locale, msg);
 	}
 	public void setInlineMessage(Locale locale, String msg) {
-		
+
 		if(inlineMessages == null)
 			inlineMessages = new HashMap<Locale, String>(1);
-		
+
 		inlineMessages.put(locale, msg);
 	}
 	public void setInlineMessages(Map<Locale, String> inlineMessages) {
@@ -65,45 +64,40 @@ public class LocalizedMessages {
 	public void setIwb(IWBundle iwb) {
 		this.iwb = iwb;
 	}
-	
+
 	public String getLocalizedSubject(Locale locale) {
-	
 		String subject;
-		
-		if(iwb != null) {
-			
+
+		if (iwb != null) {
 			subject = subjectKey != null ? iwb.getResourceBundle(locale).getLocalizedString(subjectKey, subjectKey) : CoreConstants.EMPTY;
 		} else if (inlineSubjects != null) {
 			subject = inlineSubjects.get(locale);
 		} else {
-			
 			Logger.getLogger(getClass().getName()).log(Level.WARNING, "Tried to get localized subject, but neither iwb, nor inlineSubjects set");
 			subject = null;
 		}
-		
-		if(getSubjectTransformator() != null)
+
+		if (getSubjectTransformator() != null)
 			subject = getSubjectTransformator().apply(subject, locale);
-		
+
 		return subject;
 	}
-	
+
 	public String getLocalizedMessage(Locale locale) {
-		
 		String message;
-		
-		if(iwb != null) {
+
+		if (iwb != null) {
 			message = msgKey != null ? iwb.getResourceBundle(locale).getLocalizedString(msgKey, msgKey) : CoreConstants.EMPTY;
 		} else if (inlineMessages != null) {
 			message = inlineMessages.get(locale);
 		} else {
-			
 			Logger.getLogger(getClass().getName()).log(Level.WARNING, "Tried to get localized message, but neither iwb, nor inlineMessages set");
 			message = null;
 		}
-		
-		if(getMessageTransformator() != null)
+
+		if (getMessageTransformator() != null)
 			message = getMessageTransformator().apply(message, locale);
-		
+
 		return message;
 	}
 	public String getSubjectValuesExp() {
@@ -152,27 +146,30 @@ public class LocalizedMessages {
 	public LocalizedMessageTransformator getMessageTransformator() {
 		return messageTransformator;
 	}
-	public void setMessageTransformator(
-			LocalizedMessageTransformator messageTransformator) {
+	public void setMessageTransformator(LocalizedMessageTransformator messageTransformator) {
 		this.messageTransformator = messageTransformator;
 	}
-	
+
 	public boolean hasSubject() {
-		
 		return (inlineSubjects != null && !inlineSubjects.isEmpty()) || (subjectKey != null && subjectKey.length() != 0);
 	}
-	
+
 	public boolean hasMessage() {
-		
 		return (inlineMessages != null && !inlineMessages.isEmpty()) || (msgKey != null && msgKey.length() != 0);
 	}
-	
+
 	public List<String> getAttachFiles() {
 		return attachFiles;
 	}
-	
+
 	public void setAttachFiles(List<String> attachFiles) {
 		this.attachFiles = attachFiles;
 	}
-	
+
+	@Override
+	public String toString() {
+		return "Sending message to " + sendToEmails + " or/and to role(s): " + sendToRoles + ". Subject: " + subjectValuesExp + "; message: " +
+				messageValuesExp;
+	}
+
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
@@ -16,13 +17,12 @@ import com.idega.block.process.variables.VariableDataType;
  *
  * Last modified: $Date: 2008/09/17 13:09:39 $ by $Author: civilis $
  */
-@Scope("singleton")
 @Repository
+@Scope(BeanDefinition.SCOPE_SINGLETON)
 public class DataConvertersFactory {
-	
-//	private Map<ConverterDataType, DataConverter> converters = new HashMap<ConverterDataType, DataConverter>();
+
 	final private Map<VariableDataType, DataConverter> dataConverters;
-	
+
 	public DataConvertersFactory() {
 		dataConverters = new HashMap<VariableDataType, DataConverter>();
 	}
@@ -37,11 +37,11 @@ public class DataConvertersFactory {
 
 	@Autowired
 	public void setInjDataConverters(List<DataConverter> injDataConverters) {
-		
+
 		final Map<VariableDataType, DataConverter> dataConverters = getDataConverters();
-		
+
 		for (DataConverter dataConverter : injDataConverters) {
-			
+
 			dataConverters.put(dataConverter.getDataType(), dataConverter);
 		}
 	}

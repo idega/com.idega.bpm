@@ -11,38 +11,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 
-import org.apache.commons.validator.EmailValidator;
-import org.jbpm.graph.exe.ProcessInstance;
-import org.jbpm.graph.exe.Token;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
-
-import com.idega.block.email.business.EmailSenderHelper;
-import com.idega.builder.bean.AdvancedProperty;
-import com.idega.core.business.DefaultSpringBean;
-import com.idega.core.converter.util.StringConverterUtility;
-import com.idega.idegaweb.IWApplicationContext;
-import com.idega.idegaweb.IWMainApplication;
-import com.idega.jbpm.exe.BPMFactory;
-import com.idega.jbpm.exe.ProcessInstanceW;
-import com.idega.jbpm.identity.UserPersonalData;
-import com.idega.jbpm.process.business.messages.MessageValueContext;
-import com.idega.jbpm.process.business.messages.MessageValueHandler;
-import com.idega.jbpm.variables.BinaryVariable;
-import com.idega.presentation.IWContext;
-import com.idega.user.business.UserBusiness;
-import com.idega.user.data.Group;
-import com.idega.user.data.User;
-import com.idega.util.CoreConstants;
-import com.idega.util.CoreUtil;
-import com.idega.util.ListUtil;
-import com.idega.util.SendMail;
-import com.idega.util.SendMailMessageValue;
-import com.idega.util.StringUtil;
+import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.BIConversion.User;
+import com.sun.xml.internal.messaging.saaj.packaging.mime.MessagingException;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
@@ -119,26 +92,25 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			messageValuesToSend.add(mail);
 		}
 
-		if (!ListUtil.isEmpty(messageValuesToSend)) {
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					for (SendMailMessageValue mv : messageValuesToSend) {
-						try {
-							SendMail.send(mv);
-						} catch (javax.mail.MessagingException me) {
-							getLogger().log(Level.SEVERE, "Exception while sending email message", me);
-						}
-					}
+		sendMails(messageValuesToSend);
+	}
 
-					if (attachedFile != null) {
-						try {
-							attachedFile.delete();
-						} catch (SecurityException e) {}
+	protected void sendMails(final List<SendMailMessageValue> messages) {
+		if (ListUtil.isEmpty(messages))
+			return;
+
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				for (SendMailMessageValue mv : messages) {
+					try {
+						SendMail.send(mv);
+					} catch (MessagingException me) {
+						getLogger().log(Level.SEVERE, "Exception while sending email message", me);
 					}
 				}
-			}).start();
-		}
+			}
+		}).start();
 	}
 
 	protected List<AdvancedProperty> getMailHeaders() {
@@ -146,14 +118,12 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	}
 
 	private File getAttachedFile(List<String> filesToAttach, ProcessInstanceW piw) {
-		if (ListUtil.isEmpty(filesToAttach)) {
+		if (ListUtil.isEmpty(filesToAttach))
 			return null;
-		}
 
 		List<BinaryVariable> attachments = piw.getAttachments();
-		if (ListUtil.isEmpty(attachments)) {
+		if (ListUtil.isEmpty(attachments))
 			return null;
-		}
 
 		List<String> filesInSlide = new ArrayList<String>();
 		for (BinaryVariable bv: attachments) {
@@ -223,13 +193,13 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			String[] rolesNames = rolesNamesAggr.trim().split(CoreConstants.SPACE);
 
 			for (String string : rolesNames) {
-				HashSet<String> rolesNamesSet = new HashSet<String>(rolesNames.length);
+				Set<String> rolesNamesSet = new HashSet<String>(rolesNames.length);
 				rolesNamesSet.add(string);
 
 				Collection<User> users = getBpmFactory().getRolesManager().getAllUsersForRoles(rolesNamesSet, pi.getId());
 
 				/* Override so that users that are not directly related to the case can also receive email */
-				if (users.isEmpty()) {
+				if (ListUtil.isEmpty(users)) {
 					IWApplicationContext iwac = IWMainApplication.getDefaultIWApplicationContext();
 					IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
 
@@ -243,19 +213,16 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 										allUsers.add(user);
 									}
 								}
-							}
-							catch (RemoteException e) {
+							} catch (RemoteException e) {
 								e.printStackTrace();
 							}
 						}
 					}
-				}
-				else {
+				} else {
 					allUsers.addAll(users);
 				}
 			}
-		}
-		else {
+		} else {
 			allUsers = Collections.emptyList();
 		}
 
