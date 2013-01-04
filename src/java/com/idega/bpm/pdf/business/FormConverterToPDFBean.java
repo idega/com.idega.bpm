@@ -6,9 +6,34 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.apple.eawt.Application;
+import javax.faces.application.Application;
+import javax.faces.component.UIComponent;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
+
+import com.idega.block.form.business.FormConverterToPDF;
+import com.idega.block.form.presentation.FormViewer;
+import com.idega.block.process.variables.Variable;
+import com.idega.block.process.variables.VariableDataType;
 import com.idega.bpm.BPMConstants;
-import com.sun.org.apache.xpath.internal.operations.Variable;
+import com.idega.core.business.DefaultSpringBean;
+import com.idega.graphics.generator.business.PDFGenerator;
+import com.idega.idegaweb.IWBundle;
+import com.idega.jbpm.artifacts.presentation.ProcessArtifacts;
+import com.idega.jbpm.exe.BPMFactory;
+import com.idega.jbpm.exe.TaskInstanceW;
+import com.idega.jbpm.variables.BinaryVariable;
+import com.idega.presentation.IWContext;
+import com.idega.presentation.PDFRenderedComponent;
+import com.idega.repository.bean.RepositoryItem;
+import com.idega.util.CoreConstants;
+import com.idega.util.CoreUtil;
+import com.idega.util.IOUtil;
+import com.idega.util.PresentationUtil;
+import com.idega.util.StringUtil;
 
 @Scope(BeanDefinition.SCOPE_SINGLETON)
 @Service(FormConverterToPDF.STRING_BEAN_IDENTIFIER)
@@ -139,16 +164,12 @@ public class FormConverterToPDFBean extends DefaultSpringBean implements FormCon
 		        .getHash());
 	}
 
-	private String getXFormInPDF(IWContext iwc, String taskInstanceId, String formId, String formSubmitionId, String pathInSlide, String pdfName,
+	private String getXFormInPDF(IWContext iwc, String taskInstanceId, String formId, String formSubmitionId, String pathInRepository, String pdfName,
 			boolean checkExistence) {
 
 		try {
 			if (!StringUtil.isEmpty(taskInstanceId))
 				iwc.getRequest().setAttribute(FormConverterToPDF.RENDERING_TASK_INSTANCE, taskInstanceId);
-
-			IWSlideService slide = getSlideService();
-			if (slide == null)
-				return null;
 
 			String prefix = formId == null ? taskInstanceId : formId;
 			prefix = prefix == null ? String.valueOf(System.currentTimeMillis()) : prefix;
@@ -156,15 +177,15 @@ public class FormConverterToPDFBean extends DefaultSpringBean implements FormCon
 			if (!pdfName.endsWith(".pdf"))
 				pdfName = new StringBuilder(pdfName).append(".pdf").toString();
 			pdfName = StringUtil.escapeFileNameSpecialCharacters(pdfName);
-			String pathToForm = new StringBuilder(pathInSlide).append(pdfName).toString();
+			String pathToForm = new StringBuilder(pathInRepository).append(pdfName).toString();
 
 			boolean needToGenerate = true;
 			if (checkExistence) {
-				WebdavResource xformInPDF = getXFormInPDFResource(slide, pathToForm);
+				RepositoryItem xformInPDF = getXFormInPDFResource(pathToForm);
 				needToGenerate = xformInPDF == null || !xformInPDF.exists();
 			}
 			if (needToGenerate)
-				return generatePDF(iwc, slide, taskInstanceId, formId, formSubmitionId, pathInSlide, pdfName, pathToForm);
+				return generatePDF(iwc, taskInstanceId, formId, formSubmitionId, pathInRepository, pdfName, pathToForm);
 
 			return pathToForm;
 		} finally {
@@ -222,7 +243,7 @@ public class FormConverterToPDFBean extends DefaultSpringBean implements FormCon
 		return component;
 	}
 
-	private String generatePDF(IWContext iwc, IWSlideService slide, String taskInstanceId, String formId, String formSubmitionId, String pathInSlide,
+	private String generatePDF(IWContext iwc, String taskInstanceId, String formId, String formSubmitionId, String pathInRepository,
 			String pdfName, String pathToForm) {
 		UIComponent viewer = getComponentToRender(iwc, taskInstanceId, formId, formSubmitionId);
 		if (viewer == null) {
@@ -234,7 +255,7 @@ public class FormConverterToPDFBean extends DefaultSpringBean implements FormCon
 		if (isFormViewer)
 			((FormViewer) viewer).setPdfViewer(true);
 
-		if (getGenerator().generatePDF(iwc, viewer, pdfName, pathInSlide, true, isFormViewer))
+		if (getGenerator().generatePDF(iwc, viewer, pdfName, pathInRepository, true, isFormViewer))
 			return pathToForm;
 
 		LOGGER.warning("Unable to generate PDF for " + taskInstanceId == null ? "xform: " + formId : "taskInstance: " + taskInstanceId);
