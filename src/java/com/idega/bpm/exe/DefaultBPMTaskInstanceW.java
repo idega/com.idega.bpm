@@ -703,6 +703,18 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 		return false;
 	}
+	
+	/* (non-Javadoc)
+	 * @see com.idega.jbpm.exe.TaskInstanceW#isSubmitted()
+	 */
+	@Override
+	public boolean isSubmitted() {
+		if(getTaskInstance().getEnd() == null) {
+			return false;
+		}
+		
+		return true;
+	}
 
 	public ProcessManager getProcessManager() {
 		return processManager;
