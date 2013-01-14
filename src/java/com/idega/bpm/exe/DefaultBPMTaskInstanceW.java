@@ -516,7 +516,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 		return name;
 	}
-
+// FIXME
 	private String getNameFromMetaData(Long taskInstanceId) {
 		try {
 			MetaDataHome metaDataHome = (MetaDataHome) IDOLookup.getHome(MetaData.class);
