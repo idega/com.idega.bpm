@@ -676,15 +676,18 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
+	public Long getIdOfStartTaskInstance() {
+		return getBpmFactory().getIdOfStartTaskInstance(getProcessInstanceId());
+	}
+
+	@Override
 	@Transactional(readOnly = true)
 	public TaskInstanceW getStartTaskInstance() {
-		long id = getProcessDefinitionW().getProcessDefinition().getTaskMgmtDefinition().getStartTask().getId();
-		for (TaskInstanceW taskInstanceW : getAllTaskInstances()) {
-			if (taskInstanceW.getTaskInstance().getTask().getId() == id) {
-				return taskInstanceW;
-			}
-		}
-		return null;
+		Long id = getIdOfStartTaskInstance();
+		if (id == null)
+			return null;
+
+		return getBpmFactory().getTaskInstanceW(id);
 	}
 
 	@Override
