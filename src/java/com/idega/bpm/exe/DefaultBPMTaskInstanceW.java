@@ -64,12 +64,15 @@ import com.idega.jbpm.variables.impl.BinaryVariableImpl;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewSubmission;
 import com.idega.presentation.IWContext;
+import com.idega.repository.RepositoryService;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.util.CoreConstants;
+import com.idega.util.IOUtil;
 import com.idega.util.ListUtil;
 import com.idega.util.StringHandler;
 import com.idega.util.StringUtil;
+import com.idega.util.expression.ELUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
@@ -589,6 +592,22 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	public void setVariablesHandler(VariablesHandler variablesHandler) {
 		this.variablesHandler = variablesHandler;
+	}
+
+	@Override
+	public BinaryVariable addAttachment(Variable variable, String fileName, String description, String pathInRepository) {
+		InputStream stream = null;
+		try {
+			RepositoryService repository = ELUtil.getInstance().getBean(RepositoryService.BEAN_NAME);
+			stream = repository.getInputStreamAsRoot(pathInRepository);
+			return addAttachment(variable, fileName, description, stream);
+		} catch (Exception e) {
+			Logger.getLogger(DefaultBPMTaskInstanceW.class.getName()).log(Level.WARNING, "Error adding attachment from repository: " +
+					pathInRepository, e);
+		} finally {
+			IOUtil.close(stream);
+		}
+		return null;
 	}
 
 	@Override
