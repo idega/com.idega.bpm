@@ -55,7 +55,10 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 
 	private static final Logger LOGGER = Logger.getLogger(XFormToPDFWriter.class.getName());
 
+	private String pathToPDF = null;
+	
 	private WebdavResource resourceInPDF = null;
+
 	private boolean showPDF;
 	
 	@Autowired(required = false)
@@ -135,8 +138,8 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			return;
 		}
 
-		String pathToPdf = formConverter.getGeneratedPDFFromXForm(taskInstanceId, formId, formSubmissionId, pathInSlide, pdfName, checkExistence);
-		if (StringUtil.isEmpty(pathToPdf)) {
+		String pathToPDF = formConverter.getGeneratedPDFFromXForm(taskInstanceId, formId, formSubmissionId, pathInSlide, pdfName, checkExistence);
+		if (StringUtil.isEmpty(pathToPDF)) {
 			LOGGER.log(Level.SEVERE, "PDF from XForm was not generated!");
 			return;
 		}
@@ -147,17 +150,17 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 		} catch (IBOLookupException e) {
 			LOGGER.log(Level.SEVERE, "Error getting IWSlideService!", e);
 		}
-		if (slide == null) {
+		if (slide == null)
 			return;
-		}
 
-		if (!setResource(slide, pathToPdf)) {
-			LOGGER.log(Level.SEVERE, "Error reading PDF document: " + pathToPdf);
+		if (!setResource(slide, pathToPDF)) {
+			LOGGER.log(Level.SEVERE, "Error reading PDF document: " + pathToPDF);
 			return;
 		}
-		if (resourceInPDF == null || !resourceInPDF.exists()) {
+		if (resourceInPDF == null || !resourceInPDF.exists())
 			return;
-		}
+		
+		this.pathToPDF = pathToPDF;
 		
 		if (showPDF) {
 			//	Setting inline attribute - we don't want to force download of PDF file
@@ -185,7 +188,16 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			return;
 		}
 
-		InputStream streamIn = resourceInPDF.getMethodData();
+		InputStream streamIn = null;
+		try {
+			streamIn = resourceInPDF.getMethodData();
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Error opening stream to resource " + resourceInPDF, e);
+		}
+		if (streamIn == null) {
+			IWSlideService repository = IBOLookup.getServiceInstance(IWMainApplication.getDefaultIWApplicationContext(), IWSlideService.class);
+			streamIn = repository.getInputStream(pathToPDF);
+		}
 		FileUtil.streamToOutputStream(streamIn, streamOut);
 		
 		streamOut.flush();
