@@ -168,8 +168,8 @@ public class LocalizedMessages {
 
 	@Override
 	public String toString() {
-		return "Sending message to " + sendToEmails + " or/and to role(s): " + sendToRoles + ". Subject: " + subjectValuesExp + "; message: " +
-				messageValuesExp;
+		return "To " + sendToEmails + " or/and to role(s): " + sendToRoles + ". Recipient user: " + getRecipientUserId() + ". Subject: " +
+				subjectValuesExp + "; message: " + messageValuesExp + ". Inline subjects: " + inlineSubjects + ", inline messages: " + inlineMessages;
 	}
 
 }
