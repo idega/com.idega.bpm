@@ -37,6 +37,7 @@ import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
 import com.idega.util.IOUtil;
 import com.idega.util.PresentationUtil;
+import com.idega.util.StringHandler;
 import com.idega.util.StringUtil;
 
 @Scope(BeanDefinition.SCOPE_SINGLETON)
@@ -197,6 +198,7 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 			if (!pdfName.endsWith(".pdf"))
 				pdfName = new StringBuilder(pdfName).append(".pdf").toString();
 			pdfName = StringUtil.escapeFileNameSpecialCharacters(pdfName);
+			pdfName = StringHandler.stripNonRomanCharacters(pdfName, new char[] {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_', '.'});
 			String pathToForm = new StringBuilder(pathInSlide).append(pdfName).toString();
 
 			boolean needToGenerate = true;
