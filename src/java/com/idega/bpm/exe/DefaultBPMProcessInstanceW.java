@@ -752,18 +752,36 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	@Transactional(readOnly = false)
 	public boolean doSubmitSharedTask(String taskName, Map<String, Object> variables) {
-		if (StringUtil.isEmpty(taskName))
+		List<TaskInstanceW> unfinishedTasks = getUnfinishedTaskInstancesForTask(taskName);
+		if (ListUtil.isEmpty(unfinishedTasks)) {
+			getLogger().warning("Unable to find shared task '" + taskName + "' for process instance with ID: " + getProcessInstanceId());
+			return false;
+		}
+
+		return doSubmitTask(unfinishedTasks.iterator().next(), variables);
+	}
+
+	@Override
+	@Transactional(readOnly = false)
+	public boolean doSubmitTask(String taskName, Map<String, Object> variables) {
+		if (StringUtil.isEmpty(taskName)) {
+			getLogger().warning("Task name is not provided");
 			return Boolean.FALSE;
+		}
+
+		TaskInstanceW task = getSingleUnfinishedTaskInstanceForTask(taskName);
+		return doSubmitTask(task, variables);
+	}
+
+	@Transactional(readOnly = false)
+	private boolean doSubmitTask(TaskInstanceW task, Map<String, Object> variables) {
+		if (task == null) {
+			getLogger().warning("Task name is not provided");
+			return Boolean.FALSE;
+		}
 
 		try {
-			List<TaskInstanceW> unfinishedTasks = getUnfinishedTaskInstancesForTask(taskName);
-			if (ListUtil.isEmpty(unfinishedTasks)) {
-				getLogger().warning("Unable to find shared task '" + taskName + "' for process instance with ID: " + getProcessInstanceId());
-				return false;
-			}
-
-			TaskInstanceW unfinishedTask = unfinishedTasks.iterator().next();
-			View view = unfinishedTask.loadView();
+			View view = task.loadView();
 			ViewSubmission viewSubmission = getBpmFactory().getViewSubmission();
 
 			Map<String, Object> currentVariables = view.resolveVariables();
@@ -784,7 +802,8 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 			return Boolean.TRUE;
 		} catch (Exception e) {
-			getLogger().log(Level.WARNING, "Error submiting task '" + taskName + "' for process instance: " + getProcessInstanceId(), e);
+			getLogger().log(Level.WARNING, "Error submiting task '" + task.getTaskInstance().getName() + "' for process instance: " +
+					getProcessInstanceId(), e);
 		}
 
 		return Boolean.FALSE;
