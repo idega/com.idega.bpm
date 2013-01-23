@@ -776,7 +776,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Transactional(readOnly = false)
 	private boolean doSubmitTask(TaskInstanceW task, Map<String, Object> variables) {
 		if (task == null) {
-			getLogger().warning("Task name is not provided");
+			getLogger().warning("Task is not provided");
 			return Boolean.FALSE;
 		}
 
