@@ -44,7 +44,7 @@ public class XFormsView implements View {
 
 	private String viewId;
 	private Long taskInstanceId;
-	private boolean submitable = true;
+	private boolean submitable = true, submitted;
 	private DocumentManagerFactory documentManagerFactory;
 	private Document form;
 	private Converter converter;
@@ -56,10 +56,11 @@ public class XFormsView implements View {
 	@Autowired
 	private XFormsDAO xformsDAO;
 
+	@Override
 	public ViewToTask getViewToTask() {
-		if (viewToTask == null) {
+		if (viewToTask == null)
 			ELUtil.getInstance().autowire(this);
-		}
+
 		return viewToTask;
 	}
 
@@ -75,6 +76,7 @@ public class XFormsView implements View {
 		this.converter = converter;
 	}
 
+	@Override
 	public void setViewId(String viewId) {
 		form = null;
 		parameters = null;
@@ -82,32 +84,35 @@ public class XFormsView implements View {
 		this.viewId = viewId;
 	}
 
+	@Override
 	public String getViewId() {
 		return viewId;
 	}
 
+	@Override
 	public String getViewType() {
 		return VIEW_TYPE;
 	}
 
+	@Override
 	public void setViewType(String viewType) {
-		throw new UnsupportedOperationException(
-		        "XFormsView view type cannot be changed");
+		throw new UnsupportedOperationException("XFormsView view type cannot be changed");
 	}
 
 	public DocumentManagerFactory getDocumentManagerFactory() {
 		return documentManagerFactory;
 	}
 
-	public void setDocumentManagerFactory(
-	        DocumentManagerFactory documentManagerFactory) {
+	public void setDocumentManagerFactory(DocumentManagerFactory documentManagerFactory) {
 		this.documentManagerFactory = documentManagerFactory;
 	}
 
+	@Override
 	public UIComponent getViewForDisplay() {
 		return getViewForDisplay(false);
 	}
 
+	@Override
 	public UIComponent getViewForDisplay(boolean pdfViewer) {
 		FacesContext context = FacesContext.getCurrentInstance();
 		Application application = context.getApplication();
@@ -137,18 +142,17 @@ public class XFormsView implements View {
 			FormViewer formviewer = (FormViewer) application.createComponent(FormViewer.COMPONENT_TYPE);
 			formviewer.setXFormsDocument(xform);
 			formviewer.setPdfViewer(pdfViewer);
+			formviewer.setSubmitted(isSubmitted());
 			return formviewer;
 		}
 	}
 
 	public void setFormDocument(Document formDocument) {
-
 		form = formDocument;
 		viewId = form.getFormId().toString();
 	}
 
 	protected boolean isFormDocumentLoaded() {
-
 		return form != null;
 	}
 
@@ -164,26 +168,19 @@ public class XFormsView implements View {
 	}
 
 	protected Document getFormDocument() {
-
 		if (form == null) {
-
 			if (getViewId() == null || getViewId().length() == 0)
-				throw new IllegalStateException(
-				        "Tried to get form document, but no view id not set");
+				throw new IllegalStateException("Tried to get form document, but no view id not set");
 
 			final Long formId = new Long(getViewId());
 
-			Logger.getLogger(getClass().getName()).finer(
-			    "Opening form in xforms view by form id = " + formId);
+			Logger.getLogger(getClass().getName()).finer("Opening form in xforms view by form id = " + formId);
 
 			try {
-				DocumentManager documentManager = getDocumentManagerFactory()
-				        .newDocumentManager(
-				            IWMainApplication.getDefaultIWMainApplication());
+				DocumentManager documentManager = getDocumentManagerFactory().newDocumentManager(IWMainApplication.getDefaultIWMainApplication());
 				form = documentManager.openFormLazy(formId);
 
 				setFormDocument(form);
-
 			} catch (RuntimeException e) {
 				throw e;
 			} catch (Exception e) {
@@ -194,20 +191,21 @@ public class XFormsView implements View {
 		return form;
 	}
 
+	@Override
 	public boolean isSubmitable() {
 		return submitable;
 	}
 
+	@Override
 	public void setSubmitable(boolean submitable) {
-
 		this.submitable = submitable;
 
 		if (isFormDocumentLoaded()) {
-
 			getFormDocument().setReadonly(!submitable);
 		}
 	}
 
+	@Override
 	public void populateParameters(Map<String, String> parameters) {
 		this.parameters = parameters;
 
@@ -216,6 +214,7 @@ public class XFormsView implements View {
 		}
 	}
 
+	@Override
 	public boolean populateVariables(Map<String, Object> variables) {
 		this.variables = variables;
 
@@ -236,31 +235,34 @@ public class XFormsView implements View {
 		return true;
 	}
 
+	@Override
 	public Map<String, String> resolveParameters() {
 		if (parameters != null)
 			return parameters;
 
-		throw new UnsupportedOperationException(
-		        "Resolving parameters from form not supported yet.");
+		throw new UnsupportedOperationException("Resolving parameters from form not supported yet.");
 	}
 
+	@Override
 	public Map<String, Object> resolveVariables() {
 		if (variables != null)
 			return variables;
 
-		throw new UnsupportedOperationException(
-		        "Resolving variables from form not supported yet.");
+		throw new UnsupportedOperationException("Resolving variables from form not supported yet.");
 	}
 
+	@Override
 	public String getDisplayName() {
 		return getDisplayName(new Locale("is", "IS"));
 	}
 
+	@Override
 	public Date getDateCreated() {
 		// TODO: implement
 		return new Date();
 	}
 
+	@Override
 	public void takeView() {
 		if (StringUtil.isEmpty(getViewId()))
 			throw new IllegalStateException(
@@ -280,14 +282,17 @@ public class XFormsView implements View {
 		setFormDocument(formDocument);
 	}
 
+	@Override
 	public Long getTaskInstanceId() {
 		return taskInstanceId;
 	}
 
+	@Override
 	public void setTaskInstanceId(Long taskInstanceId) {
 		this.taskInstanceId = taskInstanceId;
 	}
 
+	@Override
 	public String getDisplayName(Locale locale) {
 		// TODO: cache here by viewid
 
@@ -306,6 +311,7 @@ public class XFormsView implements View {
 		return displayName;
 	}
 
+	@Override
 	public String getDefaultDisplayName() {
 
 		if (StringUtil.isEmpty(getViewId()))
@@ -333,6 +339,17 @@ public class XFormsView implements View {
 		return variables;
 	}
 
+	@Override
+	public boolean isSubmitted() {
+		return submitted;
+	}
+
+	@Override
+	public void setSubmitted(boolean submitted) {
+		this.submitted = submitted;
+	}
+
+	@Override
 	public boolean hasViewForDisplay() {
 		return true;
 	}
