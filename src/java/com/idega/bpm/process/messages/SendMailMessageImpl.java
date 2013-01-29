@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
-import javax.mail.MessagingException;
-
 import org.apache.commons.validator.EmailValidator;
 import org.jbpm.graph.exe.ProcessInstance;
 import org.jbpm.graph.exe.Token;
@@ -135,8 +133,10 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 				for (SendMailMessageValue mv : messages) {
 					try {
 						SendMail.send(mv);
-					} catch (MessagingException me) {
-						getLogger().log(Level.SEVERE, "Exception while sending email message", me);
+					} catch (Exception me) {
+						String message = "Exception while sending email message: " + mv;
+						getLogger().log(Level.SEVERE, message, me);
+						CoreUtil.sendExceptionNotification(message, me);
 					}
 				}
 			}
