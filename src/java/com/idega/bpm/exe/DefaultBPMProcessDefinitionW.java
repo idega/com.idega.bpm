@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.block.process.variables.Variable;
+import com.idega.bpm.BPMConstants;
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
@@ -36,6 +37,7 @@ import com.idega.jbpm.events.VariableCreatedEvent;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessDefinitionW;
+import com.idega.jbpm.identity.BPMUser;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewSubmission;
@@ -240,7 +242,13 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	protected void submitVariablesAndProceedProcess(TaskInstance ti, Map<String, Object> variables, boolean proceed) {
 		Integer usrId = null;
 		try {
-			usrId = getBpmFactory().getBpmUserFactory().getCurrentBPMUser().getIdToUse();
+			BPMUser bpmUser = getBpmFactory().getBpmUserFactory().getCurrentBPMUser();
+			if (bpmUser != null)
+				usrId = bpmUser.getIdToUse();
+			else {
+				if (variables.containsKey(BPMConstants.USER_ID))
+					usrId = Integer.valueOf(variables.get(BPMConstants.USER_ID).toString());
+			}
 		} catch (Exception e) {
 			getLogger().log(Level.WARNING, "Error getting ID of a current user", e);
 		}
@@ -349,5 +357,11 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	@Override
 	public String getProcessName(Locale locale) {
 		return getProcessDefinition().getName();
+	}
+
+	@Override
+	public Object doPrepareProcess(Map<String, Object> parameters) {
+		getLogger().info("This method is not implemented");
+		return null;
 	}
 }
