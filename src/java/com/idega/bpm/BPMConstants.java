@@ -15,4 +15,6 @@ public class BPMConstants {
 								BPM_PROCESS_HANDLER_VARIABLE = "bpm_process_handler_variable",
 								
 								PUBLIC_PROCESS = "string_processIsPublic";
+
+	public static final String USER_ID = "string_userId";
 }
