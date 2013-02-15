@@ -2,7 +2,7 @@ html, body {
 	margin: 0;
 	padding: 0;
 	font-family: Arial, Helvetica, sans-serif;
-	font-size: 12pt;
+	font-size: 12px;
 	color: #000;
 }
 
@@ -11,7 +11,7 @@ a {
 }
 
 h1 {
-	font-size: 18pt !important;
+	font-size: 18px !important;
 }
 
 div.legend {
@@ -31,7 +31,7 @@ div.input, div.select1 {
 div.input label, div.textarea label, div.select1 label {
 	display: block;
 	float: left !important;
-	font-size: 12pt;
+	font-size: 12px;
 	width: 20% !important;
 }
 
@@ -39,7 +39,7 @@ div.select1 div.selectDropdownReplacementForPDFDocument, div.input div.replaceFo
 	float: left;
 	width: auto;
 	clear: none;
-	font-size: 12pt;
+	font-size: 12px;
 	color: #101010;
 	display: block !important;
 }
@@ -64,7 +64,7 @@ span.output {
 span.output label, div.float label {
 	display: block;
 	float: left !important;
-	font-size: 12pt;
+	font-size: 12px;
 	width: 200px !important;
 	padding: 0 !important;
 }
@@ -76,7 +76,7 @@ span.helpBlock > label {
 span.output span {
 	padding: 0 !important;
 	color: #101010;
-	font-size: 12pt;
+	font-size: 12px;
 	font-weight: bold;
 }
 
@@ -100,7 +100,7 @@ div.fbc_header_text label {
 
 div.fbc_header_text span, div.fbc_simple_text span {
 	margin: 0;
-	font-size: 14pt !important;
+	font-size: 14px !important;
 }
 
 div.fbc_simple_text label {
@@ -131,7 +131,7 @@ div.label, .paragraphAlert, .fbc_simple_text, .noLabel {
 
 table th, table td {
 	border-bottom: 1px #ddd solid;
-	font-size: 12pt;
+	font-size: 12px;
 	padding: 2px 3px;
 	empty-cells: show;
 }
