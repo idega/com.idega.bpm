@@ -45,7 +45,7 @@ import com.idega.xformsmanager.component.beans.LocalizedStringBean;
 public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 
 	public static final String XFORM_ID_PARAMETER = "XFormIdToDownload";
-	public static final String PATH_IN_SLIDE_PARAMETER = "pathInSlideForXFormPDF";
+	public static final String PATH_IN_REPOSITORY_PARAMETER = "pathInRepositoryForXFormPDF";
 	public static final String XFORM_SUBMISSION_ID_PARAMETER = "XFormSubmitionId";
 	public static final String XFORM_SUBMISSION_UNIQUE_ID_PARAMETER = "XFormSubmissionUniqueId";
 	public static final String DO_NOT_CHECK_EXISTENCE_OF_XFORM_IN_PDF_PARAMETER = "doNotCheckExistence";
@@ -82,7 +82,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 		String formSubmissionUniqueId = iwc.getParameter(XFORM_SUBMISSION_UNIQUE_ID_PARAMETER);
 
 		String pdfName = null;
-		String pathInSlide = null;
+		String pathInRepository = null;
 
 		if (taskInstanceId == null && formId == null && formSubmissionId == null && formSubmissionUniqueId == null) {
 			LOGGER.log(Level.SEVERE, "Do not know what to download: taskInstanceId, formId, formSubmitionId and formSubmissionUniqueId are nulls");
@@ -100,7 +100,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			}
 
 			pdfName = getLocalizedFormName(submission, iwc.getCurrentLocale());
-			pathInSlide = submission.getSubmissionStorageIdentifier();
+			pathInRepository = submission.getSubmissionStorageIdentifier();
 			formSubmissionId = submission.getSubmissionUUID();	//	Using unique ID
 		}
 
@@ -108,17 +108,17 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			pdfName = getPDFName(taskInstanceId, iwc.getCurrentLocale());
 		}
 
-		if (StringUtil.isEmpty(pathInSlide)) {
-			if (iwc.isParameterSet(PATH_IN_SLIDE_PARAMETER)) {
-				pathInSlide = iwc.getParameter(PATH_IN_SLIDE_PARAMETER);
+		if (StringUtil.isEmpty(pathInRepository)) {
+			if (iwc.isParameterSet(PATH_IN_REPOSITORY_PARAMETER)) {
+				pathInRepository = iwc.getParameter(PATH_IN_REPOSITORY_PARAMETER);
 
-				if (pathInSlide == null || CoreConstants.EMPTY.equals(pathInSlide)) {
+				if (pathInRepository == null || CoreConstants.EMPTY.equals(pathInRepository)) {
 					LOGGER.log(Level.SEVERE, "Unknown path for resource in Slide");
 					return;
 				}
 			}
 			else {
-				pathInSlide = BPMConstants.PDF_OF_XFORMS_PATH_IN_SLIDE;
+				pathInRepository = BPMConstants.PDF_OF_XFORMS_PATH_IN_SLIDE;
 			}
 		}
 
@@ -132,7 +132,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			return;
 		}
 
-		String pathToPdf = formConverter.getGeneratedPDFFromXForm(taskInstanceId, formId, formSubmissionId, pathInSlide, pdfName, checkExistence);
+		String pathToPdf = formConverter.getGeneratedPDFFromXForm(taskInstanceId, formId, formSubmissionId, pathInRepository, pdfName, checkExistence);
 		if (StringUtil.isEmpty(pathToPdf)) {
 			LOGGER.log(Level.SEVERE, "PDF from XForm was not generated!");
 			return;
