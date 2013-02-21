@@ -229,8 +229,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			TaskInstance ti = tiw.getTaskInstance();
 
 			try {
-				// check if task instance is eligible for viewing for user
-				// provided
+				// Checks if task instance is eligible for viewing for user provided
 
 				// TODO: add user into permission
 				Permission permission = permissionsFactory.getTaskInstanceSubmitPermission(false, ti);
