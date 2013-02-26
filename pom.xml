@@ -9,7 +9,6 @@
   <name>Idega BPM API</name>
   <groupId>com.idega.block.addon</groupId>
   <artifactId>com.idega.bpm</artifactId>
-  <version>5.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
   <inceptionYear>2008</inceptionYear>
   <description>Default BPM implementation of Idega BPM API</description>

@@ -1,6 +1,39 @@
 package com.idega.bpm.pdf.servlet;
 
-import src.java.com.idega.bpm.BPMConstants;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.idega.block.form.business.FormConverterToPDF;
+import com.idega.block.form.data.dao.XFormsDAO;
+import com.idega.bpm.BPMConstants;
+import com.idega.core.file.util.MimeTypeUtil;
+import com.idega.idegaweb.IWMainApplication;
+import com.idega.io.DownloadWriter;
+import com.idega.io.MediaWritable;
+import com.idega.jbpm.exe.BPMFactory;
+import com.idega.jbpm.exe.ProcessConstants;
+import com.idega.jbpm.exe.ProcessManager;
+import com.idega.jbpm.exe.TaskInstanceW;
+import com.idega.presentation.IWContext;
+import com.idega.repository.bean.RepositoryItem;
+import com.idega.util.CoreConstants;
+import com.idega.util.FileUtil;
+import com.idega.util.StringUtil;
+import com.idega.util.expression.ELUtil;
+import com.idega.xformsmanager.business.DocumentManagerFactory;
+import com.idega.xformsmanager.business.Form;
+import com.idega.xformsmanager.business.PersistenceManager;
+import com.idega.xformsmanager.business.Submission;
+import com.idega.xformsmanager.business.XFormPersistenceType;
+import com.idega.xformsmanager.component.beans.LocalizedStringBean;
 
 /**
  * Downloads PDF for provided XForm
@@ -20,7 +53,6 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	private static final Logger LOGGER = Logger.getLogger(XFormToPDFWriter.class.getName());
 
 	private RepositoryItem resourceInPDF = null;
-	private String pathToPDF = null;
 
 	private boolean showPDF;
 
@@ -113,8 +145,6 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 		}
 		if (resourceInPDF == null || !resourceInPDF.exists())
 			return;
-
-		this.pathToPDF = pathToPDF;
 
 		if (showPDF) {
 			//	Setting inline attribute - we don't want to force download of PDF file

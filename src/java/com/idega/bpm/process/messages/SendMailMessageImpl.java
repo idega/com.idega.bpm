@@ -1,5 +1,50 @@
 package com.idega.bpm.process.messages;
 
+import java.io.File;
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+
+import org.jbpm.graph.exe.ProcessInstance;
+import org.jbpm.graph.exe.Token;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
+
+import com.idega.block.email.business.EmailSenderHelper;
+import com.idega.builder.bean.AdvancedProperty;
+import com.idega.core.business.DefaultSpringBean;
+import com.idega.core.converter.util.StringConverterUtility;
+import com.idega.idegaweb.IWApplicationContext;
+import com.idega.idegaweb.IWMainApplication;
+import com.idega.jbpm.exe.BPMFactory;
+import com.idega.jbpm.exe.ProcessInstanceW;
+import com.idega.jbpm.identity.UserPersonalData;
+import com.idega.jbpm.process.business.messages.MessageValueContext;
+import com.idega.jbpm.process.business.messages.MessageValueHandler;
+import com.idega.jbpm.variables.BinaryVariable;
+import com.idega.presentation.IWContext;
+import com.idega.user.business.UserBusiness;
+import com.idega.user.data.Group;
+import com.idega.user.data.User;
+import com.idega.util.CoreConstants;
+import com.idega.util.CoreUtil;
+import com.idega.util.EmailValidator;
+import com.idega.util.ListUtil;
+import com.idega.util.SendMail;
+import com.idega.util.SendMailMessageValue;
+import com.idega.util.StringUtil;
+
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
