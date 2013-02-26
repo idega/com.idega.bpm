@@ -1,39 +1,6 @@
 package com.idega.bpm.pdf.business;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.faces.application.Application;
-import javax.faces.component.UIComponent;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
-
-import com.idega.block.form.business.FormConverterToPDF;
-import com.idega.block.form.presentation.FormViewer;
-import com.idega.block.process.variables.Variable;
-import com.idega.block.process.variables.VariableDataType;
-import com.idega.bpm.BPMConstants;
-import com.idega.core.business.DefaultSpringBean;
-import com.idega.graphics.generator.business.PDFGenerator;
-import com.idega.idegaweb.IWBundle;
-import com.idega.jbpm.artifacts.presentation.ProcessArtifacts;
-import com.idega.jbpm.exe.BPMFactory;
-import com.idega.jbpm.exe.TaskInstanceW;
-import com.idega.jbpm.variables.BinaryVariable;
-import com.idega.presentation.IWContext;
-import com.idega.presentation.PDFRenderedComponent;
-import com.idega.repository.bean.RepositoryItem;
-import com.idega.util.CoreConstants;
-import com.idega.util.CoreUtil;
-import com.idega.util.IOUtil;
-import com.idega.util.PresentationUtil;
-import com.idega.util.StringUtil;
+import src.java.com.idega.bpm.BPMConstants;
 
 @Scope(BeanDefinition.SCOPE_SINGLETON)
 @Service(FormConverterToPDF.STRING_BEAN_IDENTIFIER)
@@ -176,7 +143,8 @@ public class FormConverterToPDFBean extends DefaultSpringBean implements FormCon
 			pdfName = StringUtil.isEmpty(pdfName) ? new StringBuilder("Form_").append(prefix).toString() : pdfName;
 			if (!pdfName.endsWith(".pdf"))
 				pdfName = new StringBuilder(pdfName).append(".pdf").toString();
-			pdfName = StringUtil.escapeFileNameSpecialCharacters(pdfName);
+
+			pdfName = StringHandler.stripNonRomanCharacters(pdfName, new char[] {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_', '.'});
 			String pathToForm = new StringBuilder(pathInRepository).append(pdfName).toString();
 
 			boolean needToGenerate = true;

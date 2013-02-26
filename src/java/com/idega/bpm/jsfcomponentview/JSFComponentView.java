@@ -24,7 +24,7 @@ public class JSFComponentView implements View, Serializable {
 
 	private String viewId;
 	private Long taskInstanceId;
-	private boolean submitable = true;
+	private boolean submitable = true, submitted;
 	private Map<String, Object> variables;
 
 	@Autowired
@@ -163,5 +163,13 @@ public class JSFComponentView implements View, Serializable {
 	@Override
 	public boolean hasViewForDisplay() {
 		return true;
+	}
+
+	public void setSubmitted(boolean submitted) {
+		this.submitted = submitted;
+	}
+
+	public boolean isSubmitted() {
+		return submitted;
 	}
 }

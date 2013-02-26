@@ -119,6 +119,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	private static final String CACHED_TASK_NAMES = "defaultBPM_taskinstance_names";
 
+	private Boolean submitted = null;
+
 	@Override
 	@Transactional(readOnly = true)
 	public TaskInstance getTaskInstance() {
@@ -519,7 +521,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 		return name;
 	}
-
+// FIXME
 	private String getNameFromMetaData(Long taskInstanceId) {
 		try {
 			MetaDataHome metaDataHome = (MetaDataHome) IDOLookup.getHome(MetaData.class);
@@ -721,6 +723,16 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		}
 
 		return false;
+	}
+
+	@Override
+	public boolean isSubmitted() {
+		if (submitted != null)
+			return submitted;
+
+		submitted = getTaskInstance().getEnd() == null ? Boolean.FALSE : Boolean.TRUE;
+
+		return submitted;
 	}
 
 	public ProcessManager getProcessManager() {
