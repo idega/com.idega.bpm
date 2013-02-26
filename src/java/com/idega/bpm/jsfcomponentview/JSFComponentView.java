@@ -165,12 +165,10 @@ public class JSFComponentView implements View, Serializable {
 		return true;
 	}
 
-	@Override
 	public void setSubmitted(boolean submitted) {
 		this.submitted = submitted;
 	}
 
-	@Override
 	public boolean isSubmitted() {
 		return submitted;
 	}

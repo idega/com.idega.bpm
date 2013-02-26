@@ -339,12 +339,10 @@ public class XFormsView implements View {
 		return variables;
 	}
 
-	@Override
 	public boolean isSubmitted() {
 		return submitted;
 	}
 
-	@Override
 	public void setSubmitted(boolean submitted) {
 		this.submitted = submitted;
 	}
