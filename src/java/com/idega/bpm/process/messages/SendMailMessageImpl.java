@@ -153,7 +153,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		if (ListUtil.isEmpty(attachments))
 			return null;
 
-		List<String> filesInSlide = new ArrayList<String>();
+		List<String> filesInRepository = new ArrayList<String>();
 		for (BinaryVariable bv: attachments) {
 			try {
 				String name = "files_".concat(bv.getVariable().getName());
@@ -161,13 +161,13 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 					continue;
 				}
 
-				filesInSlide.add(bv.getIdentifier());
+				filesInRepository.add(bv.getIdentifier());
 			} catch (Exception e) {
 				getLogger().log(Level.WARNING, "Unable to attach file: " + bv, e);
 			}
 		}
 
-		return getEmailSenderHelper().getFileToAttach(filesInSlide);
+		return getEmailSenderHelper().getFileToAttach(filesInRepository);
 	}
 
 	protected String[] getFormattedMessage(MessageValueContext mvCtx, Locale preferredLocale, LocalizedMessages msgs,Map<Locale, String[]> unformattedForLocales,

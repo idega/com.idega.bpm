@@ -56,7 +56,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	private boolean showPDF;
 
 	@Autowired(required = false)
-	@XFormPersistenceType("slide")
+	@XFormPersistenceType(CoreConstants.REPOSITORY)
 	private transient PersistenceManager persistenceManager;
 
 	@Autowired(required = false)
@@ -113,12 +113,12 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 				pathInRepository = iwc.getParameter(PATH_IN_REPOSITORY_PARAMETER);
 
 				if (pathInRepository == null || CoreConstants.EMPTY.equals(pathInRepository)) {
-					LOGGER.log(Level.SEVERE, "Unknown path for resource in Slide");
+					LOGGER.log(Level.SEVERE, "Unknown path for resource in repository");
 					return;
 				}
 			}
 			else {
-				pathInRepository = BPMConstants.PDF_OF_XFORMS_PATH_IN_SLIDE;
+				pathInRepository = BPMConstants.PDF_OF_XFORMS_PATH_IN_REPOSITORY;
 			}
 		}
 

@@ -58,7 +58,7 @@ public class FormConverterToPDFBean extends DefaultSpringBean implements FormCon
 			return null;
 		}
 		if (StringUtil.isEmpty(uploadPath))
-			uploadPath = BPMConstants.PDF_OF_XFORMS_PATH_IN_SLIDE;
+			uploadPath = BPMConstants.PDF_OF_XFORMS_PATH_IN_REPOSITORY;
 		if (!uploadPath.startsWith(CoreConstants.SLASH))
 			uploadPath = CoreConstants.SLASH + uploadPath;
 		if (!uploadPath.endsWith(CoreConstants.SLASH))
