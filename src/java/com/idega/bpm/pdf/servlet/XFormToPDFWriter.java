@@ -56,11 +56,11 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	private static final Logger LOGGER = Logger.getLogger(XFormToPDFWriter.class.getName());
 
 	private String pathToPDF = null;
-	
+
 	private WebdavResource resourceInPDF = null;
 
 	private boolean showPDF;
-	
+
 	@Autowired(required = false)
 	@XFormPersistenceType("slide")
 	private transient PersistenceManager persistenceManager;
@@ -81,7 +81,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	public void init(HttpServletRequest req, IWContext iwc) {
 		String paramShowPDF = iwc.getParameter("showPDF");
 		showPDF = !StringUtil.isEmpty(paramShowPDF) && Boolean.TRUE.toString().equals(paramShowPDF);
-		
+
 		String taskInstanceId = iwc.getParameter(ProcessConstants.TASK_INSTANCE_ID);
 		String formId = iwc.getParameter(XFORM_ID_PARAMETER);
 		String formSubmissionId = iwc.getParameter(XFORM_SUBMISSION_ID_PARAMETER);
@@ -159,9 +159,9 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 		}
 		if (resourceInPDF == null || !resourceInPDF.exists())
 			return;
-		
+
 		this.pathToPDF = pathToPDF;
-		
+
 		if (showPDF) {
 			//	Setting inline attribute - we don't want to force download of PDF file
 			iwc.getResponse().setHeader("Content-Disposition", "inline;filename=\"" + resourceInPDF.getDisplayName() + "\"");
@@ -199,7 +199,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 			streamIn = repository.getInputStream(pathToPDF);
 		}
 		FileUtil.streamToOutputStream(streamIn, streamOut);
-		
+
 		streamOut.flush();
 		streamOut.close();
 		streamIn.close();

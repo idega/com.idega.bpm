@@ -23,6 +23,7 @@ import com.idega.bpm.BPMConstants;
 import com.idega.business.IBOLookup;
 import com.idega.business.IBOLookupException;
 import com.idega.business.IBORuntimeException;
+import com.idega.core.business.DefaultSpringBean;
 import com.idega.graphics.generator.business.PDFGenerator;
 import com.idega.idegaweb.IWBundle;
 import com.idega.idegaweb.IWMainApplication;
@@ -39,10 +40,11 @@ import com.idega.util.IOUtil;
 import com.idega.util.PresentationUtil;
 import com.idega.util.StringHandler;
 import com.idega.util.StringUtil;
+import com.idega.util.expression.ELUtil;
 
-@Scope(BeanDefinition.SCOPE_SINGLETON)
 @Service(FormConverterToPDF.STRING_BEAN_IDENTIFIER)
-public class FormConverterToPDFBean implements FormConverterToPDF {
+@Scope(BeanDefinition.SCOPE_SINGLETON)
+public class FormConverterToPDFBean extends DefaultSpringBean implements FormConverterToPDF {
 
 	private static final Logger LOGGER = Logger.getLogger(FormConverterToPDFBean.class.getName());
 
@@ -87,7 +89,7 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void addStyleSheetsForPDF(IWContext iwc) {
+	public void addStyleSheetsForPDF(IWContext iwc) {
 		IWBundle bundle = iwc.getIWMainApplication().getBundle(BPMConstants.IW_BUNDLE_STARTER);
 		String pdfCss = bundle.getVirtualPathWithFileNameString("style/pdf.css");
 		List<String> resources = null;
@@ -229,7 +231,7 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		return xformInPDF;
 	}
 
-	private UIComponent getComponentToRender(IWContext iwc, String taskInstanceId, String formId, String formSubmitionId) {
+	public UIComponent getComponentToRender(IWContext iwc, String taskInstanceId, String formId, String formSubmitionId) {
 		UIComponent component = null;
 		if (!StringUtil.isEmpty(taskInstanceId)) {
 			try {
@@ -278,7 +280,9 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		return null;
 	}
 
-	private BPMFactory getBpmFactory() {
+	protected BPMFactory getBpmFactory() {
+		if (bpmFactory == null)
+			ELUtil.getInstance().autowire(this);
 		return bpmFactory;
 	}
 
@@ -286,7 +290,9 @@ public class FormConverterToPDFBean implements FormConverterToPDF {
 		this.bpmFactory = bpmFactory;
 	}
 
-	private PDFGenerator getGenerator() {
+	protected PDFGenerator getGenerator() {
+		if (generator == null)
+			ELUtil.getInstance().autowire(this);
 		return generator;
 	}
 

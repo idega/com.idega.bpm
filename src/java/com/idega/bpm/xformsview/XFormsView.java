@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 
@@ -17,6 +16,7 @@ import com.idega.block.form.data.XForm;
 import com.idega.block.form.data.dao.XFormsDAO;
 import com.idega.block.form.presentation.FormViewer;
 import com.idega.bpm.BPMConstants;
+import com.idega.idegaweb.IWBundle;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.idegaweb.IWResourceBundle;
 import com.idega.jbpm.variables.Converter;
@@ -114,8 +114,12 @@ public class XFormsView implements View {
 
 	@Override
 	public UIComponent getViewForDisplay(boolean pdfViewer) {
-		FacesContext context = FacesContext.getCurrentInstance();
-		Application application = context.getApplication();
+		IWMainApplication application = null;
+		IWContext iwc = CoreUtil.getIWContext();
+		if (iwc == null)
+			application = IWMainApplication.getDefaultIWMainApplication();
+		else
+			application = iwc.getIWMainApplication();
 
 		org.w3c.dom.Document xform = null;
 		try {
@@ -127,24 +131,24 @@ public class XFormsView implements View {
 					", task instance ID: " + taskInstanceId, e);
 		}
 		if (xform == null) {
-			IWContext iwc = IWContext.getIWContext(context);
-			IWResourceBundle iwrb = iwc.getIWMainApplication().getBundle(BPMConstants.IW_BUNDLE_STARTER).getResourceBundle(iwc);
+			IWBundle bundle = application.getBundle(BPMConstants.IW_BUNDLE_STARTER);
+			IWResourceBundle iwrb = iwc == null ? bundle.getResourceBundle(Locale.ENGLISH) : bundle.getResourceBundle(iwc);
 			Layer errorBlock = new Layer();
 			Heading2 errorLabel = new Heading2(iwrb.getLocalizedString("error_rendering_xform",
 					"Sorry, some error occurred. We are working on it. Please, try later..."));
 			errorBlock.add(errorLabel);
 			String action = "closeAllLoadingMessages();";
-			if (!CoreUtil.isSingleComponentRenderingProcess(iwc))
+			if (iwc != null && !CoreUtil.isSingleComponentRenderingProcess(iwc))
 				action = "jQuery(window).load(function() {" + action + "});";
 			errorBlock.add(PresentationUtil.getJavaScriptAction(action));
 			return errorBlock;
-		} else {
-			FormViewer formviewer = (FormViewer) application.createComponent(FormViewer.COMPONENT_TYPE);
-			formviewer.setXFormsDocument(xform);
-			formviewer.setPdfViewer(pdfViewer);
-			formviewer.setSubmitted(isSubmitted());
-			return formviewer;
 		}
+
+		FormViewer formviewer = (FormViewer) application.createComponent(FormViewer.COMPONENT_TYPE);
+		formviewer.setXFormsDocument(xform);
+		formviewer.setPdfViewer(pdfViewer);
+		formviewer.setSubmitted(isSubmitted());
+		return formviewer;
 	}
 
 	public void setFormDocument(Document formDocument) {
