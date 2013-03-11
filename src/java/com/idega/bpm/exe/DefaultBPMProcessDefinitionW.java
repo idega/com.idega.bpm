@@ -164,6 +164,8 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 					pi.setStart(new Date());
 
+					context.getSession().flush();
+
 					submitVariablesAndProceedProcess(context, ti, viewSubmission.resolveVariables(), true);
 
 					Long piId = pi.getId();
