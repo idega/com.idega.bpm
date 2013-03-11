@@ -8,6 +8,7 @@ import org.chiba.xml.xforms.connector.SubmissionHandler;
 import org.chiba.xml.xforms.core.Submission;
 import org.chiba.xml.xforms.exception.XFormsException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Node;
 
 import com.idega.core.file.tmp.TmpFileResolver;
@@ -35,6 +36,7 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 	private TmpFileResolver uploadedResourceResolver;
 
 	@Override
+	@Transactional(readOnly = false)
 	public Map<String, Object> submit(Submission submission,  Node submissionInstance) throws XFormsException {
 		// method - post, replace - none
 		if (!submission.getReplace().equalsIgnoreCase("none"))
@@ -85,7 +87,7 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 					xformsViewSubmission.setViewType(viewType);
 
 					ProcessDefinitionW pdW = bpmFactory.getProcessManager(processDefinitionId).getProcessDefinition(processDefinitionId);
-					procDefName = pdW.getProcessDefinition().getName();
+					procDefName = getBpmFactory().getBPMDAO().getProcessDefinitionNameByProcessDefinitionId(processDefinitionId);
 
 					piId = pdW.startProcess(xformsViewSubmission);
 				} else {

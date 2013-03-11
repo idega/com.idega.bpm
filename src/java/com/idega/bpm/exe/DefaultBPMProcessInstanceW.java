@@ -33,6 +33,7 @@ import com.idega.block.process.business.CasesRetrievalManager;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
+import com.idega.jbpm.data.VariableInstanceQuerier;
 import com.idega.jbpm.data.dao.BPMDAO;
 import com.idega.jbpm.exe.BPMDocument;
 import com.idega.jbpm.exe.BPMEmailDocument;
@@ -78,7 +79,9 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Autowired
 	private BPMContext bpmContext;
+
 	private ProcessManager processManager;
+
 	@Autowired
 	private BPMFactory bpmFactory;
 
@@ -95,9 +98,18 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Qualifier("default")
 	private TaskMgmtInstanceW taskMgmtInstance;
 
+	@Autowired
+	private VariableInstanceQuerier querier;
+
 	public static final String email_fetch_process_name = "fetchEmails";
 
 	public static final String add_attachement_process_name = "addAttachments";
+
+	public VariableInstanceQuerier getVariableInstanceQuerier() {
+		if (querier == null)
+			ELUtil.getInstance().autowire(this);
+		return querier;
+	}
 
 	@Override
 	@Transactional(readOnly = true)
@@ -121,19 +133,24 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	 */
 	@Transactional(readOnly = true)
 	List<TaskInstance> getProcessTaskInstances(final List<String> excludedSubProcessesNames, final List<String> includedOnlySubProcessesNames) {
-		return getBpmContext().execute(new JbpmCallback() {
+		return getBpmContext().execute(new JbpmCallback<List<TaskInstance>>() {
 
 			@Override
-			@SuppressWarnings("unchecked")
-			public Object doInJbpm(JbpmContext context) throws JbpmException {
-				ProcessInstance processInstance = getProcessInstance();
+			public List<TaskInstance> doInJbpm(JbpmContext context) throws JbpmException {
+				ProcessInstance processInstance = getProcessInstance(context);
 
 				final List<TaskInstance> taskInstances;
 				if (includedOnlySubProcessesNames != null) {
 					// only inserting task instances from subprocesses
 					taskInstances = new ArrayList<TaskInstance>();
 				} else {
-					taskInstances = new ArrayList<TaskInstance>(processInstance.getTaskMgmtInstance().getTaskInstances());
+					@SuppressWarnings("unchecked")
+					Collection<TaskInstance> tasks = processInstance.getTaskMgmtInstance().getTaskInstances();
+					if (ListUtil.isEmpty(tasks)) {
+						taskInstances = new ArrayList<TaskInstance>();
+						getLogger().warning("Where are no tasks for process instance " + processInstance.getId());
+					} else
+						taskInstances = new ArrayList<TaskInstance>(tasks);
 				}
 
 				taskInstances.addAll(getSubprocessesTaskInstances(processInstance, excludedSubProcessesNames, includedOnlySubProcessesNames));
@@ -220,49 +237,61 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return getBPMDocuments(unfinishedTaskInstances, locale);
 	}
 
-	private List<TaskInstanceW> filterTasksByUserPermission(User user, List<TaskInstanceW> unfinishedTaskInstances) {
-		PermissionsFactory permissionsFactory = getBpmFactory().getPermissionsFactory();
-		RolesManager rolesManager = getBpmFactory().getRolesManager();
+	@Transactional(readOnly = true)
+	private List<TaskInstanceW> filterTasksByUserPermission(User user, final List<TaskInstanceW> unfinishedTaskInstances) {
+		final PermissionsFactory permissionsFactory = getBpmFactory().getPermissionsFactory();
+		final RolesManager rolesManager = getBpmFactory().getRolesManager();
 
-		for (Iterator<TaskInstanceW> iterator = unfinishedTaskInstances.iterator(); iterator.hasNext();) {
-			TaskInstanceW tiw = iterator.next();
-			TaskInstance ti = tiw.getTaskInstance();
+		return getBpmContext().execute(new JbpmCallback<List<TaskInstanceW>>() {
 
-			try {
-				// Checks if task instance is eligible for viewing for user provided
+			@Override
+			public List<TaskInstanceW> doInJbpm(JbpmContext context) throws JbpmException {
+				for (Iterator<TaskInstanceW> iterator = unfinishedTaskInstances.iterator(); iterator.hasNext();) {
+					TaskInstanceW tiw = iterator.next();
+					TaskInstance ti = tiw.getTaskInstance();
 
-				// TODO: add user into permission
-				Permission permission = permissionsFactory.getTaskInstanceSubmitPermission(false, ti);
-				rolesManager.checkPermission(permission);
-			} catch (BPMAccessControlException e) {
-				iterator.remove();
+					try {
+						// Checks if task instance is eligible for viewing for user provided
+
+						// TODO: add user into permission
+						Permission permission = permissionsFactory.getTaskInstanceSubmitPermission(false, ti);
+						rolesManager.checkPermission(permission);
+					} catch (BPMAccessControlException e) {
+						iterator.remove();
+					}
+				}
+
+				return unfinishedTaskInstances;
 			}
-		}
-
-		return unfinishedTaskInstances;
+		});
 	}
 
-	private List<TaskInstanceW> filterDocumentsByUserPermission(User user, List<TaskInstanceW> submittedTaskInstances) {
-		PermissionsFactory permissionsFactory = getBpmFactory().getPermissionsFactory();
-		RolesManager rolesManager = getBpmFactory().getRolesManager();
+	@Transactional(readOnly = true)
+	private List<TaskInstanceW> filterDocumentsByUserPermission(User user, final List<TaskInstanceW> submittedTaskInstances) {
+		final PermissionsFactory permissionsFactory = getBpmFactory().getPermissionsFactory();
+		final RolesManager rolesManager = getBpmFactory().getRolesManager();
 
-		for (Iterator<TaskInstanceW> iterator = submittedTaskInstances.iterator(); iterator.hasNext();) {
-			TaskInstanceW tiw = iterator.next();
-			TaskInstance ti = tiw.getTaskInstance();
+		return getBpmContext().execute(new JbpmCallback<List<TaskInstanceW>>() {
 
-			try {
-				// check if task instance is eligible for viewing for user
-				// provided
+			@Override
+			public List<TaskInstanceW> doInJbpm(JbpmContext context) throws JbpmException {
+				for (Iterator<TaskInstanceW> iterator = submittedTaskInstances.iterator(); iterator.hasNext();) {
+					TaskInstanceW tiw = iterator.next();
+					TaskInstance ti = tiw.getTaskInstance();
 
-				// TODO: add user into permission
-				Permission permission = permissionsFactory.getTaskInstanceViewPermission(true, ti);
-				rolesManager.checkPermission(permission);
-			} catch (BPMAccessControlException e) {
-				iterator.remove();
+					try {
+						// Check if task instance is eligible for viewing for user provided
+
+						// TODO: add user into permission
+						Permission permission = permissionsFactory.getTaskInstanceViewPermission(true, ti);
+						rolesManager.checkPermission(permission);
+					} catch (BPMAccessControlException e) {
+						iterator.remove();
+					}
+				}
+				return submittedTaskInstances;
 			}
-		}
-
-		return submittedTaskInstances;
+		});
 	}
 
 	@Override
@@ -452,13 +481,20 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	@Transactional(readOnly = true)
 	public ProcessInstance getProcessInstance() {
-		processInstance = getBpmContext().execute(new JbpmCallback() {
+		processInstance = getBpmContext().execute(new JbpmCallback<ProcessInstance>() {
 			@Override
-			public Object doInJbpm(JbpmContext context) throws JbpmException {
-				return context.getProcessInstance(getProcessInstanceId());
+			public ProcessInstance doInJbpm(JbpmContext context) throws JbpmException {
+				return getProcessInstance(context);
 			}
 		});
 
+		return processInstance;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ProcessInstance getProcessInstance(JbpmContext context) {
+		processInstance = context.getProcessInstance(getProcessInstanceId());
 		return processInstance;
 	}
 
@@ -479,7 +515,19 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	@Transactional(readOnly = true)
 	public ProcessDefinitionW getProcessDefinitionW() {
-		Long pdId = getProcessInstance().getProcessDefinition().getId();
+		return getBpmContext().execute(new JbpmCallback<ProcessDefinitionW>() {
+
+			@Override
+			public ProcessDefinitionW doInJbpm(JbpmContext context) throws JbpmException {
+				return getProcessDefinitionW(context);
+			}
+		});
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ProcessDefinitionW getProcessDefinitionW(JbpmContext context) {
+		Long pdId = getProcessInstance(context).getProcessDefinition().getId();
 		return getProcessManager().getProcessDefinition(pdId);
 	}
 

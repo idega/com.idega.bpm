@@ -30,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.idega.block.process.variables.Variable;
 import com.idega.bpm.BPMConstants;
 import com.idega.bpm.xformsview.XFormsView;
+import com.idega.core.business.DefaultSpringBean;
+import com.idega.core.localisation.business.ICLocaleBusiness;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
 import com.idega.jbpm.events.ProcessInstanceCreatedEvent;
@@ -50,7 +52,7 @@ import com.idega.util.expression.ELUtil;
  */
 @Service("defaultPDW")
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
-public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
+public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements ProcessDefinitionW {
 
 	private static Logger LOGGER;
 
@@ -64,6 +66,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	@Autowired
 	private VariablesHandler variablesHandler;
 
+	@Override
 	protected Logger getLogger() {
 		if (LOGGER == null) {
 			LOGGER = Logger.getLogger(this.getClass().getName());
@@ -78,10 +81,10 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	@Override
 	@Transactional(readOnly = true)
 	public List<Variable> getTaskVariableList(final String taskName) {
-		return getBpmContext().execute(new JbpmCallback() {
+		return getBpmContext().execute(new JbpmCallback<List<Variable>>() {
 			@Override
-			public Object doInJbpm(JbpmContext context) throws JbpmException {
-				ProcessDefinition pdef = getProcessDefinition();
+			public List<Variable> doInJbpm(JbpmContext context) throws JbpmException {
+				ProcessDefinition pdef = getProcessDefinition(context);
 				Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
 				TaskController tiController = task.getTaskController();
 
@@ -105,10 +108,10 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	@Override
 	@Transactional(readOnly = true)
 	public List<Variable> getTaskVariableWithAccessesList(final String taskName) {
-		return getBpmContext().execute(new JbpmCallback() {
+		return getBpmContext().execute(new JbpmCallback<List<Variable>>() {
 			@Override
-			public Object doInJbpm(JbpmContext context) throws JbpmException {
-				ProcessDefinition pdef = getProcessDefinition();
+			public List<Variable> doInJbpm(JbpmContext context) throws JbpmException {
+				ProcessDefinition pdef = getProcessDefinition(context);
 				Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
 				TaskController tiController = task.getTaskController();
 
@@ -145,10 +148,10 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 
 		Long piId = null;
 		try {
-			piId = getBpmContext().execute(new JbpmCallback() {
+			piId = getBpmContext().execute(new JbpmCallback<Long>() {
 				@Override
 				public Long doInJbpm(JbpmContext context) throws JbpmException {
-					ProcessDefinition pd = getProcessDefinition();
+					ProcessDefinition pd = getProcessDefinition(context);
 					ProcessInstance pi = new ProcessInstance(pd);
 					TaskInstance ti = pi.getTaskMgmtInstance().createStartTaskInstance();
 
@@ -161,7 +164,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 
 					pi.setStart(new Date());
 
-					submitVariablesAndProceedProcess(ti, viewSubmission.resolveVariables(), true);
+					submitVariablesAndProceedProcess(context, ti, viewSubmission.resolveVariables(), true);
 
 					Long piId = pi.getId();
 					return piId;
@@ -173,7 +176,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 
 		String procDefName = null;
 		try {
-			procDefName = getProcessDefinition().getName();
+			procDefName = getBpmFactory().getBPMDAO().getProcessDefinitionNameByProcessDefinitionId(processDefinitionId);
 		} catch (Exception e) {
 			getLogger().log(Level.WARNING, "Error while trying to get proc. def. name for process instance " + piId, e);
 		}
@@ -190,11 +193,11 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	@Transactional(readOnly = false)
 	public View loadInitView(Integer initiatorId) {
 		try {
-			return getBpmContext().execute(new JbpmCallback() {
+			return getBpmContext().execute(new JbpmCallback<View>() {
 				@Override
-				public Object doInJbpm(JbpmContext context) throws JbpmException {
+				public View doInJbpm(JbpmContext context) throws JbpmException {
 					Long processDefinitionId = getProcessDefinitionId();
-					ProcessDefinition pd = getProcessDefinition();
+					ProcessDefinition pd = getProcessDefinition(context);
 
 					Long startTaskId = pd.getTaskMgmtDefinition().getStartTask().getId();
 
@@ -239,7 +242,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	}
 
 	@Transactional(readOnly = false)
-	protected void submitVariablesAndProceedProcess(TaskInstance ti, Map<String, Object> variables, boolean proceed) {
+	protected void submitVariablesAndProceedProcess(JbpmContext context, TaskInstance ti, Map<String, Object> variables, boolean proceed) {
 		Integer usrId = null;
 		try {
 			BPMUser bpmUser = getBpmFactory().getBpmUserFactory().getCurrentBPMUser();
@@ -255,7 +258,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		if (usrId != null)
 			ti.setActorId(usrId.toString());
 
-		getVariablesHandler().submitVariables(variables, ti.getId(), true);
+		getVariablesHandler().submitVariables(context, variables, ti.getId(), true);
 		getLogger().info("Variables were submitted");
 
 		if (proceed) {
@@ -268,6 +271,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		} else {
 			ti.setEnd(new Date());
 		}
+
 		getLogger().info("Task instance (name=" + ti.getName() + ", ID=" + ti.getId() + ") was executed");
 
 		try {
@@ -282,14 +286,25 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	@Override
 	@Transactional(readOnly = true)
 	public String getStartTaskName() {
-		List<String> preferred = new ArrayList<String>(1);
-		preferred.add(XFormsView.VIEW_TYPE);
+		Locale locale = getCurrentLocale();
+		if (locale == null)
+			locale = ICLocaleBusiness.getLocaleFromLocaleString("is_IS");
 
-		Long taskId = getProcessDefinition().getTaskMgmtDefinition().getStartTask().getId();
+		final Locale l = locale;
+		return getBpmContext().execute(new JbpmCallback<String>() {
 
-		View view = getBpmFactory().getViewByTask(taskId, false, preferred);
+			@Override
+			public String doInJbpm(JbpmContext context) throws JbpmException {
+				List<String> preferred = new ArrayList<String>(1);
+				preferred.add(XFormsView.VIEW_TYPE);
 
-		return view.getDisplayName(new Locale("is", "IS"));
+				Long taskId = getProcessDefinition(context).getTaskMgmtDefinition().getStartTask().getId();
+
+				View view = getBpmFactory().getViewByTask(taskId, false, preferred);
+
+				return view.getDisplayName(l);
+			}
+		});
 	}
 
 	@Override
@@ -343,14 +358,20 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	}
 
 	@Override
-	@Transactional(readOnly = false)
 	public ProcessDefinition getProcessDefinition() {
-		processDefinition = getBpmContext().execute(new JbpmCallback() {
+		processDefinition = getBpmContext().execute(new JbpmCallback<ProcessDefinition>() {
 			@Override
-			public Object doInJbpm(JbpmContext context) throws JbpmException {
-				return context.getGraphSession().getProcessDefinition(getProcessDefinitionId());
+			public ProcessDefinition doInJbpm(JbpmContext context) throws JbpmException {
+				return getProcessDefinition(context);
 			}
 		});
+		return processDefinition;
+	}
+
+	@Override
+	@Transactional(readOnly = false)
+	public ProcessDefinition getProcessDefinition(JbpmContext context) {
+		processDefinition = context.getGraphSession().getProcessDefinition(getProcessDefinitionId());
 		return processDefinition;
 	}
 

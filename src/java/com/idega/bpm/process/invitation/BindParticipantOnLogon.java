@@ -2,7 +2,6 @@ package com.idega.bpm.process.invitation;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -21,33 +20,27 @@ import com.idega.user.data.User;
  */
 @Service
 @Scope(BeanDefinition.SCOPE_SINGLETON)
-public class BindParticipantOnLogon implements ApplicationListener {
+public class BindParticipantOnLogon implements ApplicationListener<UserLoggedInEvent> {
 
 	private BPMFactory bpmFactory;
 
 	@Override
-	public void onApplicationEvent(ApplicationEvent ae) {
-
-		if (ae instanceof UserLoggedInEvent) {
-
-			UserLoggedInEvent ule = (UserLoggedInEvent) ae;
-			IWContext iwc = ule.getIWC();
-			com.idega.user.data.bean.User user = ule.getLoggedInUsr();
-			User usr = null;
-			try {
-				UserBusiness userBusiness = IBOLookup.getServiceInstance(iwc, UserBusiness.class);
-				usr = userBusiness.getUser(user.getId());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			BPMUser bpmUser = getBpmFactory().getBpmUserFactory()
-			        .getLoggedInBPMUser(iwc, null, usr);
-
-			if (bpmUser != null)
-				// would associate automatically if not associated
-				bpmUser.getIsAssociated(true);
+	public void onApplicationEvent(UserLoggedInEvent ae) {
+		UserLoggedInEvent ule = ae;
+		IWContext iwc = ule.getIWC();
+		com.idega.user.data.bean.User user = ule.getLoggedInUsr();
+		User usr = null;
+		try {
+			UserBusiness userBusiness = IBOLookup.getServiceInstance(iwc, UserBusiness.class);
+			usr = userBusiness.getUser(user.getId());
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+
+		BPMUser bpmUser = getBpmFactory().getBpmUserFactory().getLoggedInBPMUser(iwc, null, usr);
+		if (bpmUser != null)
+			// would associate automatically if not associated
+			bpmUser.getIsAssociated(true);
 	}
 
 	public BPMFactory getBpmFactory() {

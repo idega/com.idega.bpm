@@ -123,11 +123,18 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	@Override
 	@Transactional(readOnly = true)
+	public TaskInstance getTaskInstance(JbpmContext context) {
+		taskInstance = context.getTaskInstance(getTaskInstanceId());
+		return taskInstance;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public TaskInstance getTaskInstance() {
-		taskInstance = getBpmContext().execute(new JbpmCallback() {
+		taskInstance = getBpmContext().execute(new JbpmCallback<TaskInstance>() {
 			@Override
-			public Object doInJbpm(JbpmContext context) throws JbpmException {
-				return context.getTaskInstance(getTaskInstanceId());
+			public TaskInstance doInJbpm(JbpmContext context) throws JbpmException {
+				return getTaskInstance(context);
 			}
 		});
 		return taskInstance;
@@ -155,25 +162,21 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Override
 	@Transactional(readOnly = false)
 	public void assign(final int userId) {
-
 		try {
-			getBpmContext().execute(new JbpmCallback() {
+			getBpmContext().execute(new JbpmCallback<Void>() {
 
 				@Override
-				public Object doInJbpm(JbpmContext context)
-				        throws JbpmException {
-
+				public Void doInJbpm(JbpmContext context) throws JbpmException {
 					Long taskInstanceId = getTaskInstanceId();
-					RolesManager rolesManager = getBpmFactory()
-					        .getRolesManager();
+					RolesManager rolesManager = getBpmFactory().getRolesManager();
 					rolesManager.hasRightsToAssignTask(taskInstanceId, userId);
 
-					getTaskInstance().setActorId(String.valueOf(userId));
-					context.save(getTaskInstance());
+					TaskInstance ti = getTaskInstance(context);
+					ti.setActorId(String.valueOf(userId));
+					context.save(ti);
 					return null;
 				}
 			});
-
 		} catch (BPMAccessControlException e) {
 			throw new ProcessException(e, e.getUserFriendlyMessage());
 		}
@@ -182,30 +185,22 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Override
 	@Transactional(readOnly = true)
 	public User getAssignedTo() {
-
 		try {
-			return getBpmContext().execute(new JbpmCallback() {
+			return getBpmContext().execute(new JbpmCallback<User>() {
 
 				@Override
-				public Object doInJbpm(JbpmContext context)
-				        throws JbpmException {
-
-					TaskInstance taskInstance = getTaskInstance();
+				public User doInJbpm(JbpmContext context) throws JbpmException {
+					TaskInstance taskInstance = getTaskInstance(context);
 					String actorId = taskInstance.getActorId();
 
 					User usr;
-
 					if (actorId != null) {
-
 						try {
 							int assignedTo = Integer.parseInt(actorId);
 							usr = getUserBusiness().getUser(assignedTo);
-
 						} catch (Exception e) {
-							Logger.getLogger(getClass().getName()).log(
-							    Level.SEVERE,
-							    "Exception while resolving assigned user name for actor id: "
-							            + actorId, e);
+							Logger.getLogger(getClass().getName()).log(Level.SEVERE, "Exception while resolving assigned user name for actor id: " +
+									actorId, e);
 							usr = null;
 						}
 					} else
@@ -214,36 +209,30 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 					return usr;
 				}
 			});
-
 		} catch (BPMAccessControlException e) {
 			throw new ProcessException(e, e.getUserFriendlyMessage());
-
 		}
 	}
 
 	@Override
 	@Transactional(readOnly = false)
 	public void start(final int userId) {
-
 		try {
-			getBpmContext().execute(new JbpmCallback() {
+			getBpmContext().execute(new JbpmCallback<Void>() {
 
 				@Override
-				public Object doInJbpm(JbpmContext context)
-				        throws JbpmException {
+				public Void doInJbpm(JbpmContext context) throws JbpmException {
 					Long taskInstanceId = getTaskInstanceId();
-					RolesManager rolesManager = getBpmFactory()
-					        .getRolesManager();
+					RolesManager rolesManager = getBpmFactory().getRolesManager();
 					rolesManager.hasRightsToStartTask(taskInstanceId, userId);
 
-					TaskInstance taskInstance = getTaskInstance();
+					TaskInstance taskInstance = getTaskInstance(context);
 					taskInstance.start();
 
 					context.save(taskInstance);
 					return null;
 				}
 			});
-
 		} catch (BPMAccessControlException e) {
 			throw new ProcessException(e, e.getUserFriendlyMessage());
 		}
@@ -256,26 +245,19 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	@Override
 	@Transactional(readOnly = false)
-	public void submit(final ViewSubmission viewSubmission,
-	        final boolean proceedProcess) {
-
-		getBpmContext().execute(new JbpmCallback() {
+	public void submit(final ViewSubmission viewSubmission, final boolean proceedProcess) {
+		getBpmContext().execute(new JbpmCallback<View>() {
 
 			@Override
-			public Object doInJbpm(JbpmContext context) throws JbpmException {
-				TaskInstance taskInstance = getTaskInstance();
+			public View doInJbpm(JbpmContext context) throws JbpmException {
+				TaskInstance taskInstance = getTaskInstance(context);
 
 				if (taskInstance.hasEnded())
-					throw new ProcessException("Task instance ("
-					        + taskInstance.getId() + ") is already submitted",
-					        "Task instance is already submitted");
+					throw new ProcessException("Task instance (" + taskInstance.getId() + ") is already submitted", "Task instance is already submitted");
 
-				submitVariablesAndProceedProcess(taskInstance, viewSubmission
-				        .resolveVariables(), proceedProcess);
+				submitVariablesAndProceedProcess(context, taskInstance, viewSubmission.resolveVariables(), proceedProcess);
 
-				// if priority was hidden, then setting to default priority
-				// after
-				// submission
+				// if priority was hidden, then setting to default priority after submission
 				if (taskInstance.getPriority() == PRIORITY_HIDDEN) {
 					taskInstance.setPriority(Task.PRIORITY_NORMAL);
 				}
@@ -287,20 +269,23 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 
 	@Transactional(readOnly = false)
-	protected void submitVariablesAndProceedProcess(TaskInstance ti,
-	        Map<String, Object> variables, boolean proceed) {
+	protected void submitVariablesAndProceedProcess(TaskInstance ti, Map<String, Object> variables, boolean proceed) {
+		submitVariablesAndProceedProcess(null, ti, variables, proceed);
+	}
 
-		getVariablesHandler().submitVariables(variables, ti.getId(), true);
+	@Transactional(readOnly = false)
+	protected void submitVariablesAndProceedProcess(JbpmContext context, TaskInstance ti, Map<String, Object> variables, boolean proceed) {
+		if (context == null)
+			getVariablesHandler().submitVariables(variables, ti.getId(), true);
+		else
+			getVariablesHandler().submitVariables(context, variables, ti.getId(), true);
 
 		if (proceed) {
-
-			String actionTaken = (String) ti
-			        .getVariable(ProcessConstants.actionTakenVariableName);
+			String actionTaken = (String) ti.getVariable(ProcessConstants.actionTakenVariableName);
 			// TODO
 			boolean takeTransitionAction = false;
 			if (actionTaken != null) {
 				for (Object transition : ti.getAvailableTransitions()) {
-
 					Transition trans = (Transition) transition;
 
 					if (actionTaken.equals(trans.getName()))
@@ -308,23 +293,17 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 				}
 			}
 
-			if (actionTaken != null && actionTaken.length() != 0
-			        && takeTransitionAction)
+			if (actionTaken != null && actionTaken.length() != 0 && takeTransitionAction)
 				ti.end(actionTaken);
 			else
 				ti.end();
-
 		} else {
 			ti.setEnd(new Date());
 		}
 
-		BPMUser bpmUser = getBpmFactory().getBpmUserFactory()
-		        .getCurrentBPMUser();
-
+		BPMUser bpmUser = getBpmFactory().getBpmUserFactory().getCurrentBPMUser();
 		if (bpmUser != null) {
-
 			Integer usrId = bpmUser.getIdToUse();
-
 			if (usrId != null)
 				ti.setActorId(usrId.toString());
 		}
@@ -338,16 +317,13 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	@Transactional(readOnly = true)
 	protected View loadView(final boolean loadForDisplay) {
-
 		try {
-			return getBpmContext().execute(new JbpmCallback() {
+			return getBpmContext().execute(new JbpmCallback<View>() {
 
 				@Override
-				public Object doInJbpm(JbpmContext context)
-				        throws JbpmException {
-
+				public View doInJbpm(JbpmContext context) throws JbpmException {
 					Long taskInstanceId = getTaskInstanceId();
-					TaskInstance taskInstance = getTaskInstance();
+					TaskInstance taskInstance = getTaskInstance(context);
 
 					List<String> preferred = new ArrayList<String>(1);
 					preferred.add(XFormsView.VIEW_TYPE);
@@ -355,52 +331,33 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 					View view;
 
 					if (taskInstance.hasEnded()) {
-
-						view = getBpmFactory().getViewByTaskInstance(
-						    taskInstanceId, false, preferred);
-
+						view = getBpmFactory().getViewByTaskInstance(taskInstanceId, false, preferred);
 					} else {
-
 						if (loadForDisplay) {
-
 							if (taskInstance.getPriority() == ProcessConstants.PRIORITY_SHARED_TASK) {
-
-								taskInstanceId = createSharedTask(context,
-								    taskInstance);
+								taskInstanceId = createSharedTask(context, taskInstance);
 							}
 						}
 
 						if (loadForDisplay) {
-
-							// if full load, then we take view before displaying
-							// it
-							view = getBpmFactory().getViewByTaskInstance(
-							    taskInstanceId, true, preferred);
-							// view = getBpmFactory().takeView(taskInstanceId,
-							// true, preferred);
+							// if full load, then we take view before displaying it
+							view = getBpmFactory().getViewByTaskInstance(taskInstanceId, true, preferred);
 						} else {
-
 							// if not full load, then we just get view by task
-							view = getBpmFactory().getViewByTask(
-							    getTaskInstance().getTask().getId(), true,
-							    preferred);
+							view = getBpmFactory().getViewByTask(getTaskInstance(context).getTask().getId(), true, preferred);
 						}
 					}
 					if (loadForDisplay) {
-						Map<String, String> parameters = new HashMap<String, String>(
-						        1);
-						parameters.put(ProcessConstants.TASK_INSTANCE_ID,
-						    String.valueOf(taskInstanceId));
+						Map<String, String> parameters = new HashMap<String, String>(1);
+						parameters.put(ProcessConstants.TASK_INSTANCE_ID, String.valueOf(taskInstanceId));
 						view.populateParameters(parameters);
-						view.populateVariables(getVariablesHandler()
-						        .populateVariables(taskInstanceId));
+						view.populateVariables(getVariablesHandler().populateVariables(taskInstanceId));
 					}
 					view.setTaskInstanceId(taskInstanceId);
 
 					return view;
 				}
 			});
-
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
@@ -747,9 +704,15 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Override
 	@Transactional(readOnly = true)
 	public ProcessInstanceW getProcessInstanceW() {
+		return getBpmContext().execute(new JbpmCallback<ProcessInstanceW>() {
 
-		return getProcessManager().getProcessInstance(
-		    getTaskInstance().getProcessInstance().getId());
+			@Override
+			public ProcessInstanceW doInJbpm(JbpmContext context) throws JbpmException {
+				TaskInstance ti = context.getTaskInstance(getTaskInstanceId());
+				Long piId = ti.getProcessInstance().getId();
+				return getProcessManager().getProcessInstance(piId);
+			}
+		});
 	}
 
 	public PermissionsFactory getPermissionsFactory() {
@@ -788,17 +751,14 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	@Override
 	public void hide() {
-
 		getTaskInstance().setPriority(PRIORITY_HIDDEN);
 	}
 
 	@Override
 	public void addVariable(Variable variable, Object value) {
-
 		Map<String, Object> variables = new HashMap<String, Object>(1);
 		variables.put(variable.getName(), value);
-		getVariablesHandler().submitVariablesExplicitly(variables,
-		    getTaskInstanceId());
+		getVariablesHandler().submitVariablesExplicitly(variables, getTaskInstanceId());
 	}
 
 	private Integer order;
@@ -806,15 +766,21 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Override
 	public Integer getOrder() {
 		if (!orderLoaded) {
-			try {
-				List<ViewTaskBind> viewTaskBinds = getBpmFactory().getBPMDAO().getViewTaskBindsByTaskId(getTaskInstance().getTask().getId());
-				if (ListUtil.isEmpty(viewTaskBinds)) {
-					return order;
-				}
+			List<ViewTaskBind> viewTaskBinds = getBpmContext().execute(new JbpmCallback<List<ViewTaskBind>>() {
 
-				for (ViewTaskBind bind: viewTaskBinds) {
-					order = bind.getViewOrder();
+				@Override
+				public List<ViewTaskBind> doInJbpm(JbpmContext context) throws JbpmException {
+					TaskInstance ti = context.getTaskInstance(getTaskInstanceId());
+					return getBpmFactory().getBPMDAO().getViewTaskBindsByTaskId(ti.getTask().getId());
 				}
+			});
+
+			try {
+				if (ListUtil.isEmpty(viewTaskBinds))
+					return order;
+
+				for (ViewTaskBind bind: viewTaskBinds)
+					order = bind.getViewOrder();
 			} finally {
 				orderLoaded = Boolean.TRUE;
 			}
