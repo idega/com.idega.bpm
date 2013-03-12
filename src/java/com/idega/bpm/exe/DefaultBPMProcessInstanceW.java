@@ -627,8 +627,12 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	@Transactional(readOnly = true)
 	public List<BPMEmailDocument> getAttachedEmails(User user) {
+		return getAttachedEmails(user, false);
+	}
+
+	@Transactional(readOnly = true)
+	public List<BPMEmailDocument> getAttachedEmails(User user, boolean fetchMessage) {
 		List<String> included = new ArrayList<String>(1);
 		included.add(email_fetch_process_name);
 		List<TaskInstance> emailsTaskInstances = getProcessTaskInstances(null, included);
@@ -641,12 +645,16 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			Map<String, Object> vars = getVariablesHandler().populateVariables(emailTaskInstance.getId());
 
 			String subject = (String) vars.get("string_subject");
+			String text = null;
+			if (fetchMessage)
+				text = (String) vars.get("string_text");
 			String fromPersonal = (String) vars.get("string_fromPersonal");
 			String fromAddress = (String) vars.get("string_fromAddress");
 
 			BPMEmailDocument bpmEmailDocument = new BPMEmailDocumentImpl();
 			bpmEmailDocument.setTaskInstanceId(emailTaskInstance.getId());
 			bpmEmailDocument.setSubject(subject);
+			bpmEmailDocument.setMessage(text);
 			bpmEmailDocument.setFromAddress(fromAddress);
 			bpmEmailDocument.setFromPersonal(fromPersonal);
 			bpmEmailDocument.setEndDate(emailTaskInstance.getEnd());
