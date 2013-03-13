@@ -13,7 +13,8 @@ public class CasesBPMAssetProperties {
 					showLogExportButton,
 					showComments = true,
 					showContacts = true,
-					isNameFromExternalEntity = false;
+					isNameFromExternalEntity = false,
+					showUserProfilePicture = Boolean.TRUE;
 	
 	public boolean isNameFromExternalEntity() {
 		return isNameFromExternalEntity;
@@ -125,5 +126,13 @@ public class CasesBPMAssetProperties {
 	
 	public void setShowContacts(boolean showContacts) {
 		this.showContacts = showContacts;
+	}
+
+	public boolean isShowUserProfilePicture() {
+		return showUserProfilePicture;
+	}
+
+	public void setShowUserProfilePicture(boolean showUserProfilePicture) {
+		this.showUserProfilePicture = showUserProfilePicture;
 	}
 }
