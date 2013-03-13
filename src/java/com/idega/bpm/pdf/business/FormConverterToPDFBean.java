@@ -35,9 +35,10 @@ import com.idega.util.IOUtil;
 import com.idega.util.PresentationUtil;
 import com.idega.util.StringHandler;
 import com.idega.util.StringUtil;
+import com.idega.util.expression.ELUtil;
 
-@Scope(BeanDefinition.SCOPE_SINGLETON)
 @Service(FormConverterToPDF.STRING_BEAN_IDENTIFIER)
+@Scope(BeanDefinition.SCOPE_SINGLETON)
 public class FormConverterToPDFBean extends DefaultSpringBean implements FormConverterToPDF {
 
 	private static final Logger LOGGER = Logger.getLogger(FormConverterToPDFBean.class.getName());
@@ -83,7 +84,7 @@ public class FormConverterToPDFBean extends DefaultSpringBean implements FormCon
 	}
 
 	@SuppressWarnings("unchecked")
-	private void addStyleSheetsForPDF(IWContext iwc) {
+	public void addStyleSheetsForPDF(IWContext iwc) {
 		IWBundle bundle = iwc.getIWMainApplication().getBundle(BPMConstants.IW_BUNDLE_STARTER);
 		String pdfCss = bundle.getVirtualPathWithFileNameString("style/pdf.css");
 		List<String> resources = null;
@@ -215,7 +216,7 @@ public class FormConverterToPDFBean extends DefaultSpringBean implements FormCon
 		return getHashValueForGeneratedPDFFromXForm(taskInstanceId, checkExistence, null);
 	}
 
-	private UIComponent getComponentToRender(IWContext iwc, String taskInstanceId, String formId, String formSubmitionId) {
+	public UIComponent getComponentToRender(IWContext iwc, String taskInstanceId, String formId, String formSubmitionId) {
 		UIComponent component = null;
 		if (!StringUtil.isEmpty(taskInstanceId)) {
 			try {
@@ -264,7 +265,9 @@ public class FormConverterToPDFBean extends DefaultSpringBean implements FormCon
 		return null;
 	}
 
-	private BPMFactory getBpmFactory() {
+	protected BPMFactory getBpmFactory() {
+		if (bpmFactory == null)
+			ELUtil.getInstance().autowire(this);
 		return bpmFactory;
 	}
 
@@ -272,7 +275,9 @@ public class FormConverterToPDFBean extends DefaultSpringBean implements FormCon
 		this.bpmFactory = bpmFactory;
 	}
 
-	private PDFGenerator getGenerator() {
+	protected PDFGenerator getGenerator() {
+		if (generator == null)
+			ELUtil.getInstance().autowire(this);
 		return generator;
 	}
 

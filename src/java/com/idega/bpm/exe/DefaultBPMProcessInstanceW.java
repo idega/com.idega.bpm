@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.block.process.business.CaseManagersProvider;
 import com.idega.block.process.business.CasesRetrievalManager;
+import com.idega.block.process.business.ExternalEntityInterface;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
@@ -229,12 +230,12 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<BPMDocument> getTaskDocumentsForUser(User user, Locale locale) {
+	public List<BPMDocument> getTaskDocumentsForUser(User user, Locale locale, boolean doShowExternalEntity) {
 		List<TaskInstanceW> unfinishedTaskInstances = getAllUnfinishedTaskInstances();
 
 		unfinishedTaskInstances = filterTasksByUserPermission(user, unfinishedTaskInstances);
 
-		return getBPMDocuments(unfinishedTaskInstances, locale);
+		return getBPMDocuments(unfinishedTaskInstances, locale, doShowExternalEntity);
 	}
 
 	@Transactional(readOnly = true)
@@ -296,14 +297,25 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<BPMDocument> getSubmittedDocumentsForUser(User user, Locale locale) {
+	public List<BPMDocument> getSubmittedDocumentsForUser(User user, Locale locale, boolean doShowExternalEntity) {
 		List<TaskInstanceW> submittedTaskInstances = getSubmittedTaskInstances(Arrays.asList(email_fetch_process_name));
 
 		submittedTaskInstances = filterDocumentsByUserPermission(user, submittedTaskInstances);
-		return getBPMDocuments(submittedTaskInstances, locale);
+		return getBPMDocuments(submittedTaskInstances, locale, doShowExternalEntity);
 	}
-
-	private List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiws, Locale locale) {
+	
+	@Autowired(required=false)
+	private ExternalEntityInterface externalEntityInterface;
+	
+	protected ExternalEntityInterface getExternalEntityInterface() {
+		if (this.externalEntityInterface == null) {
+			ELUtil.getInstance().autowire(this);
+		}
+		
+		return this.externalEntityInterface;
+	}
+	
+	private List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiws, Locale locale, boolean doShowExternalEntity) {
 		List<BPMDocument> documents = new ArrayList<BPMDocument>(tiws.size());
 
 		UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
@@ -315,12 +327,27 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 			// get submitted by
 			String actorId = ti.getActorId();
-			String actorName;
+			String actorName = null;
 
 			if (actorId != null) {
 				try {
 					User usr = userBusiness.getUser(Integer.parseInt(actorId));
-					actorName = usr.getName();
+					
+					if (!doShowExternalEntity) {
+						actorName = usr.getName();
+					} else {
+						ExternalEntityInterface eei = getExternalEntityInterface();
+						if (eei != null) {
+							actorName = eei.getName(usr);
+						}
+						
+						if (StringUtil.isEmpty(actorName)) {
+							actorName = usr.getName();
+						} else {
+							actorName = actorName + " (" + usr.getName() + ")";
+						}
+					}
+					
 				} catch (Exception e) {
 					getLogger().log(Level.SEVERE, "Exception while resolving actor name for actorId: " + actorId, e);
 					actorName = CoreConstants.EMPTY;
@@ -647,8 +674,12 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	@Transactional(readOnly = true)
 	public List<BPMEmailDocument> getAttachedEmails(User user) {
+		return getAttachedEmails(user, false);
+	}
+
+	@Transactional(readOnly = true)
+	public List<BPMEmailDocument> getAttachedEmails(User user, boolean fetchMessage) {
 		List<String> included = new ArrayList<String>(1);
 		included.add(email_fetch_process_name);
 		List<TaskInstance> emailsTaskInstances = getProcessTaskInstances(null, included);
@@ -661,12 +692,16 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			Map<String, Object> vars = getVariablesHandler().populateVariables(emailTaskInstance.getId());
 
 			String subject = (String) vars.get("string_subject");
+			String text = null;
+			if (fetchMessage)
+				text = (String) vars.get("string_text");
 			String fromPersonal = (String) vars.get("string_fromPersonal");
 			String fromAddress = (String) vars.get("string_fromAddress");
 
 			BPMEmailDocument bpmEmailDocument = new BPMEmailDocumentImpl();
 			bpmEmailDocument.setTaskInstanceId(emailTaskInstance.getId());
 			bpmEmailDocument.setSubject(subject);
+			bpmEmailDocument.setMessage(text);
 			bpmEmailDocument.setFromAddress(fromAddress);
 			bpmEmailDocument.setFromPersonal(fromPersonal);
 			bpmEmailDocument.setEndDate(emailTaskInstance.getEnd());
@@ -854,5 +889,16 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		}
 
 		return Boolean.FALSE;
+	}
+
+	@Override
+	public List<BPMDocument> getSubmittedDocumentsForUser(User user,
+			Locale locale) {
+		return getSubmittedDocumentsForUser(user, locale, false);
+	}
+
+	@Override
+	public List<BPMDocument> getTaskDocumentsForUser(User user, Locale locale) {
+		return getTaskDocumentsForUser(user, locale, false);
 	}
 }
