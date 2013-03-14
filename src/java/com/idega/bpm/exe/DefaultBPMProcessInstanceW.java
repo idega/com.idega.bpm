@@ -303,18 +303,18 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		submittedTaskInstances = filterDocumentsByUserPermission(user, submittedTaskInstances);
 		return getBPMDocuments(submittedTaskInstances, locale, doShowExternalEntity);
 	}
-	
+
 	@Autowired(required=false)
 	private ExternalEntityInterface externalEntityInterface;
-	
+
 	protected ExternalEntityInterface getExternalEntityInterface() {
 		if (this.externalEntityInterface == null) {
 			ELUtil.getInstance().autowire(this);
 		}
-		
+
 		return this.externalEntityInterface;
 	}
-	
+
 	private List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiws, Locale locale, boolean doShowExternalEntity) {
 		List<BPMDocument> documents = new ArrayList<BPMDocument>(tiws.size());
 
@@ -332,7 +332,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			if (actorId != null) {
 				try {
 					User usr = userBusiness.getUser(Integer.parseInt(actorId));
-					
+
 					if (!doShowExternalEntity) {
 						actorName = usr.getName();
 					} else {
@@ -340,14 +340,14 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 						if (eei != null) {
 							actorName = eei.getName(usr);
 						}
-						
+
 						if (StringUtil.isEmpty(actorName)) {
 							actorName = usr.getName();
 						} else {
 							actorName = actorName + " (" + usr.getName() + ")";
 						}
 					}
-					
+
 				} catch (Exception e) {
 					getLogger().log(Level.SEVERE, "Exception while resolving actor name for actorId: " + actorId, e);
 					actorName = CoreConstants.EMPTY;
@@ -400,16 +400,29 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getAllUnfinishedTaskInstances() {
-		return getUnfinishedTaskInstancesForTask(null, DefaultBPMTaskInstanceW.PRIORITY_HIDDEN, DefaultBPMTaskInstanceW.PRIORITY_VALID_HIDDEN);
+		return getBpmContext().execute(new JbpmCallback<List<TaskInstanceW>>() {
+
+			@Override
+			public List<TaskInstanceW> doInJbpm(JbpmContext context) throws JbpmException {
+				return getUnfinishedTaskInstancesForTask(context, null, DefaultBPMTaskInstanceW.PRIORITY_HIDDEN,
+						DefaultBPMTaskInstanceW.PRIORITY_VALID_HIDDEN);
+			}
+		});
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<TaskInstanceW> getUnfinishedTaskInstancesForTask(String taskName) {
-		return getUnfinishedTaskInstancesForTask(taskName, DefaultBPMTaskInstanceW.PRIORITY_HIDDEN);
+	public List<TaskInstanceW> getUnfinishedTaskInstancesForTask(final String taskName) {
+		return getBpmContext().execute(new JbpmCallback<List<TaskInstanceW>>() {
+
+			@Override
+			public List<TaskInstanceW> doInJbpm(JbpmContext context) throws JbpmException {
+				return getUnfinishedTaskInstancesForTask(context, taskName, DefaultBPMTaskInstanceW.PRIORITY_HIDDEN);
+			}
+		});
 	}
 
-	List<TaskInstanceW> getUnfinishedTaskInstancesForTask(String taskName, Integer... prioritiesToFilter) {
+	List<TaskInstanceW> getUnfinishedTaskInstancesForTask(JbpmContext context, String taskName, Integer... prioritiesToFilter) {
 		Collection<TaskInstance> taskInstances = getUnfilteredProcessTaskInstances();
 		if (ListUtil.isEmpty(taskInstances)) {
 			return wrapTaskInstances(taskInstances);
@@ -433,7 +446,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 					if (ti.hasEnded()
 							|| prioritiesToFilterList.contains(ti.getPriority())
 					        || ti.getProcessInstance().hasEnded()
-					        || (filterByTaskName && !taskName.equals(ti.getTask().getName())))
+					        || (filterByTaskName && !taskName.equals(context.getTaskInstance(id).getTask().getName())))
 						iterator.remove();
 				}
 			} catch (Exception e) {
@@ -678,6 +691,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return getAttachedEmails(user, false);
 	}
 
+	@Override
 	@Transactional(readOnly = true)
 	public List<BPMEmailDocument> getAttachedEmails(User user, boolean fetchMessage) {
 		List<String> included = new ArrayList<String>(1);
