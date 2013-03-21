@@ -866,6 +866,11 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		}
 
 		TaskInstanceW task = getSingleUnfinishedTaskInstanceForTask(taskName);
+		if (task == null) {
+			getLogger().warning("Unable to find unfinished task " + taskName + " for process instance ID: " + getProcessInstanceId());
+			return false;
+		}
+
 		return doSubmitTask(task, variables);
 	}
 

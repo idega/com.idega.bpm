@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.security.Permission;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -58,6 +59,7 @@ import com.idega.jbpm.identity.Role;
 import com.idega.jbpm.identity.RolesManager;
 import com.idega.jbpm.identity.permission.Access;
 import com.idega.jbpm.identity.permission.PermissionsFactory;
+import com.idega.jbpm.utils.JBPMConstants;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.variables.impl.BinaryVariableImpl;
@@ -311,7 +313,6 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	@Override
 	public View loadView() {
-
 		return loadView(true);
 	}
 
@@ -570,11 +571,17 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 
 	@Override
-	@Transactional(readOnly = false)
 	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is) {
-		String filesFolder = getTaskInstanceId() + System.currentTimeMillis() + CoreConstants.SLASH;
-
-		Collection<URI> uris = getLinksToVariables(is, filesFolder, fileName);
+		return addAttachment(variable, fileName, description, is, getTaskInstanceId() + System.currentTimeMillis() + CoreConstants.SLASH);
+	}
+	@Override
+	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is, String filesFolder) {
+		return addAttachment(variable, fileName, description, is, filesFolder, true);
+	}
+	@Override
+	@Transactional(readOnly = false)
+	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is, String filesFolder, boolean overwrite) {
+		Collection<URI> uris = getLinksToVariables(is, filesFolder, fileName, overwrite);
 		if (ListUtil.isEmpty(uris))
 			return null;
 
@@ -593,6 +600,12 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		binVar.setDescription(description);
 		String mimeType = MimeTypeUtil.resolveMimeTypeFromFileName(fileName);
 		binVar.setMimeType(mimeType);
+		if (!overwrite) {
+			Map<String, Object> metadata = new HashMap<String, Object>();
+			metadata.put(JBPMConstants.OVERWRITE, Boolean.FALSE);
+			metadata.put(JBPMConstants.PATH_IN_REPOSITORY, filesFolder + fileName);
+			binVar.setMetadata(metadata);
+		}
 
 		binVars.add(binVar);
 		vars.put(variableName, binVars);
@@ -603,16 +616,45 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		return binVar;
 	}
 
-	private Collection<URI> getLinksToVariables(InputStream is, String folder, String name) {
+	private Collection<URI> getURIsFromTmpLocation(String folder, String name, InputStream is) {
 		getUploadedResourceResolver().uploadToTmpLocation(folder, name, is, false);
-		Collection<URI> uris = getFileUploadManager().getFilesUris(folder, null, getUploadedResourceResolver());
+		return getFileUploadManager().getFilesUris(folder, null, getUploadedResourceResolver());
+	}
+
+	private Collection<URI> getURIsFromRepository(String folder, String name, InputStream stream) {
+		try {
+			RepositoryService repository = ELUtil.getInstance().getBean(RepositoryService.BEAN_NAME);
+
+			String path = folder + name;
+			if (!repository.getExistence(path)) {
+				if (!repository.uploadFile(folder, name, null, stream))
+					return null;
+			}
+
+			URI uri = new URI(repository.getURI(path));
+			return Arrays.asList(uri);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
+	private Collection<URI> getLinksToVariables(InputStream is, String folder, String name, boolean overwrite) {
+		Collection<URI> uris = overwrite ?
+				getURIsFromTmpLocation(folder, name, is) :
+				getURIsFromRepository(folder, name, is);
+
+		if (ListUtil.isEmpty(uris) && !overwrite)
+			uris = getURIsFromTmpLocation(folder, name, is);
+
 		if (ListUtil.isEmpty(uris)) {
 			String fixedName = StringHandler.removeWhiteSpace(name);
 			fixedName = StringHandler.stripNonRomanCharacters(fixedName, new char[] {'.', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'});
 			if (fixedName.equals(name))
 				return null;
 
-			return getLinksToVariables(is, folder, fixedName);
+			return getLinksToVariables(is, folder, fixedName, overwrite);
 		}
 
 		return uris;
@@ -638,7 +680,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 		for (BinaryVariable variable : variableList) {
 			try {
-				Permission permission = getPermissionsFactory().getTaskInstanceVariableViewPermission(true, getTaskInstance(), variable.getHash().toString());
+				Permission permission = getPermissionsFactory().getTaskInstanceVariableViewPermission(true, getTaskInstance(),
+						variable.getHash().toString());
 				rolesManager.checkPermission(permission);
 				returnList.add(variable);
 			} catch (BPMAccessControlException e) {
@@ -652,13 +695,10 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Override
 	@Transactional(readOnly = true)
 	public List<BinaryVariable> getAttachments(Variable variable) {
-
 		List<BinaryVariable> allAttachments = getAttachments();
-		ArrayList<BinaryVariable> attachmentsForVariable = new ArrayList<BinaryVariable>(
-		        allAttachments.size());
+		List<BinaryVariable> attachmentsForVariable = new ArrayList<BinaryVariable>(allAttachments.size());
 
-		for (BinaryVariable binaryVariable : allAttachments) {
-
+		for (BinaryVariable binaryVariable: allAttachments) {
 			if (binaryVariable.getVariable().equals(variable)) {
 				attachmentsForVariable.add(binaryVariable);
 			}
@@ -670,16 +710,10 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Override
 	@Transactional(readOnly = true)
 	public boolean isSignable() {
-		Map<String, Object> variablesMap = getVariablesHandler()
-		        .populateVariables(getTaskInstanceId());
+		Map<String, Object> variablesMap = getVariablesHandler() .populateVariables(getTaskInstanceId());
 
-		if (variablesMap.get(allowSigningVariableRepresentation) != null
-		        && variablesMap.get(allowSigningVariableRepresentation).equals(
-		            Boolean.TRUE.toString())) {
-			return true;
-		}
-
-		return false;
+		return variablesMap.get(allowSigningVariableRepresentation) != null &&
+				variablesMap.get(allowSigningVariableRepresentation).equals(Boolean.TRUE.toString());
 	}
 
 	@Override
@@ -721,32 +755,23 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	@Override
 	public Collection<Role> getRolesPermissions() {
-
-		Collection<Role> roles = getBpmFactory().getRolesManager()
-		        .getRolesPermissionsForTaskInstance(getTaskInstanceId(), null);
-
+		Collection<Role> roles = getBpmFactory().getRolesManager() .getRolesPermissionsForTaskInstance(getTaskInstanceId(), null);
 		return roles;
 	}
 
 	@Override
-	public Collection<Role> getAttachmentRolesPermissions(
-	        String attachmentHashValue) {
-
+	public Collection<Role> getAttachmentRolesPermissions(String attachmentHashValue) {
 		if (StringUtil.isEmpty(attachmentHashValue))
-			throw new IllegalArgumentException(
-			        "Attachment hash value not provided");
+			throw new IllegalArgumentException("Attachment hash value not provided");
 
-		Collection<Role> roles = getBpmFactory().getRolesManager()
-		        .getRolesPermissionsForTaskInstance(getTaskInstanceId(),
-		            attachmentHashValue);
+		Collection<Role> roles = getBpmFactory().getRolesManager().getRolesPermissionsForTaskInstance(getTaskInstanceId(), attachmentHashValue);
 
 		return roles;
 	}
 
 	@Override
 	public Object getVariable(String variableName) {
-		return getVariablesHandler().populateVariables(getTaskInstanceId())
-		        .get(variableName);
+		return getVariablesHandler().populateVariables(getTaskInstanceId()).get(variableName);
 	}
 
 	@Override
