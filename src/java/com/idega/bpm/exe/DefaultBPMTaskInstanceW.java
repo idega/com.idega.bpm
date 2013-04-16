@@ -313,11 +313,16 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	@Override
 	public View loadView() {
-		return loadView(true);
+		return loadView(true, XFormsView.VIEW_TYPE);
+	}
+
+	@Override
+	public View loadView(String viewType) {
+		return loadView(true, viewType, new String[] {viewType});
 	}
 
 	@Transactional(readOnly = true)
-	protected View loadView(final boolean loadForDisplay) {
+	protected View loadView(final boolean loadForDisplay, final String viewType, final String... forcedTypes) {
 		try {
 			return getBpmContext().execute(new JbpmCallback<View>() {
 
@@ -332,7 +337,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 					View view;
 
 					if (taskInstance.hasEnded()) {
-						view = getBpmFactory().getViewByTaskInstance(taskInstanceId, false, preferred);
+						view = getBpmFactory().getViewByTaskInstance(taskInstanceId, false, preferred, forcedTypes);
 					} else {
 						if (loadForDisplay) {
 							if (taskInstance.getPriority() == ProcessConstants.PRIORITY_SHARED_TASK) {
@@ -419,8 +424,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	@Override
 	public View getView() {
-
-		return loadView(false);
+		return loadView(false, XFormsView.VIEW_TYPE);
 	}
 
 	@Override

@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.apache.commons.lang.NotImplementedException;
 import org.jbpm.taskmgmt.def.Task;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
 
@@ -15,7 +16,7 @@ import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewFactory;
 import com.idega.jbpm.view.ViewFactoryType;
 
-@Scope("singleton")
+@Scope(BeanDefinition.SCOPE_SINGLETON)
 @ViewFactoryType(JSFComponentView.VIEW_TYPE)
 @Repository("process_jsfComponent_viewFactory")
 public class JSFComponentViewFactory implements ViewFactory {
@@ -23,14 +24,13 @@ public class JSFComponentViewFactory implements ViewFactory {
 	@Autowired
 	private BPMDAO BPMDAO;
 
-	public Multimap<Long, TaskView> getAllViewsByProcessDefinitions(
-			Collection<Long> processDefinitionsIds) {
-		throw new NotImplementedException(
-				"Method getAllViewsByProcessDefinitions is not implemented yet");
+	@Override
+	public Multimap<Long, TaskView> getAllViewsByProcessDefinitions(Collection<Long> processDefinitionsIds) {
+		throw new NotImplementedException("Method getAllViewsByProcessDefinitions is not implemented yet");
 	}
 
+	@Override
 	public View getView(String viewIdentifier, boolean submitable) {
-
 		if (viewIdentifier == null || viewIdentifier.trim().length() == 0)
 			throw new NullPointerException("View identifier not provided");
 
@@ -42,12 +42,11 @@ public class JSFComponentViewFactory implements ViewFactory {
 
 	public JSFComponentView getJSFComponentView() {
 		JSFComponentView view = new JSFComponentView();
-
 		return view;
 	}
 
+	@Override
 	public String getViewType() {
-
 		return JSFComponentView.VIEW_TYPE;
 	}
 
@@ -59,6 +58,7 @@ public class JSFComponentViewFactory implements ViewFactory {
 		BPMDAO = bpmdao;
 	}
 
+	@Override
 	public TaskView getTaskView(Task task) {
 		return null;
 	}

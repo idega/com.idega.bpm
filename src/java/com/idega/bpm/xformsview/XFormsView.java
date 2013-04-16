@@ -153,7 +153,9 @@ public class XFormsView implements View {
 
 	public void setFormDocument(Document formDocument) {
 		form = formDocument;
-		viewId = form.getFormId().toString();
+		Long id = form.getFormId();
+		if (id != null)
+			viewId = id.toString();
 	}
 
 	protected boolean isFormDocumentLoaded() {
@@ -343,10 +345,12 @@ public class XFormsView implements View {
 		return variables;
 	}
 
+	@Override
 	public boolean isSubmitted() {
 		return submitted;
 	}
 
+	@Override
 	public void setSubmitted(boolean submitted) {
 		this.submitted = submitted;
 	}

@@ -26,6 +26,7 @@ public class JSFComponentView implements View, Serializable {
 	private Long taskInstanceId;
 	private boolean submitable = true, submitted;
 	private Map<String, Object> variables;
+	private Map<String, String> parameters;
 
 	@Autowired
 	private transient ViewToTask viewToTask;
@@ -38,8 +39,7 @@ public class JSFComponentView implements View, Serializable {
 	@Override
 	public String getDefaultDisplayName() {
 		FacesContext context = FacesContext.getCurrentInstance();
-		UIComponent component = context.getApplication().createComponent(
-		    getViewId());
+		UIComponent component = context.getApplication().createComponent(getViewId());
 		BPMCapableJSFComponent jsfComponent = (BPMCapableJSFComponent) component;
 
 		return jsfComponent.getDefaultDisplayName();
@@ -76,8 +76,7 @@ public class JSFComponentView implements View, Serializable {
 	public UIComponent getViewForDisplay(boolean pdfViewer) {
 		// TODO: finish him
 		FacesContext context = FacesContext.getCurrentInstance();
-		UIComponent component = context.getApplication().createComponent(
-		    getViewId());
+		UIComponent component = context.getApplication().createComponent(getViewId());
 
 		BPMCapableJSFComponent jsfComponent = (BPMCapableJSFComponent) component;
 		jsfComponent.setView(this);
@@ -92,9 +91,9 @@ public class JSFComponentView implements View, Serializable {
 
 	@Override
 	public ViewToTask getViewToTask() {
-		if (viewToTask == null) {
+		if (viewToTask == null)
 			ELUtil.getInstance().autowire(this);
-		}
+
 		return viewToTask;
 	}
 
@@ -110,6 +109,7 @@ public class JSFComponentView implements View, Serializable {
 
 	@Override
 	public void populateParameters(Map<String, String> parameters) {
+		this.parameters = parameters;
 	}
 
 	@Override
@@ -120,9 +120,10 @@ public class JSFComponentView implements View, Serializable {
 
 	@Override
 	public Map<String, String> resolveParameters() {
-		throw new UnsupportedOperationException(
-		        "Resolving parameters not supported by: "
-		                + this.getClass().getName());
+		if (parameters != null)
+			return parameters;
+
+		throw new UnsupportedOperationException("Resolving parameters from form not supported yet.");
 	}
 
 	@Override
@@ -130,8 +131,7 @@ public class JSFComponentView implements View, Serializable {
 		if (variables != null)
 			return variables;
 
-		throw new UnsupportedOperationException(
-		        "Resolving variables from form not supported yet.");
+		throw new UnsupportedOperationException("Resolving variables from form not supported yet.");
 	}
 
 	@Override
@@ -151,8 +151,7 @@ public class JSFComponentView implements View, Serializable {
 
 	@Override
 	public void setViewType(String viewType) {
-		throw new UnsupportedOperationException(
-		        "JSFComponentView view type cannot be changed");
+		throw new UnsupportedOperationException("JSFComponentView view type cannot be changed");
 	}
 
 	@Override
@@ -165,10 +164,12 @@ public class JSFComponentView implements View, Serializable {
 		return true;
 	}
 
+	@Override
 	public void setSubmitted(boolean submitted) {
 		this.submitted = submitted;
 	}
 
+	@Override
 	public boolean isSubmitted() {
 		return submitted;
 	}

@@ -74,47 +74,47 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 	public void init(HttpServletRequest req, IWContext iwc) {
 		try {
 			ELUtil.getInstance().autowire(this);
-	
+
 			String caseId = iwc.getParameter(CASE_ID_PARAMETER);
-	
+
 			if (StringUtil.isEmpty(caseId)) {
 				LOGGER.log(Level.SEVERE, "Do not know what to download: caseId is null");
 				return;
 			}
 			theCase = getCaseBusiness(iwc).getCase(new Integer(caseId));
 			CaseBusiness caseBusiness = CaseCodeManager.getInstance().getCaseBusinessOrDefault(theCase.getCaseCode(), iwc);
-			
+
 			IWBundle bundle = iwc.getIWMainApplication().getBundle(BPMConstants.IW_BUNDLE_STARTER);
 			IWResourceBundle iwrb = bundle.getResourceBundle(iwc);
 			Layer container = new Layer();
 			container.add("<link href=\"" + bundle.getVirtualPathWithFileNameString("style/case_logs_pdf_style.css") +"\" type=\"text/css\" />");
 			container.add(new Heading1(theCase.getCaseIdentifier() + " - " + theCase.getSubject()));
-	
+
 			Table2 table = new Table2();
 			table.setWidth("100%");
 			container.add(table);
-			
+
 			TableRowGroup group = table.createHeaderRowGroup();
 			TableRow row = group.createRow();
-			
+
 			TableCell2 cell = row.createHeaderCell();
 			cell.add(new Text(iwrb.getLocalizedString("case.performer", "Performer")));
-			
+
 			cell = row.createHeaderCell();
 			cell.add(new Text(iwrb.getLocalizedString("case.action", "Action")));
-			
+
 			cell = row.createHeaderCell();
 			cell.add(new Text(iwrb.getLocalizedString("case.status_after", "Status after")));
-			
+
 			cell = row.createHeaderCell();
 			cell.add(new Text(iwrb.getLocalizedString("case.timestamp", "Timestamp")));
-			
+
 			cell = row.createHeaderCell();
 			cell.add(new Text(iwrb.getLocalizedString("case.comment", "Comment")));
-			
+
 			group = table.createBodyRowGroup();
-			
-			List<CaseLog> logs = new ArrayList(this.getLogs(iwc));
+
+			List<CaseLog> logs = new ArrayList<CaseLog>(this.getLogs(iwc));
 			if(ListUtil.isEmpty(logs)){
 				container.add(iwrb.getLocalizedString("no_logs_found", "There are no logs"));
 			} else {
@@ -122,34 +122,34 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 				for (CaseLog log: logs) {
 					row = group.createRow();
 					User performer = log.getPerformer();
-					
+
 					String action = "";
 					String comment = log.getComment() != null ? log.getComment() : "";
-					
+
 					if (comment.indexOf(": ") != -1) {
 						action = comment.substring(0, comment.indexOf(": "));
 						comment = action.length() < comment.length() ? comment.substring(comment.indexOf(": ") + 2) : "";
 					}
-					
+
 					cell = row.createCell();
 					cell.add(new Text(performer != null ? new Name(performer.getFirstName(), performer.getMiddleName(), performer.getLastName()).getName(iwc.getCurrentLocale()) : ""));
-					
+
 					cell = row.createCell();
 					cell.add(new Text(action));
-					
+
 					cell = row.createCell();
 					cell.add(new Text(caseBusiness.getLocalizedCaseStatusDescription(theCase, log.getCaseStatusAfter(), iwc.getCurrentLocale())));
-					
+
 					cell = row.createCell();
 					cell.add(new Text(new IWTimestamp(log.getTimeStamp()).getLocaleDateAndTime(iwc.getCurrentLocale(), IWTimestamp.SHORT, IWTimestamp.SHORT)));
-					
+
 					cell = row.createCell();
 					cell.add(new Text(comment));
 				}
 			}
-	
+
 			pdfBytes = this.pdfGenerator.getBytesOfGeneratedPDF(iwc, container, true, true);
-	
+
 			setAsDownload(iwc, this.getFileName(), this.pdfBytes.length);
 		}
 		catch (RemoteException re) {
@@ -173,7 +173,7 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 		}
 		return Collections.emptyList();
 	}
-	
+
 	private CaseBusiness getCaseBusiness(IWContext iwc) {
 		try {
 			return IBOLookup.getServiceInstance(iwc, CaseBusiness.class);
