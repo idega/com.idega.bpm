@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.block.process.variables.Variable;
 import com.idega.bpm.BPMConstants;
+import com.idega.bpm.TaskInstanceSubmitted;
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.business.IBOLookup;
 import com.idega.business.IBOLookupException;
@@ -248,6 +249,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Override
 	@Transactional(readOnly = false)
 	public void submit(final ViewSubmission viewSubmission, final boolean proceedProcess) {
+		final TaskInstanceW source = this;
+
 		getBpmContext().execute(new JbpmCallback<View>() {
 
 			@Override
@@ -257,15 +260,23 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 				if (taskInstance.hasEnded())
 					throw new ProcessException("Task instance (" + taskInstance.getId() + ") is already submitted", "Task instance is already submitted");
 
-				submitVariablesAndProceedProcess(context, taskInstance, viewSubmission.resolveVariables(), proceedProcess);
+				Long piId = null, tiId = null;
+				try {
+					piId = taskInstance.getProcessInstance().getId();
+					tiId = taskInstance.getId();
 
-				// if priority was hidden, then setting to default priority after submission
-				if (taskInstance.getPriority() == PRIORITY_HIDDEN) {
-					taskInstance.setPriority(Task.PRIORITY_NORMAL);
+					submitVariablesAndProceedProcess(context, taskInstance, viewSubmission.resolveVariables(), proceedProcess);
+
+					// if priority was hidden, then setting to default priority after submission
+					if (taskInstance.getPriority() == PRIORITY_HIDDEN) {
+						taskInstance.setPriority(Task.PRIORITY_NORMAL);
+					}
+
+					context.save(taskInstance);
+					return null;
+				} finally {
+					ELUtil.getInstance().publishEvent(new TaskInstanceSubmitted(source, piId, tiId));
 				}
-
-				context.save(taskInstance);
-				return null;
 			}
 		});
 	}
