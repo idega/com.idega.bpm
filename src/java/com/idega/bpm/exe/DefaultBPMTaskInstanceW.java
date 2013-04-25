@@ -833,4 +833,23 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	public String toString() {
 		return "Task instance, ID: " + getTaskInstanceId();
 	}
+
+	@Override
+	public boolean hasAttachment(String identifier, String variableName) {
+		if (StringUtil.isEmpty(identifier) || StringUtil.isEmpty(variableName))
+			return false;
+
+		List<BinaryVariable> variables = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId());
+		if (ListUtil.isEmpty(variables))
+			return false;
+
+		for (BinaryVariable variable: variables) {
+			String varIdentifier = variable.getIdentifier();
+			String varName = variable.getVariable().getName();
+			if (identifier.equals(varIdentifier) && variableName.equals(varName))
+				return true;
+		}
+
+		return false;
+	}
 }

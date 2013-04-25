@@ -192,8 +192,13 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 	}
 
 	@Override
-	@Transactional(readOnly = false)
 	public View loadInitView(Integer initiatorId) {
+		return loadInitView(initiatorId, null);
+	}
+
+	@Override
+	@Transactional(readOnly = false)
+	public View loadInitView(Integer initiatorId, String identifier) {
 		try {
 			return getBpmContext().execute(new JbpmCallback<View>() {
 				@Override
