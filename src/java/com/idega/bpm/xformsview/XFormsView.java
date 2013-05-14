@@ -160,7 +160,7 @@ public class XFormsView implements View {
 		return form != null;
 	}
 
-	protected Document getFormDocumentWithData() {
+	public Document getFormDocumentWithData() {
 		Document doc = getFormDocument();
 
 		if (!isSubmitable())
@@ -171,7 +171,7 @@ public class XFormsView implements View {
 		return populateVariables(getVariables()) ? doc : null;
 	}
 
-	protected Document getFormDocument() {
+	public Document getFormDocument() {
 		if (form == null) {
 			if (getViewId() == null || getViewId().length() == 0)
 				throw new IllegalStateException("Tried to get form document, but no view id not set");
