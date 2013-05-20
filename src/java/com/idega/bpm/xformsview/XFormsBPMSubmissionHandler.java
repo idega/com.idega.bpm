@@ -15,7 +15,7 @@ import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
 import com.idega.jbpm.BPMContext;
-import com.idega.jbpm.events.ProcessInstanceCreatedEvent;
+import com.idega.jbpm.event.ProcessInstanceCreatedEvent;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessDefinitionW;

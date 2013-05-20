@@ -225,7 +225,8 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getSubmittedTaskInstances() {
-		return getSubmittedTaskInstances(null);
+		List<String> emptyFilter = Collections.emptyList();
+		return getSubmittedTaskInstances(emptyFilter);
 	}
 
 	@Override
@@ -919,5 +920,45 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	public List<BPMDocument> getTaskDocumentsForUser(User user, Locale locale) {
 		return getTaskDocumentsForUser(user, locale, false);
+	}
+
+	@Override
+	public TaskInstanceW getTaskInstance(String taskName) {
+		if (StringUtil.isEmpty(taskName)) {
+			getLogger().warning("Task name is not provided");
+			return null;
+		}
+
+		List<TaskInstanceW> tasks = getAllTaskInstances();
+		if (ListUtil.isEmpty(tasks)) {
+			getLogger().warning("Proc. ins. " + getProcessInstanceId() + " does not have any tasks");
+			return null;
+		}
+
+		for (TaskInstanceW task: tasks) {
+			if (taskName.equals(task.getTaskInstance().getName())) {
+				return task;
+			}
+		}
+
+		getLogger().warning("Task " + taskName + " can not be found for proc. inst. " + getProcessInstanceId() + " and it's tasks: " + tasks);
+		return null;
+	}
+
+	@Override
+	public List<TaskInstanceW> getSubmittedTaskInstances(String name) {
+		if (StringUtil.isEmpty(name))
+			return null;
+
+		List<TaskInstanceW> submittedTasks = getSubmittedTaskInstances();
+		if (ListUtil.isEmpty(submittedTasks))
+			return null;
+
+		List<TaskInstanceW> filteredTasks = new ArrayList<TaskInstanceW>();
+		for (TaskInstanceW task: submittedTasks) {
+			if (name.equals(task.getTaskInstance().getName()))
+				filteredTasks.add(task);
+		}
+		return filteredTasks;
 	}
 }

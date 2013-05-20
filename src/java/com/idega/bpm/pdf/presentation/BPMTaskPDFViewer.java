@@ -17,6 +17,7 @@ import com.idega.bpm.pdf.servlet.BPMTaskPDFPrinter;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.idegaweb.IWResourceBundle;
 import com.idega.io.MediaWritable;
+import com.idega.jbpm.bean.VariableInstanceType;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.TaskInstanceW;
@@ -39,7 +40,7 @@ import com.idega.util.expression.ELUtil;
  */
 public class BPMTaskPDFViewer extends IWBaseComponent implements BPMCapableJSFComponent, PDFRenderedComponent {
 
-	public static final String DOCUMENT_VARIABLE_NAME = "files_pdfTaskView";
+	public static final String DOCUMENT_VARIABLE_NAME = VariableInstanceType.BYTE_ARRAY.getPrefix() + "pdfTaskView";
 	public static final String COMPONENT_TYPE = "BPMTaskPDFViewer";
 
 	private JSFComponentView view;

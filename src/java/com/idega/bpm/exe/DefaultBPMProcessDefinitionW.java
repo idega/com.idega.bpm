@@ -34,8 +34,8 @@ import com.idega.core.business.DefaultSpringBean;
 import com.idega.core.localisation.business.ICLocaleBusiness;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
-import com.idega.jbpm.events.ProcessInstanceCreatedEvent;
-import com.idega.jbpm.events.VariableCreatedEvent;
+import com.idega.jbpm.event.ProcessInstanceCreatedEvent;
+import com.idega.jbpm.event.VariableCreatedEvent;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessDefinitionW;
@@ -279,6 +279,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 			ti.setEnd(new Date());
 		}
 
+		context.getSession().flush();
 		getLogger().info("Task instance (name=" + ti.getName() + ", ID=" + ti.getId() + ") was executed");
 
 		try {

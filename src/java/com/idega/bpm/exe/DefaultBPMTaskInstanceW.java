@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.block.process.variables.Variable;
 import com.idega.bpm.BPMConstants;
-import com.idega.bpm.TaskInstanceSubmitted;
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.business.IBOLookup;
 import com.idega.business.IBOLookupException;
@@ -46,8 +45,10 @@ import com.idega.data.MetaDataHome;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
+import com.idega.jbpm.bean.VariableInstanceType;
 import com.idega.jbpm.data.Actor;
 import com.idega.jbpm.data.ViewTaskBind;
+import com.idega.jbpm.event.TaskInstanceSubmitted;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessException;
@@ -842,6 +843,10 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		List<BinaryVariable> variables = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId());
 		if (ListUtil.isEmpty(variables))
 			return false;
+
+		String filesVarPrefix = VariableInstanceType.BYTE_ARRAY.getPrefix();
+		if (variableName.startsWith(filesVarPrefix))
+			variableName = variableName.substring(variableName.indexOf(filesVarPrefix) + filesVarPrefix.length());
 
 		for (BinaryVariable variable: variables) {
 			String varIdentifier = variable.getIdentifier();

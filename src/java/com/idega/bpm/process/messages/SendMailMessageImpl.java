@@ -27,6 +27,7 @@ import com.idega.core.business.DefaultSpringBean;
 import com.idega.core.converter.util.StringConverterUtility;
 import com.idega.idegaweb.IWApplicationContext;
 import com.idega.idegaweb.IWMainApplication;
+import com.idega.jbpm.bean.VariableInstanceType;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessInstanceW;
 import com.idega.jbpm.identity.UserPersonalData;
@@ -159,7 +160,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		List<String> filesInRepository = new ArrayList<String>();
 		for (BinaryVariable bv: attachments) {
 			try {
-				String name = "files_".concat(bv.getVariable().getName());
+				String name = VariableInstanceType.BYTE_ARRAY.getPrefix().concat(bv.getVariable().getName());
 				if (!filesToAttach.contains(name)) {
 					continue;
 				}
