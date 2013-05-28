@@ -242,10 +242,9 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 		try {
 			taskName = tiw.getName(locale);
 
-			if(StringUtil.isEmpty(taskName))
+			if (StringUtil.isEmpty(taskName))
 				return null;
-
-		} catch(Exception e) {
+		} catch (Exception e) {
 			LOGGER.log(Level.WARNING, "Error getting name for task instance by ID: " + taskInstance + " and locale: " + locale, e);
 			return null;
 		}

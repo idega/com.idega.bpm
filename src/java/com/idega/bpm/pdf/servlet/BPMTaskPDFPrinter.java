@@ -26,56 +26,51 @@ public class BPMTaskPDFPrinter extends AttachmentWriter {
 
 	@Autowired
 	private BPMFactory bpmFactory;
-	
+
 	@Override
 	public String getMimeType() {
 
 		if(binaryVariable != null && binaryVariable.getMimeType() != null)
 			return binaryVariable.getMimeType();
-		
+
 		return MimeTypeUtil.MIME_TYPE_PDF_1;
 	}
 
 	@Override
 	protected BinaryVariable resolveBinaryVariable(IWContext iwc) {
-
 		String taskIdStr = iwc.getParameter(PARAM_TASK_INSTANCE_ID);
 		String variableName = iwc.getParameter(PARAM_VARIABLE_NAME);
 
 		if (taskIdStr != null && variableName != null) {
-			
-			Variable variable = Variable
-			.parseDefaultStringRepresentation(variableName);
+			Variable variable = Variable.parseDefaultStringRepresentation(variableName);
 
 			Long taskInstanceId = Long.valueOf(taskIdStr);
-			
+
 			TaskInstanceW taskInstanceW = getBpmFactory()
-			.getProcessManagerByTaskInstanceId(taskInstanceId)
-			.getTaskInstance(taskInstanceId);
+					.getProcessManagerByTaskInstanceId(taskInstanceId)
+					.getTaskInstance(taskInstanceId);
 			List<BinaryVariable> attachmentsForVar = taskInstanceW.getAttachments(variable);
 //			TODO: check if this is correct implementation (expecting only one attachment for variable)
 			binaryVariable = !ListUtil.isEmpty(attachmentsForVar) ? attachmentsForVar.iterator().next() : null;
-			
 		} else {
-			
 			binaryVariable = null;
 			logger.log(Level.WARNING, "No task instance id and variable name provided");
 		}
-		
+
 		if (binaryVariable == null) {
 			logger.warning("Variable not found by instance id: " + taskIdStr + " and variable name: " + variableName);
 		} else {
 			logger.info("Starting to download: " + binaryVariable.getFileName() + ", " + binaryVariable.getIdentifier());
 		}
-		
+
 		return binaryVariable;
 	}
 
 	protected BPMFactory getBpmFactory() {
-		
+
 		if(bpmFactory == null)
 			ELUtil.getInstance().autowire(this);
-		
+
 		return bpmFactory;
 	}
 }

@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -248,38 +249,52 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 
 	@Override
-	@Transactional(readOnly = false)
-	public void submit(final ViewSubmission viewSubmission, final boolean proceedProcess) {
-		final TaskInstanceW source = this;
+	public void submit(JbpmContext context, ViewSubmission view) {
+		submit(context, view, true);
+	}
 
-		getBpmContext().execute(new JbpmCallback<View>() {
+	@Override
+	public void submit(final ViewSubmission viewSubmission, final boolean proceedProcess) {
+		getBpmContext().execute(new JbpmCallback<Void>() {
 
 			@Override
-			public View doInJbpm(JbpmContext context) throws JbpmException {
-				TaskInstance taskInstance = getTaskInstance(context);
-
-				if (taskInstance.hasEnded())
-					throw new ProcessException("Task instance (" + taskInstance.getId() + ") is already submitted", "Task instance is already submitted");
-
-				Long piId = null, tiId = null;
-				try {
-					piId = taskInstance.getProcessInstance().getId();
-					tiId = taskInstance.getId();
-
-					submitVariablesAndProceedProcess(context, taskInstance, viewSubmission.resolveVariables(), proceedProcess);
-
-					// if priority was hidden, then setting to default priority after submission
-					if (taskInstance.getPriority() == PRIORITY_HIDDEN) {
-						taskInstance.setPriority(Task.PRIORITY_NORMAL);
-					}
-
-					context.save(taskInstance);
-					return null;
-				} finally {
-					ELUtil.getInstance().publishEvent(new TaskInstanceSubmitted(source, piId, tiId));
-				}
+			public Void doInJbpm(JbpmContext context) throws JbpmException {
+				submit(context, viewSubmission, proceedProcess);
+				return null;
 			}
 		});
+	}
+
+	@Transactional(readOnly = false)
+	private void submit(JbpmContext context, ViewSubmission viewSubmission, boolean proceedProcess) {
+		TaskInstance taskInstance = getTaskInstance(context);
+		if (taskInstance.hasEnded())
+			throw new ProcessException("Task instance (" + taskInstance.getId() + ") is already submitted", "Task instance is already submitted");
+
+		Long piId = null, tiId = null;
+		try {
+			piId = taskInstance.getProcessInstance().getId();
+			tiId = taskInstance.getId();
+
+			Map<String, Object> variables = viewSubmission.resolveVariables();
+			if (variables == null) {
+				TaskInstance ti = context.getTaskInstance(tiId);
+				@SuppressWarnings("unchecked")
+				Map<String, Object> taskVariables = ti.getVariables();
+				viewSubmission.populateVariables(taskVariables);
+				variables = viewSubmission.resolveVariables();
+			}
+
+			submitVariablesAndProceedProcess(context, taskInstance, variables, proceedProcess);
+
+			// if priority was hidden, then setting to default priority after submission
+			if (taskInstance.getPriority() == PRIORITY_HIDDEN) {
+				taskInstance.setPriority(Task.PRIORITY_NORMAL);
+			}
+			context.save(taskInstance);
+		} finally {
+			ELUtil.getInstance().publishEvent(new TaskInstanceSubmitted(this, piId, tiId));
+		}
 	}
 
 	@Transactional(readOnly = false)
@@ -288,7 +303,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 
 	@Transactional(readOnly = false)
-	protected void submitVariablesAndProceedProcess(JbpmContext context, TaskInstance ti, Map<String, Object> variables, boolean proceed) {
+	private void submitVariablesAndProceedProcess(JbpmContext context, TaskInstance ti, Map<String, Object> variables, boolean proceed) {
 		if (context == null)
 			getVariablesHandler().submitVariables(variables, ti.getId(), true);
 		else
@@ -296,11 +311,13 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 		if (proceed) {
 			String actionTaken = (String) ti.getVariable(ProcessConstants.actionTakenVariableName);
-			// TODO
+
 			boolean takeTransitionAction = false;
-			if (actionTaken != null) {
-				for (Object transition : ti.getAvailableTransitions()) {
-					Transition trans = (Transition) transition;
+			@SuppressWarnings("unchecked")
+			List<Transition> availableTransitions = ti.getAvailableTransitions();
+			if (actionTaken != null && !ListUtil.isEmpty(availableTransitions)) {
+				for (Iterator<Transition> transIter = availableTransitions.iterator(); (transIter.hasNext() && !takeTransitionAction);) {
+					Transition trans = transIter.next();
 
 					if (actionTaken.equals(trans.getName()))
 						takeTransitionAction = true;
@@ -353,7 +370,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 					} else {
 						if (loadForDisplay) {
 							if (taskInstance.getPriority() == ProcessConstants.PRIORITY_SHARED_TASK) {
-								taskInstanceId = createSharedTask(context, taskInstance);
+								taskInstanceId = createSharedTask(taskInstance.getId());
 							}
 						}
 
@@ -383,55 +400,43 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		}
 	}
 
+	/**
+	 * Shared task. The original task instance is kept intact, while new token and task instances  are created
+	 *
+	 * @param context
+	 * @param taskInstance
+	 * @return
+	 */
 	@Transactional(readOnly = false)
-	Long createSharedTask(JbpmContext context, TaskInstance taskInstance) {
+	Long createSharedTask(final Long tiId) {
+		return getBpmContext().execute(new JbpmCallback<Long>() {
 
-		// shared task. The original task instance is
-		// kept
-		// intact, while new token and task instances
-		// are created
+			@Override
+			public Long doInJbpm(JbpmContext context) throws JbpmException {
+				TaskInstance taskInstance = context.getTaskInstance(tiId);
+				Token currentToken = taskInstance.getToken();
 
-		Token currentToken = taskInstance.getToken();
+				String keepMeAliveTknName = "KeepMeAlive";
+				Token keepMeAliveTkn = currentToken.getChild(keepMeAliveTknName);
 
-		String keepMeAliveTknName = "KeepMeAlive";
-		Token keepMeAliveTkn = currentToken.getChild(keepMeAliveTknName);
+				if (keepMeAliveTkn == null) {
+					keepMeAliveTkn = new Token(currentToken, keepMeAliveTknName);
+					context.save(keepMeAliveTkn);
+				}
 
-		if (keepMeAliveTkn == null) {
+				// providing millisecond as token unique identifier for parent.
+				// This is needed, because parent holds children tokens in the map where key is token name
+				Token individualInstanceToken = new Token(currentToken, "sharedTask_" + System.currentTimeMillis());
 
-			keepMeAliveTkn = new Token(currentToken, keepMeAliveTknName);
+				taskInstance = taskInstance.getTaskMgmtInstance().createTaskInstance(taskInstance.getTask(), individualInstanceToken);
+				// TODO: populate token with currentToken.getParent() variables
+				// setting hidden priority, so the task wouldn't appear in the tasks list
+				taskInstance.setPriority(PRIORITY_HIDDEN);
+				context.save(taskInstance);
 
-			context.save(keepMeAliveTkn);
-		}
-
-		// providing millis as token unique identifier
-		// for
-		// parent.
-		// This is needed, because parent holds children
-		// tokens
-		// in the map where key is token name
-		Token individualInstanceToken = new Token(currentToken, "sharedTask_"
-		// + taskInstance.getTask()
-		        // .getName()
-		        + System.currentTimeMillis());
-
-		context.save(individualInstanceToken);
-
-		taskInstance = taskInstance.getTaskMgmtInstance().createTaskInstance(
-		    taskInstance.getTask(), individualInstanceToken);
-
-		// TODO: populate token with
-		// currentToken.getParent()
-		// variables
-
-		// setting hidden priority, so the task wouldn't
-		// appear
-		// in the tasks list
-		taskInstance.setPriority(PRIORITY_HIDDEN);
-
-		// System.out.println("__saving in asdasd");
-		// context.save(taskInstance);
-
-		return taskInstance.getId();
+				return taskInstance.getId();
+			}
+		});
 	}
 
 	@Override
@@ -726,7 +731,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Override
 	@Transactional(readOnly = true)
 	public boolean isSignable() {
-		Map<String, Object> variablesMap = getVariablesHandler() .populateVariables(getTaskInstanceId());
+		Map<String, Object> variablesMap = getVariablesHandler().populateVariables(getTaskInstanceId());
 
 		return variablesMap.get(allowSigningVariableRepresentation) != null &&
 				variablesMap.get(allowSigningVariableRepresentation).equals(Boolean.TRUE.toString());
@@ -857,4 +862,5 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 		return false;
 	}
+
 }

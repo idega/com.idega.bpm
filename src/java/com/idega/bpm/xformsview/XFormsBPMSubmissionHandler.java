@@ -37,7 +37,7 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 
 	@Override
 	@Transactional(readOnly = false)
-	public Map<String, Object> submit(Submission submission,  Node submissionInstance) throws XFormsException {
+	public Map<String, Object> submit(Submission submission, Node submissionInstance) throws XFormsException {
 		// method - post, replace - none
 		if (!submission.getReplace().equalsIgnoreCase("none"))
 			throw new XFormsException("Submission mode '" + submission.getReplace() + "' not supported");
@@ -62,6 +62,7 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 
 		Long piId = null;
 		String procDefName = null;
+		Map<String, Object> results = null;
 		try {
 			if (taskInstanceId != null) {
 				BPMFactory bpmFactory = getBpmFactory();
@@ -73,6 +74,7 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 				procDefName = piW.getProcessDefinitionW().getProcessDefinition().getName();
 
 				tiW.submit(xformsViewSubmission);
+				results = xformsViewSubmission.resolveVariables();
 			} else {
 				BPMFactory bpmFactory = getBpmFactory();
 				Map<String, String> parameters = xformsViewSubmission.resolveParameters();
@@ -90,19 +92,19 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 					procDefName = getBpmFactory().getBPMDAO().getProcessDefinitionNameByProcessDefinitionId(processDefinitionId);
 
 					piId = pdW.startProcess(xformsViewSubmission);
+					results = xformsViewSubmission.resolveVariables();
 				} else {
-					Logger.getLogger(getClass().getName()).severe("Couldn't handle submission. No action associated with the submission action. " +
-							"Parameters=" + parameters);
+					Logger.getLogger(getClass().getName()).severe("Couldn't handle submission. No action associated with the submission " +
+							"action. Parameters=" + parameters);
 				}
 			}
 
 			getFileUploadManager().cleanup(null, submissionInstance, getUploadedResourceResolver());
+			return results;
 		} finally {
 			if (procDefName != null && piId != null)
 				ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, piId));
 		}
-
-		return null;
 	}
 
 	public BPMFactory getBpmFactory() {

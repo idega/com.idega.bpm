@@ -444,9 +444,10 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 					iterator.remove();
 				} else {
 					id = ti.getId();
+					ProcessInstance pi = ti.getProcessInstance();
 					if (ti.hasEnded()
 							|| prioritiesToFilterList.contains(ti.getPriority())
-					        || ti.getProcessInstance().hasEnded()
+					        || (pi == null || pi.hasEnded())
 					        || (filterByTaskName && !taskName.equals(context.getTaskInstance(id).getTask().getName())))
 						iterator.remove();
 				}
@@ -887,9 +888,9 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			ViewSubmission viewSubmission = getBpmFactory().getViewSubmission();
 
 			Map<String, Object> currentVariables = view.resolveVariables();
-			if (currentVariables == null)
+			if (currentVariables == null) {
 				currentVariables = variables;
-			else if (variables != null) {
+			} else if (variables != null) {
 				for (Map.Entry<String, Object> entry: variables.entrySet()) {
 					currentVariables.put(entry.getKey(), entry.getValue());
 				}
@@ -960,5 +961,10 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 				filteredTasks.add(task);
 		}
 		return filteredTasks;
+	}
+
+	@Override
+	public String toString() {
+		return "Proc. inst. ID: " + getProcessInstanceId();
 	}
 }
