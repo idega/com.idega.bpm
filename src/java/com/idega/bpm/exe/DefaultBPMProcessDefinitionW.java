@@ -34,6 +34,7 @@ import com.idega.core.business.DefaultSpringBean;
 import com.idega.core.localisation.business.ICLocaleBusiness;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
+import com.idega.jbpm.data.VariableInstanceQuerier;
 import com.idega.jbpm.event.ProcessInstanceCreatedEvent;
 import com.idega.jbpm.event.VariableCreatedEvent;
 import com.idega.jbpm.exe.BPMFactory;
@@ -65,6 +66,8 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 	private BPMContext bpmContext;
 	@Autowired
 	private VariablesHandler variablesHandler;
+	@Autowired
+	private VariableInstanceQuerier querier;
 
 	@Override
 	protected Logger getLogger() {
@@ -266,7 +269,20 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 			ti.setActorId(usrId.toString());
 
 		getVariablesHandler().submitVariables(context, variables, ti.getId(), true);
+		context.getSession().flush();
 		getLogger().info("Variables were submitted");
+
+		//	Indexing variables
+		Long piId = null;
+		ProcessInstance pi = null;
+		try {
+			pi = ti.getProcessInstance();
+			piId = pi.getId();
+
+			getVariableInstanceQuerier().doIndexVariables(piId);
+		} catch (Exception e) {
+			getLogger().log(Level.WARNING, "Error indexing variables " + variables + " for task instance: " + ti + ", proc. inst. ID: " + piId, e);
+		}
 
 		if (proceed) {
 			String actionTaken = (String) ti.getVariable(ProcessConstants.actionTakenVariableName);
@@ -279,16 +295,16 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 			ti.setEnd(new Date());
 		}
 
-		context.getSession().flush();
 		getLogger().info("Task instance (name=" + ti.getName() + ", ID=" + ti.getId() + ") was executed");
 
-		try {
-			ApplicationContext appContext = ELUtil.getInstance().getApplicationContext();
-			ProcessInstance pi = ti.getProcessInstance();
-			appContext.publishEvent(new VariableCreatedEvent(this, pi.getProcessDefinition().getName(), pi.getId(), variables));
-		} catch (Exception e) {
-			getLogger().log(Level.WARNING, "Error publishing VariableCreatedEvent for task instance: " + ti, e);
-		}
+		ApplicationContext appContext = ELUtil.getInstance().getApplicationContext();
+		appContext.publishEvent(new VariableCreatedEvent(this, pi.getProcessDefinition().getName(), piId, variables));
+	}
+
+	private VariableInstanceQuerier getVariableInstanceQuerier() {
+		if (querier == null)
+			ELUtil.getInstance().autowire(this);
+		return querier;
 	}
 
 	@Override
