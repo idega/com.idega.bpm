@@ -58,7 +58,7 @@ public class BPMTaskPDFPrinter extends AttachmentWriter {
 		}
 
 		if (binaryVariable == null) {
-			logger.warning("Variable not found by instance id: " + taskIdStr + " and variable name: " + variableName);
+			logger.warning("Variable not found by task instance id: " + taskIdStr + " and variable name: " + variableName);
 		} else {
 			logger.info("Starting to download: " + binaryVariable.getFileName() + ", " + binaryVariable.getIdentifier());
 		}

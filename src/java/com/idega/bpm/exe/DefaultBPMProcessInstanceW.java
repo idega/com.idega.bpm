@@ -154,7 +154,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 						taskInstances = new ArrayList<TaskInstance>(tasks);
 				}
 
-				taskInstances.addAll(getSubprocessesTaskInstances(processInstance, excludedSubProcessesNames, includedOnlySubProcessesNames));
+				taskInstances.addAll(getSubprocessesTaskInstances(context, processInstance, excludedSubProcessesNames, includedOnlySubProcessesNames));
 				return taskInstances;
 			}
 		});
@@ -165,15 +165,20 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 				(includedOnlySubProcessesNames == null && excludedSubProcessesNames != null && excludedSubProcessesNames.contains(processName));
 	}
 
-	private Collection<TaskInstance> getSubprocessesTaskInstances(ProcessInstance processInstance, final List<String> excludedSubProcessesNames,
-				final List<String> includedOnlySubProcessesNames) {
+	private Collection<TaskInstance> getSubprocessesTaskInstances(
+			JbpmContext context,
+			ProcessInstance processInstance,
+			final List<String> excludedSubProcessesNames,
+			final List<String> includedOnlySubProcessesNames
+	) {
 		List<ProcessInstance> subProcessInstances = getBpmDAO().getSubprocessInstancesOneLevel(processInstance.getId());
 
 		List<TaskInstance> taskInstances;
-
 		if (!ListUtil.isEmpty(subProcessInstances)) {
 			taskInstances = new ArrayList<TaskInstance>();
-			for (ProcessInstance subProcessInstance : subProcessInstances) {
+			for (ProcessInstance subProcessInstance: subProcessInstances) {
+				subProcessInstance = context.getProcessInstance(subProcessInstance.getId());
+
 				if (!isFilterOutProcessInstance(subProcessInstance.getProcessDefinition().getName(),
 				    excludedSubProcessesNames, includedOnlySubProcessesNames)) {
 

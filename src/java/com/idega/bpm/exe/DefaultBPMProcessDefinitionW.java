@@ -269,7 +269,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 			ti.setActorId(usrId.toString());
 
 		getVariablesHandler().submitVariables(context, variables, ti.getId(), true);
-		context.getSession().flush();
+		context.getSession().flush();	//	if we are not flushing here, BPM data will be missing for the other nodes
 		getLogger().info("Variables were submitted");
 
 		//	Indexing variables
