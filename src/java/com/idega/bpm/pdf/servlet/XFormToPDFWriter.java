@@ -117,8 +117,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 					LOGGER.log(Level.SEVERE, "Unknown path for resource in repository");
 					return;
 				}
-			}
-			else {
+			} else {
 				pathInRepository = BPMConstants.PDF_OF_XFORMS_PATH_IN_REPOSITORY;
 			}
 		}

@@ -19,6 +19,7 @@ import com.idega.block.form.presentation.FormViewer;
 import com.idega.block.process.variables.Variable;
 import com.idega.block.process.variables.VariableDataType;
 import com.idega.bpm.BPMConstants;
+import com.idega.bpm.jsfcomponentview.BPMCapableJSFComponent;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.graphics.generator.business.PDFGenerator;
 import com.idega.idegaweb.IWBundle;
@@ -254,10 +255,10 @@ public class FormConverterToPDFBean extends DefaultSpringBean implements FormCon
 			return null;
 		}
 
-		boolean isFormViewer = viewer instanceof FormViewer;
-		if (isFormViewer)
-			((FormViewer) viewer).setPdfViewer(true);
+		if (viewer instanceof PDFRenderedComponent)
+			((PDFRenderedComponent) viewer).setPdfViewer(true);
 
+		boolean isFormViewer = (viewer instanceof FormViewer) || (viewer instanceof BPMCapableJSFComponent);
 		if (getGenerator().generatePDF(iwc, viewer, pdfName, pathInRepository, true, isFormViewer))
 			return pathToForm;
 
