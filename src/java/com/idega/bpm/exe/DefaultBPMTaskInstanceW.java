@@ -272,11 +272,12 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			throw new ProcessException("Task instance (" + taskInstance.getId() + ") is already submitted", "Task instance is already submitted");
 
 		Long piId = null, tiId = null;
+		Map<String, Object> variables = null;
 		try {
 			piId = taskInstance.getProcessInstance().getId();
 			tiId = taskInstance.getId();
 
-			Map<String, Object> variables = viewSubmission.resolveVariables();
+			variables = viewSubmission.resolveVariables();
 			if (variables == null) {
 				TaskInstance ti = context.getTaskInstance(tiId);
 				@SuppressWarnings("unchecked")
@@ -293,7 +294,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			}
 			context.save(taskInstance);
 		} finally {
-			ELUtil.getInstance().publishEvent(new TaskInstanceSubmitted(this, piId, tiId));
+			ELUtil.getInstance().publishEvent(new TaskInstanceSubmitted(this, piId, tiId, variables));
 		}
 	}
 
