@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.security.Permission;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -41,6 +42,7 @@ import com.idega.core.file.util.MimeTypeUtil;
 import com.idega.data.IDOLookup;
 import com.idega.data.MetaData;
 import com.idega.data.MetaDataHome;
+import com.idega.idegaweb.IWApplicationContext;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
@@ -58,12 +60,15 @@ import com.idega.jbpm.identity.Role;
 import com.idega.jbpm.identity.RolesManager;
 import com.idega.jbpm.identity.permission.Access;
 import com.idega.jbpm.identity.permission.PermissionsFactory;
+import com.idega.jbpm.utils.JBPMConstants;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.variables.impl.BinaryVariableImpl;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewSubmission;
 import com.idega.presentation.IWContext;
+import com.idega.slide.SlideConstants;
+import com.idega.slide.business.IWSlideService;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.util.CoreConstants;
@@ -594,11 +599,19 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 
 	@Override
-	@Transactional(readOnly = false)
 	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is) {
-		String filesFolder = getTaskInstanceId() + System.currentTimeMillis() + CoreConstants.SLASH;
-
-		Collection<URI> uris = getLinksToVariables(is, filesFolder, fileName);
+		return addAttachment(variable, fileName, description, is, getTaskInstanceId() + System.currentTimeMillis() + CoreConstants.SLASH);
+	}
+	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is, String filesFolder) {
+		return addAttachment(variable, fileName, description, is, filesFolder, true);
+	}
+	
+	@Override
+	@Transactional(readOnly = false)
+	public BinaryVariable addAttachment(Variable variable, String fileName, String description, 
+			InputStream is, String filesFolder, boolean overwrite) {
+		IWApplicationContext iwac = IWMainApplication.getDefaultIWApplicationContext();
+		Collection<URI> uris = getLinksToVariables(is, filesFolder, fileName,iwac, overwrite);
 		if (ListUtil.isEmpty(uris))
 			return null;
 
@@ -617,6 +630,12 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		binVar.setDescription(description);
 		String mimeType = MimeTypeUtil.resolveMimeTypeFromFileName(fileName);
 		binVar.setMimeType(mimeType);
+		if (!overwrite) {
+			Map<String, Object> metadata = new HashMap<String, Object>();
+			metadata.put(JBPMConstants.OVERWRITE, Boolean.FALSE);
+			metadata.put(JBPMConstants.PATH_IN_REPOSITORY, filesFolder + fileName);
+			binVar.setMetadata(metadata);
+		}
 
 		binVars.add(binVar);
 		vars.put(variableName, binVars);
@@ -626,21 +645,49 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 		return binVar;
 	}
+	private Collection<URI> getLinksToVariables(InputStream is, String folder, String name,IWApplicationContext iwac, boolean overwrite) {
+		Collection<URI> uris = overwrite ?
+				getURIsFromTmpLocation(folder, name, is) :
+				getURIsFromRepository(folder, name, is,iwac);
 
-	private Collection<URI> getLinksToVariables(InputStream is, String folder, String name) {
-		getUploadedResourceResolver().uploadToTmpLocation(folder, name, is, false);
-		Collection<URI> uris = getFileUploadManager().getFilesUris(folder, null, getUploadedResourceResolver());
+		if (ListUtil.isEmpty(uris) && !overwrite)
+			uris = getURIsFromTmpLocation(folder, name, is);
+
 		if (ListUtil.isEmpty(uris)) {
 			String fixedName = StringHandler.removeWhiteSpace(name);
 			fixedName = StringHandler.stripNonRomanCharacters(fixedName, new char[] {'.', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'});
 			if (fixedName.equals(name))
 				return null;
 
-			return getLinksToVariables(is, folder, fixedName);
+			return getLinksToVariables(is, folder, fixedName,iwac, overwrite);
 		}
 
 		return uris;
 	}
+	
+	private Collection<URI> getURIsFromTmpLocation(String folder, String name, InputStream is) {
+		getUploadedResourceResolver().uploadToTmpLocation(folder, name, is, false);
+		return getFileUploadManager().getFilesUris(folder, null, getUploadedResourceResolver());
+	}
+	private Collection<URI> getURIsFromRepository(String folder, String name, InputStream stream,IWApplicationContext iwac) {
+		try {
+			IWSlideService iwSlideService = IBOLookup.getServiceInstance(iwac, IWSlideService.class);
+
+			String path = folder + name;
+			if (!iwSlideService.getExistence(path)) {
+				if (!iwSlideService.uploadFile(folder, name, null, stream))
+					return null;
+			}
+			String filePath = new StringBuilder(SlideConstants.SLIDE_SCHEME).append(CoreConstants.COLON).append(iwSlideService.getURI(path)).toString();
+			URI uri = new URI(filePath);
+			return Arrays.asList(uri);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
 
 	TmpFilesManager getFileUploadManager() {
 		return fileUploadManager;
