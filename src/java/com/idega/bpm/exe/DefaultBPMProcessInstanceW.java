@@ -622,7 +622,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		}
 	}
 
-	BPMDAO getBpmDAO() {
+	protected BPMDAO getBpmDAO() {
 		return bpmDAO;
 	}
 
