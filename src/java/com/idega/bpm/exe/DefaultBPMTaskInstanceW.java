@@ -635,6 +635,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			metadata.put(JBPMConstants.OVERWRITE, Boolean.FALSE);
 			metadata.put(JBPMConstants.PATH_IN_REPOSITORY, filesFolder + fileName);
 			binVar.setMetadata(metadata);
+			binVar.setPersistedToRepository(true);
 		}
 
 		binVars.add(binVar);
