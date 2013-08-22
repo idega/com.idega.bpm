@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import javax.annotation.Resource;
+import javax.servlet.ServletContext;
 
 import org.jbpm.JbpmContext;
 import org.jbpm.JbpmException;
@@ -27,13 +28,17 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.idega.block.process.business.CaseManagersProvider;
 import com.idega.block.process.business.CasesRetrievalManager;
 import com.idega.block.process.business.ExternalEntityInterface;
 import com.idega.core.business.DefaultSpringBean;
+import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
+import com.idega.jbpm.business.BPMAssetsResolver;
 import com.idega.jbpm.data.dao.BPMDAO;
 import com.idega.jbpm.exe.BPMDocument;
 import com.idega.jbpm.exe.BPMEmailDocument;
@@ -64,6 +69,7 @@ import com.idega.user.util.UserComparator;
 import com.idega.util.CoreConstants;
 import com.idega.util.ListUtil;
 import com.idega.util.StringUtil;
+import com.idega.util.datastructures.map.MapUtil;
 import com.idega.util.expression.ELUtil;
 
 /**
@@ -516,42 +522,64 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return null;
 	}
 
+	private List<User> usersConnectedToProcess = null;
+	
 	@Override
 	@Transactional(readOnly = true)
 	public List<User> getUsersConnectedToProcess() {
+		if (usersConnectedToProcess != null) {
+			return usersConnectedToProcess;
+		}
+		
+		try {
+			ServletContext servletCtx = IWMainApplication.getDefaultIWMainApplication().getServletContext();
+			WebApplicationContext webAppCtx = WebApplicationContextUtils.getWebApplicationContext(servletCtx);
+			@SuppressWarnings("unchecked")
+			Map<String, BPMAssetsResolver> bpmAssetsResolvers = webAppCtx.getBeansOfType(BPMAssetsResolver.class);
+			if (!MapUtil.isEmpty(bpmAssetsResolvers)) {
+				for (BPMAssetsResolver resolver: bpmAssetsResolvers.values()) {
+					usersConnectedToProcess = resolver.getUsersConectedToProcess(this);
+				}
+			}
+		} catch (Exception e) {}
+		if (usersConnectedToProcess != null) {
+			return usersConnectedToProcess;
+		}
+		
 		final Collection<User> users;
 		try {
 			Long processInstanceId = getProcessInstanceId();
-			BPMTypedPermission perm = (BPMTypedPermission) getBpmFactory().getPermissionsFactory().getRoleAccessPermission(processInstanceId, null, false);
+			BPMTypedPermission perm = (BPMTypedPermission) getBpmFactory().getPermissionsFactory()
+					.getRoleAccessPermission(processInstanceId, null, false);
 			users = getBpmFactory().getRolesManager().getAllUsersForRoles(null, processInstanceId, perm);
 		} catch (Exception e) {
 			getLogger().log(Level.SEVERE, "Exception while resolving all process instance users", e);
 			return null;
 		}
 
-		if (!ListUtil.isEmpty(users)) {
-			// using separate list, as the resolved one could be cashed (shared) and so
-			List<User> connectedPeople = new ArrayList<User>(users);
+		if (ListUtil.isEmpty(users)) {
+			usersConnectedToProcess = new ArrayList<User>();
+			return usersConnectedToProcess;
+		}
+		
+		// using separate list, as the resolved one could be cashed (shared) and so
+		usersConnectedToProcess = new ArrayList<User>(users);
+		for (Iterator<User> iterator = usersConnectedToProcess.iterator(); iterator.hasNext();) {
+			User user = iterator.next();
+			String hideInContacts = user.getMetaData(BPMUser.HIDE_IN_CONTACTS);
 
-			for (Iterator<User> iterator = connectedPeople.iterator(); iterator.hasNext();) {
-				User user = iterator.next();
-				String hideInContacts = user.getMetaData(BPMUser.HIDE_IN_CONTACTS);
-
-				if (hideInContacts != null)
-					// excluding ones, that should be hidden in contacts list
-					iterator.remove();
-			}
-
-			try {
-				Collections.sort(connectedPeople, new UserComparator(getCurrentLocale()));
-			} catch (Exception e) {
-				getLogger().log(Level.SEVERE, "Exception while sorting contacts list (" + connectedPeople + ")", e);
-			}
-
-			return connectedPeople;
+			if (hideInContacts != null)
+				// excluding ones, that should be hidden in contacts list
+				iterator.remove();
 		}
 
-		return null;
+		try {
+			Collections.sort(usersConnectedToProcess, new UserComparator(getCurrentLocale()));
+		} catch (Exception e) {
+			getLogger().log(Level.SEVERE, "Exception while sorting contacts list (" + usersConnectedToProcess + ")", e);
+		}
+		
+		return usersConnectedToProcess;
 	}
 
 	@Override
