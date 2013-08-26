@@ -154,9 +154,20 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 				(includedOnlySubProcessesNames == null && excludedSubProcessesNames != null && excludedSubProcessesNames.contains(processName));
 	}
 
+	private List<ProcessInstance> getAllSubprocesses(ProcessInstance processInstance){
+		List<ProcessInstance> subProcessInstances = getBpmDAO().getSubprocessInstancesOneLevel(processInstance.getId());
+		if(ListUtil.isEmpty(subProcessInstances)){
+			return Collections.emptyList();
+		}
+		ArrayList<ProcessInstance> childSubProcessInstances = new ArrayList<ProcessInstance>(subProcessInstances);
+		for(ProcessInstance subProcess : subProcessInstances){
+			childSubProcessInstances.addAll(getAllSubprocesses(subProcess));
+		}
+		return childSubProcessInstances;
+	}
 	private Collection<TaskInstance> getSubprocessesTaskInstances(ProcessInstance processInstance, final List<String> excludedSubProcessesNames,
 				final List<String> includedOnlySubProcessesNames) {
-		List<ProcessInstance> subProcessInstances = getBpmDAO().getSubprocessInstancesOneLevel(processInstance.getId());
+		List<ProcessInstance> subProcessInstances = getAllSubprocesses(processInstance);
 
 		List<TaskInstance> taskInstances;
 
@@ -659,6 +670,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return getAttachedEmails(user, false);
 	}
 
+	@Override
 	@Transactional(readOnly = true)
 	public List<BPMEmailDocument> getAttachedEmails(User user, boolean fetchMessage) {
 		List<String> included = new ArrayList<String>(1);
