@@ -5,7 +5,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import com.idega.block.email.business.EmailSenderHelper;
 import com.idega.builder.bean.AdvancedProperty;
+import com.idega.core.accesscontrol.business.AccessController;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.core.converter.util.StringConverterUtility;
 import com.idega.idegaweb.IWApplicationContext;
@@ -38,6 +38,7 @@ import com.idega.presentation.IWContext;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.Group;
 import com.idega.user.data.User;
+import com.idega.util.ArrayUtil;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
 import com.idega.util.ListUtil;
@@ -65,7 +66,6 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 
 	@Override
 	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
-
 		final UserPersonalData upd = (UserPersonalData) context;
 
 		final IWContext iwc = CoreUtil.getIWContext();
@@ -74,10 +74,11 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 
 		List<String> sendToEmails = msgs.getSendToEmails();
 		final List<String> emailAddresses;
-		if (sendToEmails != null)
+		if (sendToEmails != null) {
 			emailAddresses = new ArrayList<String>(sendToEmails);
-		else
+		} else {
 			emailAddresses = new ArrayList<String>(1);
+		}
 
 		if (upd != null && upd.getUserEmail() != null)
 			emailAddresses.add(upd.getUserEmail());
@@ -144,7 +145,10 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	}
 
 	protected List<AdvancedProperty> getMailHeaders() {
-		return Arrays.asList(new AdvancedProperty(SendMail.HEADER_AUTO_SUBMITTED, "auto-generated"), new AdvancedProperty(SendMail.HEADER_PRECEDENCE, "bulk"));
+		return Arrays.asList(
+				new AdvancedProperty(SendMail.HEADER_AUTO_SUBMITTED, "auto-generated"),
+				new AdvancedProperty(SendMail.HEADER_PRECEDENCE, "bulk")
+		);
 	}
 
 	private File getAttachedFile(List<String> filesToAttach, ProcessInstanceW piw) {
@@ -172,9 +176,13 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		return getEmailSenderHelper().getFileToAttach(filesInSlide);
 	}
 
-	protected String[] getFormattedMessage(MessageValueContext mvCtx, Locale preferredLocale, LocalizedMessages msgs,Map<Locale, String[]> unformattedForLocales,
-			Token tkn) {
-
+	protected String[] getFormattedMessage(
+			MessageValueContext mvCtx,
+			Locale preferredLocale,
+			LocalizedMessages msgs,
+			Map<Locale, String[]> unformattedForLocales,
+			Token tkn
+	) {
 		String unformattedSubject;
 		String unformattedMsg;
 
@@ -217,45 +225,77 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		return getMessageValueHandler().getFormattedMessage(unformattedMessage,	messageValues, tkn, mvCtx);
 	}
 
-	public Collection<User> getUsersToSendMessageTo(String rolesNamesAggr, ProcessInstance pi) {
+	private Collection<User> getAllUsersByRoles(String[] roles, ProcessInstance pi) {
 		Collection<User> allUsers = new ArrayList<User>();
-		if (rolesNamesAggr != null) {
-			String[] rolesNames = rolesNamesAggr.trim().split(CoreConstants.SPACE);
+		for (String string: roles) {
+			Set<String> rolesNamesSet = new HashSet<String>(roles.length);
+			rolesNamesSet.add(string);
 
-			for (String string : rolesNames) {
-				Set<String> rolesNamesSet = new HashSet<String>(rolesNames.length);
-				rolesNamesSet.add(string);
+			Collection<User> users = getBpmFactory().getRolesManager().getAllUsersForRoles(rolesNamesSet, pi.getId());
 
-				Collection<User> users = getBpmFactory().getRolesManager().getAllUsersForRoles(rolesNamesSet, pi.getId());
+			/* Override so that users that are not directly related to the case can also receive email */
+			if (ListUtil.isEmpty(users)) {
+				IWApplicationContext iwac = IWMainApplication.getDefaultIWApplicationContext();
+				IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
 
-				/* Override so that users that are not directly related to the case can also receive email */
-				if (ListUtil.isEmpty(users)) {
-					IWApplicationContext iwac = IWMainApplication.getDefaultIWApplicationContext();
-					IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
-
-					for (String role : rolesNamesSet) {
-						Collection<Group> groups = iwma.getAccessController().getAllGroupsForRoleKey(role, iwac);
-						for (Group group : groups) {
-							try {
-								users = getUserBusiness(iwac).getUsersInGroup(group);
-								for (User user : users) {
-									if (!allUsers.contains(user)) {
-										allUsers.add(user);
-									}
+				for (String role: rolesNamesSet) {
+					Collection<Group> groups = iwma.getAccessController().getAllGroupsForRoleKey(role, iwac);
+					for (Group group : groups) {
+						try {
+							users = getUserBusiness(iwac).getUsersInGroup(group);
+							for (User user : users) {
+								if (!allUsers.contains(user)) {
+									allUsers.add(user);
 								}
-							} catch (RemoteException e) {
-								e.printStackTrace();
 							}
+						} catch (RemoteException e) {
+							e.printStackTrace();
 						}
 					}
-				} else {
-					allUsers.addAll(users);
 				}
+			} else {
+				allUsers.addAll(users);
 			}
-		} else {
-			allUsers = Collections.emptyList();
+		}
+		return allUsers;
+	}
+
+	public Collection<User> getUsersToSendMessageTo(String rolesNamesAggr, ProcessInstance pi) {
+		Collection<User> allUsers = new ArrayList<User>();
+		if (rolesNamesAggr == null) {
+			getLogger().warning("Roles expression is not provided");
+			return allUsers;
 		}
 
+		String[] rolesNames = rolesNamesAggr.trim().split(CoreConstants.SPACE);
+		if (ArrayUtil.isEmpty(rolesNames)) {
+			getLogger().warning("No roles recognized from expression: " + rolesNamesAggr);
+			return allUsers;
+		}
+
+		ProcessInstanceW piW = getBpmFactory().getProcessInstanceW(pi.getId());
+		List<User> usersConnectedToProcess = piW.getUsersConnectedToProcess();
+		if (ListUtil.isEmpty(usersConnectedToProcess)) {
+			return getAllUsersByRoles(rolesNames, pi);
+		}
+
+		AccessController accessController = IWMainApplication.getDefaultIWMainApplication().getAccessController();
+		for (String role: rolesNames) {
+			for (User user: usersConnectedToProcess) {
+				if (accessController.hasRole(user, role)) {
+					allUsers.add(user);
+				}
+			}
+		}
+
+		if (ListUtil.isEmpty(allUsers)) {
+			getLogger().warning("No users (" + usersConnectedToProcess + ") connectected to proc. inst. (ID: " + pi.getId() +
+					") have role(s) " + rolesNamesAggr + " will try to send to all users having these roles");
+			return getAllUsersByRoles(rolesNames, pi);
+		}
+
+		getLogger().info("Will send message to users " + allUsers + ". Receivers were resolved by proc. inst. (ID: " + pi.getId() +
+				") and role(s): " + rolesNamesAggr);
 		return allUsers;
 	}
 
