@@ -60,6 +60,7 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 
 		Long piId = null;
 		String procDefName = null;
+		Map<String, Object> variables = null;
 		try {
 			if (taskInstanceId != null) {
 				BPMFactory bpmFactory = getBpmFactory();
@@ -88,6 +89,7 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 					procDefName = pdW.getProcessDefinition().getName();
 
 					piId = pdW.startProcess(xformsViewSubmission);
+					variables = xformsViewSubmission.resolveVariables();
 				} else {
 					Logger.getLogger(getClass().getName()).severe("Couldn't handle submission. No action associated with the submission action. " +
 							"Parameters=" + parameters);
@@ -97,7 +99,7 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 			getFileUploadManager().cleanup(null, submissionInstance, getUploadedResourceResolver());
 		} finally {
 			if (procDefName != null && piId != null)
-				ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, piId));
+				ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, piId, variables));
 		}
 
 		return null;

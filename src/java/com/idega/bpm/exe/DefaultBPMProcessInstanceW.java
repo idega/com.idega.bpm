@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import javax.annotation.Resource;
-import javax.servlet.ServletContext;
 
 import org.jbpm.JbpmContext;
 import org.jbpm.JbpmException;
@@ -28,17 +27,13 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.idega.block.process.business.CaseManagersProvider;
 import com.idega.block.process.business.CasesRetrievalManager;
 import com.idega.block.process.business.ExternalEntityInterface;
 import com.idega.core.business.DefaultSpringBean;
-import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
-import com.idega.jbpm.business.BPMAssetsResolver;
 import com.idega.jbpm.data.dao.BPMDAO;
 import com.idega.jbpm.exe.BPMDocument;
 import com.idega.jbpm.exe.BPMEmailDocument;
@@ -69,7 +64,6 @@ import com.idega.user.util.UserComparator;
 import com.idega.util.CoreConstants;
 import com.idega.util.ListUtil;
 import com.idega.util.StringUtil;
-import com.idega.util.datastructures.map.MapUtil;
 import com.idega.util.expression.ELUtil;
 
 /**
@@ -292,18 +286,18 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		submittedTaskInstances = filterDocumentsByUserPermission(user, submittedTaskInstances);
 		return getBPMDocuments(submittedTaskInstances, locale, doShowExternalEntity);
 	}
-	
+
 	@Autowired(required=false)
 	private ExternalEntityInterface externalEntityInterface;
-	
+
 	protected ExternalEntityInterface getExternalEntityInterface() {
 		if (this.externalEntityInterface == null) {
 			ELUtil.getInstance().autowire(this);
 		}
-		
+
 		return this.externalEntityInterface;
 	}
-	
+
 	private List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiws, Locale locale, boolean doShowExternalEntity) {
 		List<BPMDocument> documents = new ArrayList<BPMDocument>(tiws.size());
 
@@ -321,7 +315,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			if (actorId != null) {
 				try {
 					User usr = userBusiness.getUser(Integer.parseInt(actorId));
-					
+
 					if (!doShowExternalEntity) {
 						actorName = usr.getName();
 					} else {
@@ -329,14 +323,14 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 						if (eei != null) {
 							actorName = eei.getName(usr);
 						}
-						
+
 						if (StringUtil.isEmpty(actorName)) {
 							actorName = usr.getName();
 						} else {
 							actorName = actorName + " (" + usr.getName() + ")";
 						}
 					}
-					
+
 				} catch (Exception e) {
 					getLogger().log(Level.SEVERE, "Exception while resolving actor name for actorId: " + actorId, e);
 					actorName = CoreConstants.EMPTY;
@@ -534,29 +528,24 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	private List<User> usersConnectedToProcess = null;
-	
+
 	@Override
 	@Transactional(readOnly = true)
 	public List<User> getUsersConnectedToProcess() {
 		if (usersConnectedToProcess != null) {
 			return usersConnectedToProcess;
 		}
-		
+
 		try {
-			ServletContext servletCtx = IWMainApplication.getDefaultIWMainApplication().getServletContext();
-			WebApplicationContext webAppCtx = WebApplicationContextUtils.getWebApplicationContext(servletCtx);
+			String procDefName = getProcessDefinitionW().getProcessDefinition().getName();
 			@SuppressWarnings("unchecked")
-			Map<String, BPMAssetsResolver> bpmAssetsResolvers = webAppCtx.getBeansOfType(BPMAssetsResolver.class);
-			if (!MapUtil.isEmpty(bpmAssetsResolvers)) {
-				for (BPMAssetsResolver resolver: bpmAssetsResolvers.values()) {
-					usersConnectedToProcess = resolver.getUsersConectedToProcess(this);
-				}
-			}
+			Map<String, Object> variables = getProcessInstance().getContextInstance().getVariables();
+			usersConnectedToProcess = getBpmFactory().getBPMDAO().getUsersConnectedToProcess(getProcessInstanceId(), procDefName, variables);
 		} catch (Exception e) {}
 		if (usersConnectedToProcess != null) {
 			return usersConnectedToProcess;
 		}
-		
+
 		final Collection<User> users;
 		try {
 			Long processInstanceId = getProcessInstanceId();
@@ -572,7 +561,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			usersConnectedToProcess = new ArrayList<User>();
 			return usersConnectedToProcess;
 		}
-		
+
 		// using separate list, as the resolved one could be cashed (shared) and so
 		usersConnectedToProcess = new ArrayList<User>(users);
 		for (Iterator<User> iterator = usersConnectedToProcess.iterator(); iterator.hasNext();) {
@@ -589,7 +578,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		} catch (Exception e) {
 			getLogger().log(Level.SEVERE, "Exception while sorting contacts list (" + usersConnectedToProcess + ")", e);
 		}
-		
+
 		return usersConnectedToProcess;
 	}
 

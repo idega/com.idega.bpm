@@ -69,8 +69,8 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		return LOGGER;
 	}
 
-	protected void notifyAboutNewProcess(final String procDefName, final Long procInstId) {
-		ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, procInstId));
+	protected void notifyAboutNewProcess(String procDefName, Long procInstId, Map<String, Object> variables) {
+		ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, procInstId, variables));
 	}
 
 	@Override
@@ -138,8 +138,9 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		getLogger().info("Starting process for process definition id = " + processDefinitionId);
 
 		Map<String, String> parameters = viewSubmission.resolveParameters();
-
 		getLogger().info("Params " + parameters);
+
+		final Map<String, Object> variables = new HashMap<String, Object>();
 
 		Long piId = null;
 		try {
@@ -159,7 +160,8 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 
 					pi.setStart(new Date());
 
-					submitVariablesAndProceedProcess(ti, viewSubmission.resolveVariables(), true);
+					variables.putAll(viewSubmission.resolveVariables());
+					submitVariablesAndProceedProcess(ti, variables, true);
 
 					Long piId = pi.getId();
 					return piId;
@@ -180,7 +182,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			return piId;
 		} finally {
 			if (procDefName != null)
-				notifyAboutNewProcess(procDefName, piId);
+				notifyAboutNewProcess(procDefName, piId, variables);
 		}
 	}
 

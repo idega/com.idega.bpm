@@ -273,8 +273,12 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			return allUsers;
 		}
 
-		ProcessInstanceW piW = getBpmFactory().getProcessInstanceW(pi.getId());
-		List<User> usersConnectedToProcess = piW.getUsersConnectedToProcess();
+		@SuppressWarnings("unchecked")
+		List<User> usersConnectedToProcess = getBpmFactory().getBPMDAO().getUsersConnectedToProcess(
+				pi.getId(),
+				pi.getProcessDefinition().getName(),
+				pi.getContextInstance().getVariables()
+		);
 		if (ListUtil.isEmpty(usersConnectedToProcess)) {
 			return getAllUsersByRoles(rolesNames, pi);
 		}
