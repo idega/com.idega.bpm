@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.logging.Level;
 
 import org.apache.commons.validator.EmailValidator;
+import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.graph.exe.ProcessInstance;
 import org.jbpm.graph.exe.Token;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,24 +65,34 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	@Autowired
 	private EmailSenderHelper emailSenderHelper;
 
-	@Override
-	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
-		final UserPersonalData upd = (UserPersonalData) context;
-
-		final IWContext iwc = CoreUtil.getIWContext();
-		final IWMainApplication iwma = iwc == null ? getApplication() : IWMainApplication.getIWMainApplication(iwc);
-		final IWApplicationContext iwac = iwma.getIWApplicationContext();
-
+	
+	protected List<String> getMailsToSendTo(Object context,LocalizedMessages msgs,ProcessInstance pi){
 		List<String> sendToEmails = msgs.getSendToEmails();
+		UserPersonalData upd = getUserPersonalData(context);
 		final List<String> emailAddresses;
 		if (sendToEmails != null) {
 			emailAddresses = new ArrayList<String>(sendToEmails);
 		} else {
 			emailAddresses = new ArrayList<String>(1);
 		}
-
 		if (upd != null && upd.getUserEmail() != null)
 			emailAddresses.add(upd.getUserEmail());
+		return emailAddresses;
+	}
+	
+	protected UserPersonalData getUserPersonalData(Object context){
+		return (UserPersonalData) context;
+	}
+	
+	@Override
+	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
+		ExecutionContext ectx = (ExecutionContext) context;
+
+		final IWContext iwc = CoreUtil.getIWContext();
+		final IWMainApplication iwma = iwc == null ? getApplication() : IWMainApplication.getIWMainApplication(iwc);
+		final IWApplicationContext iwac = iwma.getIWApplicationContext();
+
+		final List<String> emailAddresses = getMailsToSendTo(context, msgs,pi);
 
 		final Locale defaultLocale = iwma.getDefaultLocale();
 
@@ -105,11 +116,11 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		if (mvCtx == null)
 			mvCtx = new MessageValueContext(3);
 
-		mvCtx.setValue(MessageValueContext.updBean, upd);
+		mvCtx.setValue(MessageValueContext.updBean, getUserPersonalData(context));
 		mvCtx.setValue(MessageValueContext.piwBean, piw);
 		mvCtx.setValue(MessageValueContext.iwcBean, iwc);
 
-		final File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw);
+		final File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw,ectx);
 
 		for (String email : emailAddresses) {
 			String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
@@ -123,7 +134,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 
 		sendMails(messageValuesToSend);
 	}
-
+	
 	protected void sendMails(final List<SendMailMessageValue> messages) {
 		if (ListUtil.isEmpty(messages))
 			return;
@@ -151,7 +162,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		);
 	}
 
-	private File getAttachedFile(List<String> filesToAttach, ProcessInstanceW piw) {
+	protected File getAttachedFile(List<String> filesToAttach, ProcessInstanceW piw,ExecutionContext ectx) {
 		if (ListUtil.isEmpty(filesToAttach))
 			return null;
 
