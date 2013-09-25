@@ -67,7 +67,7 @@ public class SendMailMessageToRoles extends SendMailMessageImpl{
 	
 	@Override
 	protected void setBeans(MessageValueContext mvCtx,IWContext iwc, ProcessInstanceW piw, Object context){
-//		no beans needed
+		mvCtx.setValue(MessageValueContext.piwBean, piw);
 	}
 	
 	@Override
