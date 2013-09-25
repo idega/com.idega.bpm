@@ -4,7 +4,6 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -16,7 +15,10 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.idega.jbpm.exe.ProcessInstanceW;
 import com.idega.jbpm.identity.UserPersonalData;
+import com.idega.jbpm.process.business.messages.MessageValueContext;
+import com.idega.presentation.IWContext;
 import com.idega.user.data.User;
 import com.idega.util.CoreUtil;
 import com.idega.util.ListUtil;
@@ -36,11 +38,15 @@ public class SendMailMessageToRoles extends SendMailMessageImpl{
 	
 	@Override
 	protected List<String> getMailsToSendTo(Object context,LocalizedMessages msgs,ProcessInstance pi){
+		ArrayList<String> emails = new ArrayList<String>();
+		List<String> mails = msgs.getSendToEmails();
+		if(!ListUtil.isEmpty(mails)){
+			emails.addAll(mails);
+		}
 		Collection<User> users = getUsersToSendMessageTo(msgs.getSendToRoles(), pi);
 		if(ListUtil.isEmpty(users)){
-			return Collections.emptyList();
+			return emails;
 		}
-		ArrayList<String> emails = new ArrayList<String>(users.size());
 		for(User user : users){
 			try {
 				addUserEmailsToList(emails,user);
@@ -57,6 +63,11 @@ public class SendMailMessageToRoles extends SendMailMessageImpl{
 	protected UserPersonalData getUserPersonalData(Object context){
 		// This data is not needed here
 		return null;
+	}
+	
+	@Override
+	protected void setBeans(MessageValueContext mvCtx,IWContext iwc, ProcessInstanceW piw, Object context){
+//		no beans needed
 	}
 	
 	@Override

@@ -116,10 +116,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		if (mvCtx == null)
 			mvCtx = new MessageValueContext(3);
 
-		mvCtx.setValue(MessageValueContext.updBean, getUserPersonalData(context));
-		mvCtx.setValue(MessageValueContext.piwBean, piw);
-		mvCtx.setValue(MessageValueContext.iwcBean, iwc);
-
+		setBeans(mvCtx, iwc, piw, context);
 		final File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw,ectx);
 
 		for (String email : emailAddresses) {
@@ -133,6 +130,12 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		}
 
 		sendMails(messageValuesToSend);
+	}
+	
+	protected void setBeans(MessageValueContext mvCtx,IWContext iwc, ProcessInstanceW piw, Object context){
+		mvCtx.setValue(MessageValueContext.updBean, getUserPersonalData(context));
+		mvCtx.setValue(MessageValueContext.piwBean, piw);
+		mvCtx.setValue(MessageValueContext.iwcBean, iwc);
 	}
 	
 	protected void sendMails(final List<SendMailMessageValue> messages) {
