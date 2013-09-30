@@ -370,7 +370,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		.append("WHERE jpi.ID_= jvi.PROCESSINSTANCE_ ")
 		.append("AND jpd.ID_=jpi.PROCESSDEFINITION_ ")
 		.append("AND jpd.NAME_ = '").append(getProcessDefinition().getName()).append("' ")
-		.append("AND jvi.NAME_='managerRoleName';");
+		.append("AND jvi.NAME_='managerRoleName'");
 		
 		String[] values = null;
 		try {
