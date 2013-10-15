@@ -26,6 +26,7 @@ import com.idega.block.email.business.EmailSenderHelper;
 import com.idega.builder.bean.AdvancedProperty;
 import com.idega.core.accesscontrol.business.AccessController;
 import com.idega.core.business.DefaultSpringBean;
+import com.idega.core.contact.data.Email;
 import com.idega.core.converter.util.StringConverterUtility;
 import com.idega.idegaweb.IWApplicationContext;
 import com.idega.idegaweb.IWMainApplication;
@@ -81,6 +82,25 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		}
 		if (upd != null && upd.getUserEmail() != null)
 			emailAddresses.add(upd.getUserEmail());
+
+		if (ListUtil.isEmpty(sendToEmails)) {
+			String sendToRoles = msgs.getSendToRoles();
+			if (!StringUtil.isEmpty(sendToRoles)) {
+				Collection<User> recipients = getUsersToSendMessageTo(sendToRoles, pi);
+				if (!ListUtil.isEmpty(recipients)) {
+					for (User recipient: recipients) {
+						Email email = null;
+						try {
+							email = recipient.getUsersEmail();
+						} catch (Exception e) {}
+						if (email != null) {
+							emailAddresses.add(email.getEmailAddress());
+						}
+					}
+				}
+			}
+		}
+
 		return emailAddresses;
 	}
 
@@ -96,7 +116,11 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		final IWMainApplication iwma = iwc == null ? getApplication() : IWMainApplication.getIWMainApplication(iwc);
 		final IWApplicationContext iwac = iwma.getIWApplicationContext();
 
-		final List<String> emailAddresses = getMailsToSendTo(context, msgs,pi);
+		final List<String> emailAddresses = getMailsToSendTo(context, msgs, pi);
+		if (ListUtil.isEmpty(emailAddresses)) {
+			getLogger().warning("No recipients resolved for " + msgs);
+			return;
+		}
 
 		final Locale defaultLocale = iwma.getDefaultLocale();
 
