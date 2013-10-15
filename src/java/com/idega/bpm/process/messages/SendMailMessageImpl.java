@@ -65,7 +65,11 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	@Autowired
 	private EmailSenderHelper emailSenderHelper;
 
-	
+	@Override
+	public String getSubject() {
+		return null;
+	}
+
 	protected List<String> getMailsToSendTo(Object context,LocalizedMessages msgs,ProcessInstance pi){
 		List<String> sendToEmails = msgs.getSendToEmails();
 		UserPersonalData upd = getUserPersonalData(context);
@@ -79,11 +83,11 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			emailAddresses.add(upd.getUserEmail());
 		return emailAddresses;
 	}
-	
+
 	protected UserPersonalData getUserPersonalData(Object context){
 		return (UserPersonalData) context;
 	}
-	
+
 	@Override
 	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
 		ExecutionContext ectx = (ExecutionContext) context;
@@ -117,11 +121,14 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			mvCtx = new MessageValueContext(3);
 
 		setBeans(mvCtx, iwc, piw, context);
-		final File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw,ectx);
+		final File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw, ectx);
 
 		for (String email : emailAddresses) {
 			String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
-			String subject = subjAndMsg[0];
+			String subject = getSubject();
+			if (StringUtil.isEmpty(subject)) {
+				subject = subjAndMsg[0];
+			}
 			String text = subjAndMsg[1];
 
 			SendMailMessageValue mail = new SendMailMessageValue(attachedFile, null, null, from, host, subject, text, email, null);
@@ -131,13 +138,13 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 
 		sendMails(messageValuesToSend);
 	}
-	
+
 	protected void setBeans(MessageValueContext mvCtx,IWContext iwc, ProcessInstanceW piw, Object context){
 		mvCtx.setValue(MessageValueContext.updBean, getUserPersonalData(context));
 		mvCtx.setValue(MessageValueContext.piwBean, piw);
 		mvCtx.setValue(MessageValueContext.iwcBean, iwc);
 	}
-	
+
 	protected void sendMails(final List<SendMailMessageValue> messages) {
 		if (ListUtil.isEmpty(messages))
 			return;

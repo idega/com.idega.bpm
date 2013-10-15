@@ -31,11 +31,11 @@ import com.idega.util.SendMailMessageValue;
 public class SendMailMessageToRoles extends SendMailMessageImpl{
 
 	public static final String BEAN_NAME = "sendMailMessageToRoles";
-	
+
 	protected void addUserEmailsToList(List<String> emails,User user) throws EJBException, RemoteException{
 		emails.add(user.getUsersEmail().getEmailAddress());
 	}
-	
+
 	@Override
 	protected List<String> getMailsToSendTo(Object context,LocalizedMessages msgs,ProcessInstance pi){
 		ArrayList<String> emails = new ArrayList<String>();
@@ -51,25 +51,25 @@ public class SendMailMessageToRoles extends SendMailMessageImpl{
 			try {
 				addUserEmailsToList(emails,user);
 			} catch (Exception e) {
-				getLogger().log(Level.WARNING, "failed sending message of process instance " + pi.getId() 
+				getLogger().log(Level.WARNING, "failed sending message of process instance " + pi.getId()
 						+ " to user " + user.getId(), e);
 				continue;
 			}
 		}
 		return emails;
 	}
-	
+
 	@Override
 	protected UserPersonalData getUserPersonalData(Object context){
 		// This data is not needed here
 		return null;
 	}
-	
+
 	@Override
 	protected void setBeans(MessageValueContext mvCtx,IWContext iwc, ProcessInstanceW piw, Object context){
 		mvCtx.setValue(MessageValueContext.piwBean, piw);
 	}
-	
+
 	@Override
 	protected void sendMails(final List<SendMailMessageValue> messages) {
 		if (ListUtil.isEmpty(messages))
@@ -81,10 +81,10 @@ public class SendMailMessageToRoles extends SendMailMessageImpl{
 				for (SendMailMessageValue mv : messages) {
 					try {
 						File attachment = mv.getAttachedFile();
-						SendMail.send(mv.getFrom(), mv.getTo(), mv.getCc(), mv.getBcc(), 
-								mv.getReplyTo(), mv.getHost(), mv.getSubject(), mv.getText(), 
+						SendMail.send(mv.getFrom(), mv.getTo(), mv.getCc(), mv.getBcc(),
+								mv.getReplyTo(), mv.getHost(), mv.getSubject(), mv.getText(),
 								mv.getHeaders(), false, false, attachment);
-					
+
 					} catch (Exception me) {
 						String message = "Exception while sending email message: " + mv;
 						Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, message, me);

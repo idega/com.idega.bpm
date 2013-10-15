@@ -12,13 +12,12 @@ import com.idega.util.expression.ELUtil;
 
 @Service(SendMessageToRoleEmailsHandler.BEAN_NAME)
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
-public class SendMessageToRoleEmailsHandler extends SendMessagesHandler{
-	
+public class SendMessageToRoleEmailsHandler extends SendMessagesHandler {
+
 	private static final long serialVersionUID = -2016206012681471149L;
-	
+
 	public static final String BEAN_NAME = "sendMessageToRoleEmailsHandler";
-	
-	
+
 	@Override
 	public void execute(ExecutionContext ectx) throws Exception {
 		final String sendToRoles = getSendToRoles();
@@ -36,10 +35,10 @@ public class SendMessageToRoleEmailsHandler extends SendMessagesHandler{
 		msg.setRecipientUserId(recipientUserId);
 		getSendMessage().send(null, ectx, ectx.getProcessInstance(), msg, tkn);
 	}
-	
+
 	@Override
 	public SendMessage getSendMessage() {
 		return ELUtil.getInstance().getBean(SendMailMessageToRoles.BEAN_NAME);
 	}
-	
+
 }
