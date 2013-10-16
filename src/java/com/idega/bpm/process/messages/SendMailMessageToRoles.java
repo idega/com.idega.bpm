@@ -83,7 +83,7 @@ public class SendMailMessageToRoles extends SendMailMessageImpl{
 						File attachment = mv.getAttachedFile();
 						SendMail.send(mv.getFrom(), mv.getTo(), mv.getCc(), mv.getBcc(),
 								mv.getReplyTo(), mv.getHost(), mv.getSubject(), mv.getText(),
-								mv.getHeaders(), false, false, attachment);
+								mv.getHeaders(), false, true, attachment);
 
 					} catch (Exception me) {
 						String message = "Exception while sending email message: " + mv;
