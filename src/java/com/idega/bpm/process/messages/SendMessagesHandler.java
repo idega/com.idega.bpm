@@ -1,10 +1,13 @@
 package com.idega.bpm.process.messages;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.jbpm.graph.def.ActionHandler;
 import org.jbpm.graph.exe.ExecutionContext;
@@ -15,9 +18,13 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.idega.core.localisation.business.ICLocaleBusiness;
+import com.idega.data.IDOLookup;
 import com.idega.idegaweb.IWBundle;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.identity.UserPersonalData;
+import com.idega.user.data.User;
+import com.idega.user.data.UserHome;
+import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
@@ -49,12 +56,37 @@ public class SendMessagesHandler implements ActionHandler {
  	private Map<String, String> inlineSubject;
 	private Map<String, String> inlineMessage;
 
+	private String sendToCreator = null;
+	private String receiverMailVariableName = null;
+	
+	public String getReceiverMailVariableName() {
+		return receiverMailVariableName;
+	}
+
+	public void setReceiverMailVariableName(String receiverMailVariableName) {
+		this.receiverMailVariableName = receiverMailVariableName;
+	}
+
+	public String getSendToCreator() {
+		return sendToCreator;
+	}
+
+	public void setSendToCreator(String sendToCreator) {
+		this.sendToCreator = sendToCreator;
+	}
+	
+	public boolean isAddCreatorMail(){
+		return "true".equalsIgnoreCase(sendToCreator);
+	}
+	
+	
+
 	private SendMessage sendMessage;
 
 	@Override
 	public void execute(ExecutionContext ectx) throws Exception {
 		final String sendToRoles = getSendToRoles();
-		final List<String> sendToEmails = getSendToEmails();
+		List<String> sendToEmails = getSendToEmails();
 		final UserPersonalData upd = getUserData();
 		final Integer recipientUserId = getRecipientUserID();
 
@@ -64,9 +96,33 @@ public class SendMessagesHandler implements ActionHandler {
 
 		msg.setFrom(getFromAddress());
 		msg.setSendToRoles(sendToRoles);
-		msg.setSendToEmails(sendToEmails);
 		msg.setAttachFiles(getAttachFiles());
 		msg.setRecipientUserId(recipientUserId);
+		if(isAddCreatorMail()){
+			if(upd == null){
+				try{
+					String pId = (String) ectx.getVariable("string_userPersonalId");
+					UserHome userHome = (UserHome) IDOLookup.getHome(User.class);
+					User user = userHome.findByPersonalID(pId);
+					msg.setRecipientUserId(Integer.valueOf(user.getId()));
+				}catch (Exception e) {
+					Logger.getLogger(SendMessagesHandler.class.getName()).log(Level.WARNING, "Failed getting user data", e);
+				}
+			}else{
+				msg.setRecipientUserId(upd.getUserId());
+			}
+		}
+		String receiverMail = getReceiverMailVariableName(); 
+		if(!StringUtil.isEmpty(receiverMail)){
+			String mail = (String) ectx.getVariable(receiverMail);
+			if(!StringUtil.isEmpty(mail)){
+				if(sendToEmails == null){
+					sendToEmails = new ArrayList<String>();
+				}
+				sendToEmails.add(mail);
+			}
+		}
+		msg.setSendToEmails(sendToEmails);
 
 		getSendMessage().send(null, upd, ectx.getProcessInstance(), msg, tkn);
 	}

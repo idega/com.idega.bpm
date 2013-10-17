@@ -28,6 +28,7 @@ import com.idega.core.accesscontrol.business.AccessController;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.core.contact.data.Email;
 import com.idega.core.converter.util.StringConverterUtility;
+import com.idega.data.IDOLookup;
 import com.idega.idegaweb.IWApplicationContext;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.exe.BPMFactory;
@@ -40,6 +41,7 @@ import com.idega.presentation.IWContext;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.Group;
 import com.idega.user.data.User;
+import com.idega.user.data.UserHome;
 import com.idega.util.ArrayUtil;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
@@ -82,7 +84,6 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		}
 		if (upd != null && upd.getUserEmail() != null)
 			emailAddresses.add(upd.getUserEmail());
-
 		if (ListUtil.isEmpty(sendToEmails)) {
 			String sendToRoles = msgs.getSendToRoles();
 			if (!StringUtil.isEmpty(sendToRoles)) {
@@ -101,6 +102,25 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			}
 		}
 
+		
+		Integer receipientId = msgs.getRecipientUserId();
+		if(receipientId != null){
+			try{
+				UserHome userHome = (UserHome) IDOLookup.getHome(User.class);
+				User user = userHome.findByPrimaryKey(receipientId);
+				@SuppressWarnings("unchecked")
+				Collection<Email> emails = user.getEmails();
+				if(ListUtil.isEmpty(emails)){
+					getLogger().log(Level.WARNING, "User " + receipientId + "has no email");
+				}else{
+					Email email = emails.iterator().next();
+					emailAddresses.add(email.getEmailAddress());
+				}
+			}catch (Exception e) {
+				getLogger().log(Level.WARNING, "Failed getting mail of user " + receipientId, e);
+			}
+		}
+		
 		return emailAddresses;
 	}
 
