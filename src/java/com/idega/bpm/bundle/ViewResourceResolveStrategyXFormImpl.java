@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.idega.bpm.xformsview.XFormsView;
 import com.idega.jbpm.bundle.ProcessBundleResources;
 import com.idega.jbpm.view.ViewResource;
 import com.idega.jbpm.view.ViewResourceResolveStrategy;
@@ -11,7 +12,7 @@ import com.idega.util.StringUtil;
 import com.idega.xformsmanager.business.DocumentManagerFactory;
 
 /**
- * 
+ *
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
  * @version $Revision: 1.1 $ Last modified: $Date: 2009/01/25 15:44:13 $ by
  *          $Author: civilis $
@@ -24,6 +25,7 @@ public class ViewResourceResolveStrategyXFormImpl implements
 	@Autowired
 	private DocumentManagerFactory documentManagerFactory;
 
+	@Override
 	public ViewResource resolve(ProcessBundleResources resources,
 			String taskName, String identifier) {
 
@@ -47,7 +49,8 @@ public class ViewResourceResolveStrategyXFormImpl implements
 		return documentManagerFactory;
 	}
 
+	@Override
 	public String getViewResourceTypeHandler() {
-		return "xforms";
+		return XFormsView.VIEW_TYPE;
 	}
 }

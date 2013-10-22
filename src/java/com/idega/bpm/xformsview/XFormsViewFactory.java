@@ -24,11 +24,11 @@ import com.idega.xformsmanager.business.DocumentManagerFactory;
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
  * @version $Revision: 1.6 $
- * 
+ *
  *          Last modified: $Date: 2009/01/27 11:31:13 $ by $Author: civilis $
  */
 @Scope("singleton")
-@ViewFactoryType("xforms")
+@ViewFactoryType(XFormsView.VIEW_TYPE)
 @Repository("process_xforms_viewFactory")
 public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 
@@ -39,6 +39,7 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 	@Autowired
 	private BPMDAO BPMDAO;
 
+	@Override
 	public View getView(String viewIdentifier, boolean submitable) {
 
 		if (StringUtil.isEmpty(viewIdentifier))
@@ -51,6 +52,7 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 		return view;
 	}
 
+	@Override
 	public XFormsViewSubmission getViewSubmission() {
 
 		XFormsViewSubmission view = new XFormsViewSubmission();
@@ -59,6 +61,7 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 		return view;
 	}
 
+	@Override
 	public XFormsView getXFormsView() {
 
 		XFormsView view = new XFormsView();
@@ -69,6 +72,7 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 		return view;
 	}
 
+	@Override
 	public TaskView getTaskView(Task task) {
 
 		XFormsTaskView view = new XFormsTaskView(task);
@@ -79,6 +83,7 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 		return view;
 	}
 
+	@Override
 	public String getViewType() {
 		return XFormsView.VIEW_TYPE;
 	}
@@ -105,9 +110,9 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 	/*
 	 * protected PersistenceManager getPersistenceManager() { return
 	 * persistenceManager; }
-	 * 
+	 *
 	 * @Autowired
-	 * 
+	 *
 	 * @XFormPersistenceType("slide") public void
 	 * setPersistenceManager(PersistenceManager persistenceManager) {
 	 * this.persistenceManager = persistenceManager; }
@@ -121,6 +126,7 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 			this.task = task;
 		}
 
+		@Override
 		public Task getTask() {
 			return task;
 		}
@@ -134,6 +140,7 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 		this.viewToTask = viewToTask;
 	}
 
+	@Override
 	@Transactional(readOnly = true)
 	public Multimap<Long, TaskView> getAllViewsByProcessDefinitions(
 			Collection<Long> processDefinitionsIds) {
