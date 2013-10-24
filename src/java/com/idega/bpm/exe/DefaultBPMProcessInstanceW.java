@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.idega.block.process.business.CaseManagersProvider;
 import com.idega.block.process.business.CasesRetrievalManager;
 import com.idega.block.process.business.ExternalEntityInterface;
+import com.idega.bpm.BPMConstants;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
@@ -673,12 +674,12 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		for (TaskInstance emailTaskInstance : emailsTaskInstances) {
 			Map<String, Object> vars = getVariablesHandler().populateVariables(emailTaskInstance.getId());
 
-			String subject = (String) vars.get("string_subject");
+			String subject = (String) vars.get(BPMConstants.VAR_SUBJECT);
 			String text = null;
 			if (fetchMessage)
-				text = (String) vars.get("string_text");
-			String fromPersonal = (String) vars.get("string_fromPersonal");
-			String fromAddress = (String) vars.get("string_fromAddress");
+				text = (String) vars.get(BPMConstants.VAR_TEXT);
+			String fromPersonal = (String) vars.get(BPMConstants.VAR_FROM);
+			String fromAddress = (String) vars.get(BPMConstants.VAR_FROM_ADDRESS);
 
 			BPMEmailDocument bpmEmailDocument = new BPMEmailDocumentImpl();
 			bpmEmailDocument.setTaskInstanceId(emailTaskInstance.getId());
