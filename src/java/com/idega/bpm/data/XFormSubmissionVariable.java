@@ -26,13 +26,13 @@ public class XFormSubmissionVariable implements Serializable {
 
 		name = name.trim();
 		if (name.length() > 255) {
-			name = name.substring(0, 255);
+			name = name.substring(0, 254);
 		}
 		this.name = name;
 
 		value = value.trim();
 		if (value.length() > 255) {
-			value = value.substring(0, 255);
+			value = value.substring(0, 254);
 		}
 		this.value = value;
 	}
