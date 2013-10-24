@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -49,17 +50,22 @@ public class BPMXFormPersistenceServiceImpl extends DefaultSpringBean implements
 	}
 
 	public void doBindSubmissionsWithBPM() {
-		List<XFormSubmission> submissions = xformsDAO.getResultListByInlineQuery(
-				"from " + XFormSubmission.class.getName() + " s where s.identifier is null",
-				XFormSubmission.class
-		);
+		List<XFormSubmission> submissions = null;
+		try {
+			submissions = xformsDAO.getResultListByInlineQuery(
+					"from " + XFormSubmission.class.getName() + " s where s.provider is null",
+					XFormSubmission.class
+			);
 
-		if (ListUtil.isEmpty(submissions)) {
-			return;
-		}
+			if (ListUtil.isEmpty(submissions)) {
+				return;
+			}
 
-		for (XFormSubmission submission: submissions) {
-			doRegisterSavedForm(submission);
+			for (XFormSubmission submission: submissions) {
+				doRegisterSavedForm(submission);
+			}
+		} catch (Exception e) {
+			getLogger().log(Level.WARNING, "Error binding XForm submissions with BPM", e);
 		}
 	}
 
@@ -75,7 +81,7 @@ public class BPMXFormPersistenceServiceImpl extends DefaultSpringBean implements
 			return;
 		}
 
-		if (submission.getIdentifier() != null) {
+		if (submission.getProvider() != null) {
 			return;
 		}
 
@@ -93,8 +99,12 @@ public class BPMXFormPersistenceServiceImpl extends DefaultSpringBean implements
 			getLogger().warning("Error loading proc. def. by name: " + procDefName);
 		}
 		if (procDef == null) {
-			submission.setIdentifier(Long.valueOf(-1));
-			xformsDAO.merge(submission);
+			try {
+				submission.setProvider(Long.valueOf(0));
+				xformsDAO.merge(submission);
+			} catch (Exception e) {
+				getLogger().log(Level.WARNING, "Error setting provider=0 for submission " + submission, e);
+			}
 
 			getLogger().warning("Unable to find process definition by name '" + procDefName + "' for submission: " + submission);
 			return;
@@ -116,7 +126,7 @@ public class BPMXFormPersistenceServiceImpl extends DefaultSpringBean implements
 			return;
 		}
 
-		submission.setIdentifier(data.getId());
+		submission.setProvider(data.getId());
 		xformsDAO.merge(submission);
 	}
 
