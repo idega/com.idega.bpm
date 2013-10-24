@@ -86,8 +86,16 @@ public class BPMXFormPersistenceServiceImpl extends DefaultSpringBean implements
 			return;
 		}
 
-		ProcessDefinitionW procDef = bpmFactory.getProcessDefinitionW(procDefName);
+		ProcessDefinitionW procDef = null;
+		try {
+			procDef = bpmFactory.getProcessDefinitionW(procDefName);
+		} catch (Exception e) {
+			getLogger().warning("Error loading proc. def. by name: " + procDefName);
+		}
 		if (procDef == null) {
+			submission.setIdentifier(Long.valueOf(-1));
+			xformsDAO.merge(submission);
+
 			getLogger().warning("Unable to find process definition by name '" + procDefName + "' for submission: " + submission);
 			return;
 		}
