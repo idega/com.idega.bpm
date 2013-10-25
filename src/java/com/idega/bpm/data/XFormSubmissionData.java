@@ -21,7 +21,7 @@ import com.idega.block.form.data.XFormSubmission;
 import com.idega.util.StringUtil;
 
 @Entity
-@Table(name = "bpm_frm_sub_data")
+@Table(name = "bpm_frm_sub_dt")
 public class XFormSubmissionData implements Serializable {
 
 	private static final long serialVersionUID = 787494502478778862L;

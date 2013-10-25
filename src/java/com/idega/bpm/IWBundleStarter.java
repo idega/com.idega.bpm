@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.idega.bpm.xform.BPMXFormPersistenceServiceImpl;
 import com.idega.idegaweb.IWBundle;
 import com.idega.idegaweb.IWBundleStartable;
+import com.idega.idegaweb.IWMainApplicationSettings;
 import com.idega.jbpm.data.VariableInstanceQuerier;
 import com.idega.util.CoreUtil;
 import com.idega.util.expression.ELUtil;
@@ -40,17 +41,20 @@ public class IWBundleStarter implements IWBundleStartable {
 
 	@Override
 	public void start(IWBundle starterBundle) {
-		if (starterBundle.getApplication().getSettings().getBoolean("xform.bind_submissions_with_bpm", Boolean.TRUE)) {
+		IWMainApplicationSettings settings = starterBundle.getApplication().getSettings();
+		if (settings.getBoolean("xform.bind_submissions_with_bpm", Boolean.TRUE)) {
 			getXFormPersistenceService().doBindSubmissionsWithBPM();
 		}
 
 		try {
-			getVariableInstanceQuerier().loadVariables(Arrays.asList(
-					BPMConstants.VAR_SUBJECT,
-					BPMConstants.VAR_TEXT,
-					BPMConstants.VAR_FROM,
-					BPMConstants.VAR_FROM_ADDRESS
-			));
+			if (settings.getBoolean("bpm.load_mail_vars", Boolean.FALSE)) {
+				getVariableInstanceQuerier().loadVariables(Arrays.asList(
+						BPMConstants.VAR_SUBJECT,
+						BPMConstants.VAR_TEXT,
+						BPMConstants.VAR_FROM,
+						BPMConstants.VAR_FROM_ADDRESS
+				));
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

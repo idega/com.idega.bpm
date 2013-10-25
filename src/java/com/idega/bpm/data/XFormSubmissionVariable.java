@@ -12,7 +12,7 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Index;
 
 @Entity
-@Table(name = "bpm_frm_sub_var")
+@Table(name = "bpm_frm_sub_vr")
 public class XFormSubmissionVariable implements Serializable {
 
 	private static final long serialVersionUID = -2800442217051360892L;
@@ -26,13 +26,13 @@ public class XFormSubmissionVariable implements Serializable {
 
 		name = name.trim();
 		if (name.length() >= 255) {
-			name = name.substring(0, 253);
+			name = name.substring(0, 254);
 		}
 		this.name = name;
 
 		value = value.trim();
 		if (value.length() >= 255) {
-			value = value.substring(0, 253);
+			value = value.substring(0, 254);
 		}
 		this.value = value;
 	}
