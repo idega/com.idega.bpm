@@ -31,6 +31,7 @@ import com.idega.block.process.variables.Variable;
 import com.idega.bpm.BPMConstants;
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.core.accesscontrol.business.AccessController;
+import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
 import com.idega.jbpm.bean.VariableInstanceInfo;
@@ -44,7 +45,6 @@ import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewSubmission;
 import com.idega.user.data.User;
-import com.idega.util.CoreUtil;
 import com.idega.util.ListUtil;
 import com.idega.util.StringUtil;
 import com.idega.util.expression.ELUtil;
@@ -383,7 +383,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 			return Boolean.FALSE;
 		}
 
-		AccessController accessController = CoreUtil.getIWContext().getAccessController();
+		AccessController accessController = IWMainApplication.getDefaultIWMainApplication().getAccessController();
 		if (accessController == null) {
 			return Boolean.FALSE;
 		}
