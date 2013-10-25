@@ -28,11 +28,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.block.process.variables.Variable;
+import com.idega.bpm.BPMConstants;
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.core.accesscontrol.business.AccessController;
-import com.idega.data.SimpleQuerier;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
+import com.idega.jbpm.bean.VariableInstanceInfo;
+import com.idega.jbpm.data.VariableInstanceQuerier;
 import com.idega.jbpm.events.ProcessInstanceCreatedEvent;
 import com.idega.jbpm.events.VariableCreatedEvent;
 import com.idega.jbpm.exe.BPMFactory;
@@ -42,8 +44,8 @@ import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewSubmission;
 import com.idega.user.data.User;
-import com.idega.util.ArrayUtil;
 import com.idega.util.CoreUtil;
+import com.idega.util.ListUtil;
 import com.idega.util.StringUtil;
 import com.idega.util.expression.ELUtil;
 
@@ -66,6 +68,15 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	private BPMContext bpmContext;
 	@Autowired
 	private VariablesHandler variablesHandler;
+	@Autowired
+	private VariableInstanceQuerier querier;
+
+	private VariableInstanceQuerier getVariableInstanceQuerier() {
+		if (querier == null) {
+			ELUtil.getInstance().autowire(this);
+		}
+		return querier;
+	}
 
 	protected Logger getLogger() {
 		if (LOGGER == null) {
@@ -364,31 +375,20 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 	 */
 	@Override
 	public boolean hasManagerRole(User user) {
-		// Creating query
-		StringBuilder sb = new StringBuilder("SELECT jvi.stringvalue_ ");
-		sb.append("FROM jbpm_variableinstance jvi, jbpm_processinstance jpi, jbpm_processdefinition jpd ")
-		.append("WHERE jpi.ID_= jvi.PROCESSINSTANCE_ ")
-		.append("AND jpd.ID_=jpi.PROCESSDEFINITION_ ")
-		.append("AND jpd.NAME_ = '").append(getProcessDefinition().getName()).append("' ")
-		.append("AND jvi.NAME_='managerRoleName'");
-		
-		String[] values = null;
-		try {
-			values = SimpleQuerier.executeStringQuery(sb.toString());
-		} catch (Exception e) {
-			getLogger().log(Level.WARNING, "Failed to execute query: " + sb.toString(), e);
-		}
-		
-		if (ArrayUtil.isEmpty(values)) {
+		Collection<VariableInstanceInfo> vars = getVariableInstanceQuerier().getVariablesByProcessDefAndVariableName(
+				getProcessDefinition().getName(),
+				BPMConstants.VAR_MANAGER_ROLE
+		);
+		if (ListUtil.isEmpty(vars)) {
 			return Boolean.FALSE;
 		}
-	
+
 		AccessController accessController = CoreUtil.getIWContext().getAccessController();
 		if (accessController == null) {
 			return Boolean.FALSE;
 		}
-		
-		if (accessController.hasRole(user, values[0])) {
+
+		if (accessController.hasRole(user, (String) vars.iterator().next().getValue())) {
 			return Boolean.TRUE;
 		}
 

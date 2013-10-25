@@ -58,6 +58,14 @@ public class IWBundleStarter implements IWBundleStartable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		try {
+			if (settings.getBoolean("bpm.cache_manager_roles", Boolean.TRUE)) {
+				getVariableInstanceQuerier().loadVariables(Arrays.asList(BPMConstants.VAR_MANAGER_ROLE));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override

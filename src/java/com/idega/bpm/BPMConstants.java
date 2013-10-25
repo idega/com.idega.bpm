@@ -1,5 +1,6 @@
 package com.idega.bpm;
 
+import com.idega.jbpm.exe.ProcessDefinitionW;
 import com.idega.util.CoreConstants;
 
 public class BPMConstants {
@@ -19,5 +20,7 @@ public class BPMConstants {
 								VAR_TEXT = "string_text",
 								VAR_FROM = "string_fromPersonal",
 								VAR_SUBJECT = "string_subject",
-								VAR_FROM_ADDRESS = "string_fromAddress";
+								VAR_FROM_ADDRESS = "string_fromAddress",
+
+								VAR_MANAGER_ROLE = ProcessDefinitionW.VARIABLE_MANAGER_ROLE_NAME;
 }
