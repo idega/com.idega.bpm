@@ -1,11 +1,13 @@
 package com.idega.bpm.exe;
 
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.URI;
 import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -43,6 +45,7 @@ import com.idega.core.file.util.MimeTypeUtil;
 import com.idega.data.IDOLookup;
 import com.idega.data.MetaData;
 import com.idega.data.MetaDataHome;
+import com.idega.hibernate.HibernateUtil;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
@@ -700,10 +703,13 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 		RolesManager rolesManager = getBpmFactory().getRolesManager();
 
-		for (BinaryVariable variable : variableList) {
+		for (BinaryVariable variable: variableList) {
 			try {
-				Permission permission = getPermissionsFactory().getTaskInstanceVariableViewPermission(true, getTaskInstance(),
-						variable.getHash().toString());
+				Permission permission = getPermissionsFactory().getTaskInstanceVariableViewPermission(
+						true,
+						getTaskInstance(),
+						variable.getHash().toString()
+				);
 				rolesManager.checkPermission(permission);
 				returnList.add(variable);
 			} catch (BPMAccessControlException e) {
@@ -862,6 +868,48 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		}
 
 		return false;
+	}
+
+	private List<Long> getTokensIds(Token token, List<Long> ids) {
+		if (ids == null) {
+			ids = new ArrayList<Long>();
+		}
+
+		if (token == null) {
+			return ids;
+		}
+
+		token = HibernateUtil.initializeAndUnproxy(token);
+		if (token != null) {
+			ids.add(token.getId());
+		}
+
+		return getTokensIds(token.getParent(), ids);
+	}
+
+	@Override
+	public Map<String, Object> getVariables(Token token) {
+		List<Long> tokensIds = getTokensIds(token, null);
+		List<com.idega.jbpm.data.Variable> vars = getBpmFactory().getBPMDAO().getVariablesByTokens(tokensIds);
+		if (ListUtil.isEmpty(vars)) {
+			return Collections.emptyMap();
+		}
+
+		Map<String, Object> variables = new HashMap<String, Object>();
+		for (com.idega.jbpm.data.Variable var: vars) {
+			if (var == null) {
+				continue;
+			}
+
+			String name = var.getName();
+			if (StringUtil.isEmpty(name)) {
+				continue;
+			}
+
+			Serializable value = var.getValue();
+			variables.put(name, value);
+		}
+		return variables;
 	}
 
 }
