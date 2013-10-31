@@ -73,7 +73,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		return null;
 	}
 
-	protected List<String> getMailsToSendTo(Object context,LocalizedMessages msgs,ProcessInstance pi){
+	protected List<String> getMailsToSendTo(Object context, LocalizedMessages msgs, ProcessInstance pi) {
 		List<String> sendToEmails = msgs.getSendToEmails();
 		UserPersonalData upd = getUserPersonalData(context);
 		final List<String> emailAddresses;
@@ -102,7 +102,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			}
 		}
 
-		
+
 		Integer receipientId = msgs.getRecipientUserId();
 		if(receipientId != null){
 			try{
@@ -120,17 +120,23 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 				getLogger().log(Level.WARNING, "Failed getting mail of user " + receipientId, e);
 			}
 		}
-		
+
 		return emailAddresses;
 	}
 
-	protected UserPersonalData getUserPersonalData(Object context){
+	protected UserPersonalData getUserPersonalData(Object context) {
 		return (UserPersonalData) context;
 	}
 
 	@Override
 	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
-		ExecutionContext ectx = (ExecutionContext) context;
+		ExecutionContext ectx = null;
+		if (context instanceof ExecutionContext) {
+			ectx = (ExecutionContext) context;
+		} else {
+			getLogger().log(Level.WARNING, "Context " + context + (context == null ? "" : ", class: " + context.getClass()) +
+					" is not instance of " + ExecutionContext.class.getName());
+		}
 
 		final IWContext iwc = CoreUtil.getIWContext();
 		final IWMainApplication iwma = iwc == null ? getApplication() : IWMainApplication.getIWMainApplication(iwc);
@@ -167,7 +173,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		setBeans(mvCtx, iwc, piw, context);
 		final File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw, ectx);
 
-		for (String email : emailAddresses) {
+		for (String email: emailAddresses) {
 			String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
 			String subject = getSubject();
 			if (StringUtil.isEmpty(subject)) {
@@ -216,8 +222,8 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		);
 	}
 
-	protected File getAttachedFile(List<String> filesToAttach, ProcessInstanceW piw,ExecutionContext ectx) {
-		if (ListUtil.isEmpty(filesToAttach))
+	protected File getAttachedFile(List<String> filesToAttach, ProcessInstanceW piw, ExecutionContext ectx) {
+		if (ectx == null || ListUtil.isEmpty(filesToAttach))
 			return null;
 
 		List<BinaryVariable> attachments = piw.getAttachments();
