@@ -174,7 +174,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 					Long piId = pi.getId();
 					return piId;
 				}
-			}, true);
+			});
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
