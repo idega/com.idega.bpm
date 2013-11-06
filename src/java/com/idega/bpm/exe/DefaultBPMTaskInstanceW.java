@@ -308,10 +308,11 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	@Transactional(readOnly = false)
 	private void submitVariablesAndProceedProcess(JbpmContext context, TaskInstance ti, Map<String, Object> variables, boolean proceed) {
-		if (context == null)
+		if (context == null) {
 			getVariablesHandler().submitVariables(variables, ti.getId(), true);
-		else
+		} else {
 			getVariablesHandler().submitVariables(context, variables, ti.getId(), true);
+		}
 
 		if (proceed) {
 			String actionTaken = (String) ti.getVariable(ProcessConstants.actionTakenVariableName);
@@ -328,10 +329,11 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 				}
 			}
 
-			if (actionTaken != null && actionTaken.length() != 0 && takeTransitionAction)
+			if (actionTaken != null && actionTaken.length() != 0 && takeTransitionAction) {
 				ti.end(actionTaken);
-			else
+			} else {
 				ti.end();
+			}
 		} else {
 			ti.setEnd(new Date());
 		}
