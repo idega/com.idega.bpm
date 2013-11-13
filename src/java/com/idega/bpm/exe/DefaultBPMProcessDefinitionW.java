@@ -30,10 +30,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.idega.block.process.variables.Variable;
 import com.idega.bpm.BPMConstants;
 import com.idega.bpm.xformsview.XFormsView;
+import com.idega.core.accesscontrol.business.AccessController;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.core.localisation.business.ICLocaleBusiness;
+import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
+import com.idega.jbpm.bean.VariableInstanceInfo;
 import com.idega.jbpm.data.VariableInstanceQuerier;
 import com.idega.jbpm.event.ProcessInstanceCreatedEvent;
 import com.idega.jbpm.event.VariableCreatedEvent;
@@ -44,6 +47,8 @@ import com.idega.jbpm.identity.BPMUser;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewSubmission;
+import com.idega.user.data.User;
+import com.idega.util.ListUtil;
 import com.idega.util.StringUtil;
 import com.idega.util.expression.ELUtil;
 
@@ -77,8 +82,8 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 		return LOGGER;
 	}
 
-	protected void notifyAboutNewProcess(final String procDefName, final Long procInstId) {
-		ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, procInstId));
+	protected void notifyAboutNewProcess(String procDefName, Long procInstId, Map<String, Object> variables) {
+		ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, procInstId, variables));
 	}
 
 	@Override
@@ -146,8 +151,9 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 		getLogger().info("Starting process for process definition id = " + processDefinitionId);
 
 		Map<String, String> parameters = viewSubmission.resolveParameters();
-
 		getLogger().info("Params " + parameters);
+
+		final Map<String, Object> variables = new HashMap<String, Object>();
 
 		Long piId = null;
 		try {
@@ -169,7 +175,8 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 					context.getSession().flush();
 
-					submitVariablesAndProceedProcess(context, ti, viewSubmission.resolveVariables(), true);
+					variables.putAll(viewSubmission.resolveVariables());
+					submitVariablesAndProceedProcess(context, ti, variables, true);
 
 					Long piId = pi.getId();
 					return piId;
@@ -190,7 +197,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 			return piId;
 		} finally {
 			if (procDefName != null)
-				notifyAboutNewProcess(procDefName, piId);
+				notifyAboutNewProcess(procDefName, piId, variables);
 		}
 	}
 
@@ -408,5 +415,31 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 	public Object doPrepareProcess(Map<String, Object> parameters) {
 		getLogger().info("This method is not implemented");
 		return null;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see com.idega.jbpm.exe.ProcessDefinitionW#hasManagerRole(com.idega.user.data.User)
+	 */
+	@Override
+	public boolean hasManagerRole(User user) {
+		Collection<VariableInstanceInfo> vars = getVariableInstanceQuerier().getVariablesByProcessDefAndVariableName(
+				getProcessDefinition().getName(),
+				BPMConstants.VAR_MANAGER_ROLE
+		);
+		if (ListUtil.isEmpty(vars)) {
+			return Boolean.FALSE;
+		}
+
+		AccessController accessController = IWMainApplication.getDefaultIWMainApplication().getAccessController();
+		if (accessController == null) {
+			return Boolean.FALSE;
+		}
+
+		if (accessController.hasRole(user, (String) vars.iterator().next().getValue())) {
+			return Boolean.TRUE;
+		}
+
+		return Boolean.FALSE;
 	}
 }

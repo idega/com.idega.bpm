@@ -5,7 +5,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
+import org.apache.commons.validator.EmailValidator;
+import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.graph.exe.ProcessInstance;
 import org.jbpm.graph.exe.Token;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,11 @@ import org.springframework.stereotype.Service;
 
 import com.idega.block.email.business.EmailSenderHelper;
 import com.idega.builder.bean.AdvancedProperty;
+import com.idega.core.accesscontrol.business.AccessController;
 import com.idega.core.business.DefaultSpringBean;
+import com.idega.core.contact.data.Email;
 import com.idega.core.converter.util.StringConverterUtility;
+import com.idega.data.IDOLookup;
 import com.idega.idegaweb.IWApplicationContext;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.bean.VariableInstanceType;
@@ -38,9 +42,10 @@ import com.idega.presentation.IWContext;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.Group;
 import com.idega.user.data.User;
+import com.idega.user.data.UserHome;
+import com.idega.util.ArrayUtil;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
-import com.idega.util.EmailValidator;
 import com.idega.util.ListUtil;
 import com.idega.util.SendMail;
 import com.idega.util.SendMailMessageValue;
@@ -66,23 +71,84 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	private EmailSenderHelper emailSenderHelper;
 
 	@Override
-	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
+	public String getSubject() {
+		return null;
+	}
 
-		final UserPersonalData upd = (UserPersonalData) context;
+	protected List<String> getMailsToSendTo(Object context, LocalizedMessages msgs, ProcessInstance pi) {
+		List<String> sendToEmails = msgs.getSendToEmails();
+		UserPersonalData upd = getUserPersonalData(context);
+		final List<String> emailAddresses;
+		if (sendToEmails != null) {
+			emailAddresses = new ArrayList<String>(sendToEmails);
+		} else {
+			emailAddresses = new ArrayList<String>(1);
+		}
+		if (upd != null && upd.getUserEmail() != null)
+			emailAddresses.add(upd.getUserEmail());
+		if (ListUtil.isEmpty(sendToEmails)) {
+			String sendToRoles = msgs.getSendToRoles();
+			if (!StringUtil.isEmpty(sendToRoles)) {
+				Collection<User> recipients = getUsersToSendMessageTo(sendToRoles, pi);
+				if (!ListUtil.isEmpty(recipients)) {
+					for (User recipient: recipients) {
+						Email email = null;
+						try {
+							email = recipient.getUsersEmail();
+						} catch (Exception e) {}
+						if (email != null) {
+							emailAddresses.add(email.getEmailAddress());
+						}
+					}
+				}
+			}
+		}
+
+
+		Integer receipientId = msgs.getRecipientUserId();
+		if(receipientId != null){
+			try{
+				UserHome userHome = (UserHome) IDOLookup.getHome(User.class);
+				User user = userHome.findByPrimaryKey(receipientId);
+				@SuppressWarnings("unchecked")
+				Collection<Email> emails = user.getEmails();
+				if(ListUtil.isEmpty(emails)){
+					getLogger().log(Level.WARNING, "User " + receipientId + "has no email");
+				}else{
+					Email email = emails.iterator().next();
+					emailAddresses.add(email.getEmailAddress());
+				}
+			}catch (Exception e) {
+				getLogger().log(Level.WARNING, "Failed getting mail of user " + receipientId, e);
+			}
+		}
+
+		return emailAddresses;
+	}
+
+	protected UserPersonalData getUserPersonalData(Object context) {
+		return (UserPersonalData) context;
+	}
+
+	@Override
+	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
+		ExecutionContext ectx = null;
+		if (context instanceof ExecutionContext) {
+			ectx = (ExecutionContext) context;
+		} else {
+			getLogger().log(Level.WARNING, "Context " + context + (context == null ? "" : ", class: " + context.getClass()) +
+					" is not instance of " + ExecutionContext.class.getName());
+		}
 
 		final IWContext iwc = CoreUtil.getIWContext();
 		final IWMainApplication iwma = iwc == null ? getApplication() : IWMainApplication.getIWMainApplication(iwc);
 		final IWApplicationContext iwac = iwma.getIWApplicationContext();
 
-		List<String> sendToEmails = msgs.getSendToEmails();
-		final List<String> emailAddresses;
-		if (sendToEmails != null)
-			emailAddresses = new ArrayList<String>(sendToEmails);
-		else
-			emailAddresses = new ArrayList<String>(1);
-
-		if (upd != null && upd.getUserEmail() != null)
-			emailAddresses.add(upd.getUserEmail());
+		final List<String> emailAddresses = getMailsToSendTo(context, msgs, pi);
+		if (ListUtil.isEmpty(emailAddresses)) {
+			getLogger().warning("No recipients resolved for " + msgs);
+			return;
+		}
 
 		final Locale defaultLocale = iwma.getDefaultLocale();
 
@@ -106,15 +172,15 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		if (mvCtx == null)
 			mvCtx = new MessageValueContext(3);
 
-		mvCtx.setValue(MessageValueContext.updBean, upd);
-		mvCtx.setValue(MessageValueContext.piwBean, piw);
-		mvCtx.setValue(MessageValueContext.iwcBean, iwc);
+		setBeans(mvCtx, iwc, piw, context);
+		final File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw, ectx);
 
-		final File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw);
-
-		for (String email : emailAddresses) {
+		for (String email: emailAddresses) {
 			String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
-			String subject = subjAndMsg[0];
+			String subject = getSubject();
+			if (StringUtil.isEmpty(subject)) {
+				subject = subjAndMsg[0];
+			}
 			String text = subjAndMsg[1];
 
 			SendMailMessageValue mail = new SendMailMessageValue(attachedFile, null, null, from, host, subject, text, email, null);
@@ -123,6 +189,12 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		}
 
 		sendMails(messageValuesToSend);
+	}
+
+	protected void setBeans(MessageValueContext mvCtx,IWContext iwc, ProcessInstanceW piw, Object context){
+		mvCtx.setValue(MessageValueContext.updBean, getUserPersonalData(context));
+		mvCtx.setValue(MessageValueContext.piwBean, piw);
+		mvCtx.setValue(MessageValueContext.iwcBean, iwc);
 	}
 
 	protected void sendMails(final List<SendMailMessageValue> messages) {
@@ -146,11 +218,14 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	}
 
 	protected List<AdvancedProperty> getMailHeaders() {
-		return Arrays.asList(new AdvancedProperty(SendMail.HEADER_AUTO_SUBMITTED, "auto-generated"), new AdvancedProperty(SendMail.HEADER_PRECEDENCE, "bulk"));
+		return Arrays.asList(
+				new AdvancedProperty(SendMail.HEADER_AUTO_SUBMITTED, "auto-generated"),
+				new AdvancedProperty(SendMail.HEADER_PRECEDENCE, "bulk")
+		);
 	}
 
-	private File getAttachedFile(List<String> filesToAttach, ProcessInstanceW piw) {
-		if (ListUtil.isEmpty(filesToAttach))
+	protected File getAttachedFile(List<String> filesToAttach, ProcessInstanceW piw, ExecutionContext ectx) {
+		if (ectx == null || ListUtil.isEmpty(filesToAttach))
 			return null;
 
 		List<BinaryVariable> attachments = piw.getAttachments();
@@ -174,9 +249,13 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		return getEmailSenderHelper().getFileToAttach(filesInRepository);
 	}
 
-	protected String[] getFormattedMessage(MessageValueContext mvCtx, Locale preferredLocale, LocalizedMessages msgs,Map<Locale, String[]> unformattedForLocales,
-			Token tkn) {
-
+	protected String[] getFormattedMessage(
+			MessageValueContext mvCtx,
+			Locale preferredLocale,
+			LocalizedMessages msgs,
+			Map<Locale, String[]> unformattedForLocales,
+			Token tkn
+	) {
 		String unformattedSubject;
 		String unformattedMsg;
 
@@ -219,45 +298,81 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		return getMessageValueHandler().getFormattedMessage(unformattedMessage,	messageValues, tkn, mvCtx);
 	}
 
-	public Collection<User> getUsersToSendMessageTo(String rolesNamesAggr, ProcessInstance pi) {
+	private Collection<User> getAllUsersByRoles(String[] roles, ProcessInstance pi) {
 		Collection<User> allUsers = new ArrayList<User>();
-		if (rolesNamesAggr != null) {
-			String[] rolesNames = rolesNamesAggr.trim().split(CoreConstants.SPACE);
+		for (String string: roles) {
+			Set<String> rolesNamesSet = new HashSet<String>(roles.length);
+			rolesNamesSet.add(string);
 
-			for (String string : rolesNames) {
-				Set<String> rolesNamesSet = new HashSet<String>(rolesNames.length);
-				rolesNamesSet.add(string);
+			Collection<User> users = getBpmFactory().getRolesManager().getAllUsersForRoles(rolesNamesSet, pi.getId());
 
-				Collection<User> users = getBpmFactory().getRolesManager().getAllUsersForRoles(rolesNamesSet, pi.getId());
+			/* Override so that users that are not directly related to the case can also receive email */
+			if (ListUtil.isEmpty(users)) {
+				IWApplicationContext iwac = IWMainApplication.getDefaultIWApplicationContext();
+				IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
 
-				/* Override so that users that are not directly related to the case can also receive email */
-				if (ListUtil.isEmpty(users)) {
-					IWApplicationContext iwac = IWMainApplication.getDefaultIWApplicationContext();
-					IWMainApplication iwma = IWMainApplication.getDefaultIWMainApplication();
-
-					for (String role : rolesNamesSet) {
-						Collection<Group> groups = iwma.getAccessController().getAllGroupsForRoleKeyLegacy(role, iwac);
-						for (Group group : groups) {
-							try {
-								users = getUserBusiness(iwac).getUsersInGroup(group);
-								for (User user : users) {
-									if (!allUsers.contains(user)) {
-										allUsers.add(user);
-									}
+				for (String role: rolesNamesSet) {
+					Collection<Group> groups = iwma.getAccessController().getAllGroupsForRoleKeyLegacy(role, iwac);
+					for (Group group : groups) {
+						try {
+							users = getUserBusiness(iwac).getUsersInGroup(group);
+							for (User user : users) {
+								if (!allUsers.contains(user)) {
+									allUsers.add(user);
 								}
-							} catch (RemoteException e) {
-								e.printStackTrace();
 							}
+						} catch (RemoteException e) {
+							e.printStackTrace();
 						}
 					}
-				} else {
-					allUsers.addAll(users);
 				}
+			} else {
+				allUsers.addAll(users);
 			}
-		} else {
-			allUsers = Collections.emptyList();
+		}
+		return allUsers;
+	}
+
+	public Collection<User> getUsersToSendMessageTo(String rolesNamesAggr, ProcessInstance pi) {
+		Collection<User> allUsers = new ArrayList<User>();
+		if (rolesNamesAggr == null) {
+			getLogger().warning("Roles expression is not provided");
+			return allUsers;
 		}
 
+		String[] rolesNames = rolesNamesAggr.trim().split(CoreConstants.SPACE);
+		if (ArrayUtil.isEmpty(rolesNames)) {
+			getLogger().warning("No roles recognized from expression: " + rolesNamesAggr);
+			return allUsers;
+		}
+
+		@SuppressWarnings("unchecked")
+		List<User> usersConnectedToProcess = getBpmFactory().getBPMDAO().getUsersConnectedToProcess(
+				pi.getId(),
+				pi.getProcessDefinition().getName(),
+				pi.getContextInstance().getVariables()
+		);
+		if (ListUtil.isEmpty(usersConnectedToProcess)) {
+			return getAllUsersByRoles(rolesNames, pi);
+		}
+
+		AccessController accessController = IWMainApplication.getDefaultIWMainApplication().getAccessController();
+		for (String role: rolesNames) {
+			for (User user: usersConnectedToProcess) {
+				if (accessController.hasRole(user, role)) {
+					allUsers.add(user);
+				}
+			}
+		}
+
+		if (ListUtil.isEmpty(allUsers)) {
+			getLogger().warning("No users (" + usersConnectedToProcess + ") connectected to proc. inst. (ID: " + pi.getId() +
+					") have role(s) " + rolesNamesAggr + " will try to send to all users having these roles");
+			return getAllUsersByRoles(rolesNames, pi);
+		}
+
+		getLogger().info("Will send message to users " + allUsers + ". Receivers were resolved by proc. inst. (ID: " + pi.getId() +
+				") and role(s): " + rolesNamesAggr);
 		return allUsers;
 	}
 

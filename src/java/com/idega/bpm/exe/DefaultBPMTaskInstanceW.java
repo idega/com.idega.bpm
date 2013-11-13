@@ -510,8 +510,10 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	private String getNameFromMetaData(Long taskInstanceId) {
 		try {
 			MetaDataHome metaDataHome = (MetaDataHome) IDOLookup.getHome(MetaData.class);
-			Collection<MetaData> data = metaDataHome.findAllByMetaDataNameAndType(BPMConstants.TASK_CUSTOM_NAME_META_DATA.concat(BPMConstants.TASK_CUSTOM_NAME_SEPARATOR)
-					.concat(String.valueOf(taskInstanceId)), String.class.getName());
+			Collection<MetaData> data = metaDataHome.findAllByMetaDataNameAndType(
+					BPMConstants.TASK_CUSTOM_NAME_META_DATA.concat(BPMConstants.TASK_CUSTOM_NAME_SEPARATOR).concat(String.valueOf(taskInstanceId)),
+					String.class.getName()
+			);
 			return ListUtil.isEmpty(data) ? null : data.iterator().next().getMetaDataValue();
 		} catch (FinderException e) {
 		} catch (Exception e) {
@@ -632,6 +634,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			metadata.put(JBPMConstants.OVERWRITE, Boolean.FALSE);
 			metadata.put(JBPMConstants.PATH_IN_REPOSITORY, filesFolder + fileName);
 			binVar.setMetadata(metadata);
+			binVar.setPersistedToRepository(true);
 		}
 
 		binVars.add(binVar);

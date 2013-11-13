@@ -28,7 +28,7 @@ import com.idega.xformsmanager.business.DocumentManagerFactory;
  *          Last modified: $Date: 2009/01/27 11:31:13 $ by $Author: civilis $
  */
 @Scope("singleton")
-@ViewFactoryType("xforms")
+@ViewFactoryType(XFormsView.VIEW_TYPE)
 @Repository("process_xforms_viewFactory")
 public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 
@@ -107,6 +107,16 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 		this.converter = converter;
 	}
 
+	/*
+	 * protected PersistenceManager getPersistenceManager() { return
+	 * persistenceManager; }
+	 *
+	 * @Autowired
+	 *
+	 * @XFormPersistenceType("slide") public void
+	 * setPersistenceManager(PersistenceManager persistenceManager) {
+	 * this.persistenceManager = persistenceManager; }
+	 */
 	class XFormsTaskView extends XFormsView implements TaskView {
 
 		private final Task task;

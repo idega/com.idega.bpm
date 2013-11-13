@@ -14,5 +14,7 @@ import com.idega.jbpm.process.business.messages.MessageValueContext;
  */
 public interface SendMessage {
 
+	public abstract String getSubject();
+
 	public abstract void send(MessageValueContext mvCtx, Object context, ProcessInstance pi, LocalizedMessages msgs, Token tkn);
 }

@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.idega.block.process.business.CaseManagersProvider;
 import com.idega.block.process.business.CasesRetrievalManager;
 import com.idega.block.process.business.ExternalEntityInterface;
+import com.idega.bpm.BPMConstants;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
@@ -165,14 +166,25 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 				(includedOnlySubProcessesNames == null && excludedSubProcessesNames != null && excludedSubProcessesNames.contains(processName));
 	}
 
+	private List<ProcessInstance> getAllSubprocesses(ProcessInstance processInstance){
+		List<ProcessInstance> subProcessInstances = getBpmDAO().getSubprocessInstancesOneLevel(processInstance.getId());
+		if(ListUtil.isEmpty(subProcessInstances)){
+			return Collections.emptyList();
+		}
+		ArrayList<ProcessInstance> childSubProcessInstances = new ArrayList<ProcessInstance>(subProcessInstances);
+		for(ProcessInstance subProcess : subProcessInstances){
+			childSubProcessInstances.addAll(getAllSubprocesses(subProcess));
+		}
+		return childSubProcessInstances;
+	}
+
 	private Collection<TaskInstance> getSubprocessesTaskInstances(
 			JbpmContext context,
 			ProcessInstance processInstance,
 			final List<String> excludedSubProcessesNames,
 			final List<String> includedOnlySubProcessesNames
 	) {
-		List<ProcessInstance> subProcessInstances = getBpmDAO().getSubprocessInstancesOneLevel(processInstance.getId());
-
+		List<ProcessInstance> subProcessInstances = getAllSubprocesses(processInstance);
 		List<TaskInstance> taskInstances;
 		if (!ListUtil.isEmpty(subProcessInstances)) {
 			taskInstances = new ArrayList<TaskInstance>();
@@ -583,42 +595,59 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return null;
 	}
 
+	private List<User> usersConnectedToProcess = null;
+
 	@Override
 	@Transactional(readOnly = true)
 	public List<User> getUsersConnectedToProcess() {
+		if (usersConnectedToProcess != null) {
+			return usersConnectedToProcess;
+		}
+
+		try {
+			String procDefName = getProcessDefinitionW().getProcessDefinition().getName();
+			@SuppressWarnings("unchecked")
+			Map<String, Object> variables = getProcessInstance().getContextInstance().getVariables();
+			usersConnectedToProcess = getBpmFactory().getBPMDAO().getUsersConnectedToProcess(getProcessInstanceId(), procDefName, variables);
+		} catch (Exception e) {}
+		if (usersConnectedToProcess != null) {
+			return usersConnectedToProcess;
+		}
+
 		final Collection<User> users;
 		try {
 			Long processInstanceId = getProcessInstanceId();
-			BPMTypedPermission perm = (BPMTypedPermission) getBpmFactory().getPermissionsFactory().getRoleAccessPermission(processInstanceId, null, false);
+			BPMTypedPermission perm = (BPMTypedPermission) getBpmFactory().getPermissionsFactory()
+					.getRoleAccessPermission(processInstanceId, null, false);
 			users = getBpmFactory().getRolesManager().getAllUsersForRoles(null, processInstanceId, perm);
 		} catch (Exception e) {
 			getLogger().log(Level.SEVERE, "Exception while resolving all process instance users", e);
 			return null;
 		}
 
-		if (!ListUtil.isEmpty(users)) {
-			// using separate list, as the resolved one could be cashed (shared) and so
-			List<User> connectedPeople = new ArrayList<User>(users);
-
-			for (Iterator<User> iterator = connectedPeople.iterator(); iterator.hasNext();) {
-				User user = iterator.next();
-				String hideInContacts = user.getMetaData(BPMUser.HIDE_IN_CONTACTS);
-
-				if (hideInContacts != null)
-					// excluding ones, that should be hidden in contacts list
-					iterator.remove();
-			}
-
-			try {
-				Collections.sort(connectedPeople, new UserComparator(getCurrentLocale()));
-			} catch (Exception e) {
-				getLogger().log(Level.SEVERE, "Exception while sorting contacts list (" + connectedPeople + ")", e);
-			}
-
-			return connectedPeople;
+		if (ListUtil.isEmpty(users)) {
+			usersConnectedToProcess = new ArrayList<User>();
+			return usersConnectedToProcess;
 		}
 
-		return null;
+		// using separate list, as the resolved one could be cashed (shared) and so
+		usersConnectedToProcess = new ArrayList<User>(users);
+		for (Iterator<User> iterator = usersConnectedToProcess.iterator(); iterator.hasNext();) {
+			User user = iterator.next();
+			String hideInContacts = user.getMetaData(BPMUser.HIDE_IN_CONTACTS);
+
+			if (hideInContacts != null)
+				// excluding ones, that should be hidden in contacts list
+				iterator.remove();
+		}
+
+		try {
+			Collections.sort(usersConnectedToProcess, new UserComparator(getCurrentLocale()));
+		} catch (Exception e) {
+			getLogger().log(Level.SEVERE, "Exception while sorting contacts list (" + usersConnectedToProcess + ")", e);
+		}
+
+		return usersConnectedToProcess;
 	}
 
 	@Override
@@ -689,7 +718,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		}
 	}
 
-	BPMDAO getBpmDAO() {
+	protected BPMDAO getBpmDAO() {
 		return bpmDAO;
 	}
 
@@ -712,12 +741,12 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		for (TaskInstance emailTaskInstance : emailsTaskInstances) {
 			Map<String, Object> vars = getVariablesHandler().populateVariables(emailTaskInstance.getId());
 
-			String subject = (String) vars.get("string_subject");
+			String subject = (String) vars.get(BPMConstants.VAR_SUBJECT);
 			String text = null;
 			if (fetchMessage)
-				text = (String) vars.get("string_text");
-			String fromPersonal = (String) vars.get("string_fromPersonal");
-			String fromAddress = (String) vars.get("string_fromAddress");
+				text = (String) vars.get(BPMConstants.VAR_TEXT);
+			String fromPersonal = (String) vars.get(BPMConstants.VAR_FROM);
+			String fromAddress = (String) vars.get(BPMConstants.VAR_FROM_ADDRESS);
 
 			BPMEmailDocument bpmEmailDocument = new BPMEmailDocumentImpl();
 			bpmEmailDocument.setTaskInstanceId(emailTaskInstance.getId());
