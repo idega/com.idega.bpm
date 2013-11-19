@@ -23,6 +23,7 @@ import org.jbpm.JbpmContext;
 import org.jbpm.JbpmException;
 import org.jbpm.graph.def.Transition;
 import org.jbpm.graph.exe.Token;
+import org.jbpm.graph.node.TaskNode;
 import org.jbpm.taskmgmt.def.Task;
 import org.jbpm.taskmgmt.exe.TaskInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,6 +91,8 @@ import com.idega.util.expression.ELUtil;
 @Service("defaultTIW")
 @Transactional(readOnly = false)
 public class DefaultBPMTaskInstanceW implements TaskInstanceW {
+
+	private static final Logger LOGGER = Logger.getLogger(DefaultBPMTaskInstanceW.class.getName());
 
 	private static final String allowSigningVariableRepresentation = "system_allowSigning";
 
@@ -207,8 +210,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 							int assignedTo = Integer.parseInt(actorId);
 							usr = getUserBusiness().getUser(assignedTo);
 						} catch (Exception e) {
-							Logger.getLogger(getClass().getName()).log(Level.SEVERE, "Exception while resolving assigned user name for actor id: " +
-									actorId, e);
+							LOGGER.log(Level.SEVERE, "Exception while resolving assigned user name for actor id: " + actorId, e);
 							usr = null;
 						}
 					} else
@@ -329,7 +331,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 				}
 			}
 
-			if (actionTaken != null && actionTaken.length() != 0 && takeTransitionAction) {
+			if (!StringUtil.isEmpty(actionTaken) && takeTransitionAction && hasLeavingTransition(ti, actionTaken)) {
 				ti.end(actionTaken);
 			} else {
 				ti.end();
@@ -344,6 +346,28 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			if (usrId != null)
 				ti.setActorId(usrId.toString());
 		}
+	}
+
+	private boolean hasLeavingTransition(TaskInstance ti, String transitionName) {
+		if (ti == null) {
+			LOGGER.warning("Task instance is not provided");
+			return false;
+		}
+		if (StringUtil.isEmpty(transitionName)) {
+			LOGGER.warning("Transtion name is not provided for task instance " + ti + ", ID: " + ti.getId());
+			return false;
+		}
+
+		try {
+			Task task = ti.getTask();
+			TaskNode node = task.getTaskNode();
+			Transition transition = node.getLeavingTransition(transitionName);
+			return transition != null;
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Error while verifying if there is leaving transition '" + transitionName + "' for task instnace " + ti +
+					", ID: " + ti.getId(), e);
+		}
+		return false;
 	}
 
 	@Override
@@ -591,8 +615,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			stream = repository.getInputStreamAsRoot(pathInRepository);
 			return addAttachment(variable, fileName, description, stream);
 		} catch (Exception e) {
-			Logger.getLogger(DefaultBPMTaskInstanceW.class.getName()).log(Level.WARNING, "Error adding attachment from repository: " +
-					pathInRepository, e);
+			LOGGER.log(Level.WARNING, "Error adding attachment from repository: " +	pathInRepository, e);
 		} finally {
 			IOUtil.close(stream);
 		}
