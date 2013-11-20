@@ -331,8 +331,19 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 				}
 			}
 
-			if (!StringUtil.isEmpty(actionTaken) && takeTransitionAction && hasLeavingTransition(ti, actionTaken)) {
-				ti.end(actionTaken);
+			if (!StringUtil.isEmpty(actionTaken) && takeTransitionAction) {
+				if (hasLeavingTransition(ti, actionTaken)) {
+					ti.end(actionTaken);
+				} else {
+					String allTransitions = CoreConstants.EMPTY;
+					if (!ListUtil.isEmpty(availableTransitions)) {
+						for (Transition transition: availableTransitions) {
+							allTransitions += "Transition name: " + transition.getName() + ", ID: " + transition.getId() + "; ";
+						}
+					}
+					throw new RuntimeException("There is no leaving transition '" + actionTaken + "' for task instance " + ti + ", ID: " + ti.getId() +
+							", unable to end task. All available transitions: " + allTransitions);
+				}
 			} else {
 				ti.end();
 			}

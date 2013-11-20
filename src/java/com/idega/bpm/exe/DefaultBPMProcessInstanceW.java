@@ -166,13 +166,13 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 				(includedOnlySubProcessesNames == null && excludedSubProcessesNames != null && excludedSubProcessesNames.contains(processName));
 	}
 
-	private List<ProcessInstance> getAllSubprocesses(ProcessInstance processInstance){
+	private List<ProcessInstance> getAllSubprocesses(ProcessInstance processInstance) {
 		List<ProcessInstance> subProcessInstances = getBpmDAO().getSubprocessInstancesOneLevel(processInstance.getId());
-		if(ListUtil.isEmpty(subProcessInstances)){
+		if (ListUtil.isEmpty(subProcessInstances)) {
 			return Collections.emptyList();
 		}
-		ArrayList<ProcessInstance> childSubProcessInstances = new ArrayList<ProcessInstance>(subProcessInstances);
-		for(ProcessInstance subProcess : subProcessInstances){
+		List<ProcessInstance> childSubProcessInstances = new ArrayList<ProcessInstance>(subProcessInstances);
+		for (ProcessInstance subProcess: subProcessInstances) {
 			childSubProcessInstances.addAll(getAllSubprocesses(subProcess));
 		}
 		return childSubProcessInstances;
@@ -894,26 +894,35 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	@Transactional(readOnly = false)
 	public boolean doSubmitTask(String taskName, Map<String, Object> variables) {
+		TaskInstanceW tiW = getSubmittedTaskInstance(taskName, variables);
+		return tiW == null ? Boolean.FALSE : Boolean.TRUE;
+	}
+
+	@Override
+	public TaskInstanceW getSubmittedTaskInstance(String taskName, Map<String, Object> variables) {
 		if (StringUtil.isEmpty(taskName)) {
 			getLogger().warning("Task name is not provided");
-			return Boolean.FALSE;
+			return null;
 		}
 
-		TaskInstanceW task = getSingleUnfinishedTaskInstanceForTask(taskName);
-		if (task == null) {
+		TaskInstanceW taskInstanceW = getSingleUnfinishedTaskInstanceForTask(taskName);
+		if (taskInstanceW == null) {
 			getLogger().warning("Unable to find unfinished task " + taskName + " for process instance ID: " + getProcessInstanceId());
-			return false;
+			return null;
 		}
 
-		return doSubmitTask(task, variables);
+		if (doSubmitTask(taskInstanceW, variables)) {
+			return taskInstanceW;
+		}
+
+		return null;
 	}
 
 	@Transactional(readOnly = false)
 	private boolean doSubmitTask(TaskInstanceW task, Map<String, Object> variables) {
 		if (task == null) {
-			getLogger().warning("Task is not provided");
+			getLogger().warning("Task instance is not provided");
 			return Boolean.FALSE;
 		}
 
