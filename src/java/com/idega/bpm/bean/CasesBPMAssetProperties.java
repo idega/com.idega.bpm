@@ -16,7 +16,8 @@ public class CasesBPMAssetProperties {
 					isNameFromExternalEntity = false,
 					showUserProfilePicture = true,
 					addExportContacts = false,
-					showUserCompany = false;
+					showUserCompany = false,
+					showLastLoginDate = false;
 	
 	public boolean isNameFromExternalEntity() {
 		return isNameFromExternalEntity;
@@ -152,5 +153,13 @@ public class CasesBPMAssetProperties {
 
 	public void setShowUserCompany(boolean showUserCompany) {
 		this.showUserCompany = showUserCompany;
+	}
+
+	public boolean isShowLastLoginDate() {
+		return showLastLoginDate;
+	}
+
+	public void setShowLastLoginDate(boolean showLastLoginDate) {
+		this.showLastLoginDate = showLastLoginDate;
 	}
 }
