@@ -84,6 +84,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		}
 		if (upd != null && upd.getUserEmail() != null)
 			emailAddresses.add(upd.getUserEmail());
+
 		if (ListUtil.isEmpty(sendToEmails)) {
 			String sendToRoles = msgs.getSendToRoles();
 			if (!StringUtil.isEmpty(sendToRoles)) {
@@ -108,7 +109,6 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			try{
 				UserHome userHome = (UserHome) IDOLookup.getHome(User.class);
 				User user = userHome.findByPrimaryKey(receipientId);
-				@SuppressWarnings("unchecked")
 				Collection<Email> emails = user.getEmails();
 				if(ListUtil.isEmpty(emails)){
 					getLogger().log(Level.WARNING, "User " + receipientId + "has no email");
@@ -125,7 +125,9 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	}
 
 	protected UserPersonalData getUserPersonalData(Object context) {
-		return (UserPersonalData) context;
+		if (context instanceof UserPersonalData)
+			return (UserPersonalData) context;
+		return null;
 	}
 
 	@Override
@@ -162,8 +164,6 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		}
 		String host = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_SYSTEM_SMTP_MAILSERVER, CoreConstants.EMAIL_DEFAULT_HOST);
 
-		// TODO: if upd contains userId, we can get User here and add to message value context
-
 		Locale preferredLocale = iwc != null ? iwc.getCurrentLocale() : defaultLocale;
 		final List<SendMailMessageValue> messageValuesToSend = new ArrayList<SendMailMessageValue>(emailAddresses.size());
 
@@ -173,7 +173,21 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		setBeans(mvCtx, iwc, piw, context);
 		final File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw, ectx);
 
+		UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
 		for (String email: emailAddresses) {
+			if (StringUtil.isEmpty(email)) {
+				continue;
+			}
+
+			Object userBean = mvCtx.getValue(MessageValueContext.userBean);
+			Object updBean = mvCtx.getValue(MessageValueContext.updBean);
+			if (userBean == null && updBean == null) {
+				Collection<User> users = userBusiness.getUsersByEmail(email);
+				if (!ListUtil.isEmpty(users)) {
+					mvCtx.setValue(MessageValueContext.userBean, users.iterator().next());
+				}
+			}
+
 			String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
 			String subject = getSubject();
 			if (StringUtil.isEmpty(subject)) {
