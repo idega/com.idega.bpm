@@ -58,7 +58,7 @@ public class SendMessagesHandler implements ActionHandler {
 
 	private String sendToCreator = null;
 	private String receiverMailVariableName = null;
-	
+
 	public String getReceiverMailVariableName() {
 		return receiverMailVariableName;
 	}
@@ -74,12 +74,10 @@ public class SendMessagesHandler implements ActionHandler {
 	public void setSendToCreator(String sendToCreator) {
 		this.sendToCreator = sendToCreator;
 	}
-	
+
 	public boolean isAddCreatorMail(){
-		return "true".equalsIgnoreCase(sendToCreator);
+		return Boolean.TRUE.toString().equalsIgnoreCase(sendToCreator);
 	}
-	
-	
 
 	private SendMessage sendMessage;
 
@@ -112,7 +110,7 @@ public class SendMessagesHandler implements ActionHandler {
 				msg.setRecipientUserId(upd.getUserId());
 			}
 		}
-		String receiverMail = getReceiverMailVariableName(); 
+		String receiverMail = getReceiverMailVariableName();
 		if(!StringUtil.isEmpty(receiverMail)){
 			String mail = (String) ectx.getVariable(receiverMail);
 			if(!StringUtil.isEmpty(mail)){
@@ -291,5 +289,25 @@ public class SendMessagesHandler implements ActionHandler {
 
 	public void setFromAddress(String fromAddress) {
 		this.fromAddress = fromAddress;
+	}
+
+	private Boolean sendViaEmail = null;
+	private String alsoSendViaEmail;
+
+	public boolean isSendViaEmail() {
+		if (sendViaEmail != null) {
+			return sendViaEmail;
+		}
+
+		sendViaEmail = !StringUtil.isEmpty(alsoSendViaEmail) && Boolean.valueOf(alsoSendViaEmail);
+		return sendViaEmail;
+	}
+
+	public String getAlsoSendViaEmail() {
+		return alsoSendViaEmail;
+	}
+
+	public void setAlsoSendViaEmail(String alsoSendViaEmail) {
+		this.alsoSendViaEmail = alsoSendViaEmail;
 	}
 }
