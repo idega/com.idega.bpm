@@ -157,7 +157,6 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 
 		Map<Locale, String[]> unformattedForLocales = new HashMap<Locale, String[]>(5);
 
-		// TODO: get default email
 		String from = msgs.getFrom();
 		if (StringUtil.isEmpty(from) || !EmailValidator.getInstance().isValid(from)) {
 			from = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_SYSTEM_MAIL_FROM_ADDRESS, CoreConstants.EMAIL_DEFAULT_FROM);
