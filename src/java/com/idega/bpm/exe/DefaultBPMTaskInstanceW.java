@@ -81,6 +81,7 @@ import com.idega.util.IOUtil;
 import com.idega.util.ListUtil;
 import com.idega.util.StringHandler;
 import com.idega.util.StringUtil;
+import com.idega.util.datastructures.map.MapUtil;
 import com.idega.util.expression.ELUtil;
 
 /**
@@ -847,10 +848,11 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 
 	@Override
-	public void addVariable(Variable variable, Object value) {
+	public boolean addVariable(Variable variable, Object value) {
 		Map<String, Object> variables = new HashMap<String, Object>(1);
 		variables.put(variable.getName(), value);
-		getVariablesHandler().submitVariablesExplicitly(variables, getTaskInstanceId());
+		Map<String, Object> taskVariables = getVariablesHandler().submitVariablesExplicitly(variables, getTaskInstanceId());
+		return !MapUtil.isEmpty(taskVariables) && taskVariables.containsKey(variable.getName());
 	}
 
 	private Integer order;
