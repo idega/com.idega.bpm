@@ -29,8 +29,7 @@ public class BPMTaskPDFPrinter extends AttachmentWriter {
 
 	@Override
 	public String getMimeType() {
-
-		if(binaryVariable != null && binaryVariable.getMimeType() != null)
+		if (binaryVariable != null && binaryVariable.getMimeType() != null)
 			return binaryVariable.getMimeType();
 
 		return MimeTypeUtil.MIME_TYPE_PDF_1;
@@ -59,8 +58,6 @@ public class BPMTaskPDFPrinter extends AttachmentWriter {
 
 		if (binaryVariable == null) {
 			logger.warning("Variable not found by task instance id: " + taskIdStr + " and variable name: " + variableName);
-		} else {
-			logger.info("Starting to download: " + binaryVariable.getFileName() + ", " + binaryVariable.getIdentifier());
 		}
 
 		return binaryVariable;
