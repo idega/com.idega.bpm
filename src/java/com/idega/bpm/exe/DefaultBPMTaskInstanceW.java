@@ -500,16 +500,12 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		final Map<Locale, String> names;
 		final Long taskInstanceId = getTaskInstanceId();
 
-		// synchronized (cashTaskNames) {
-		// synchronizing on CASHED_TASK_NAMES map, as it's accessed from
-		// multiple threads
 		if (cachedTaskNames.containsKey(taskInstanceId)) {
 			names = cachedTaskNames.get(getTaskInstanceId());
 		} else {
 			names = new HashMap<Locale, String>(5);
 			cachedTaskNames.put(taskInstanceId, names);
 		}
-		// }
 
 		String name = null;
 		if (names.containsKey(locale)) {
@@ -523,12 +519,14 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 		return name;
 	}
-// FIXME
+
 	private String getNameFromMetaData(Long taskInstanceId) {
 		try {
 			MetaDataHome metaDataHome = (MetaDataHome) IDOLookup.getHome(MetaData.class);
-			Collection<MetaData> data = metaDataHome.findAllByMetaDataNameAndType(BPMConstants.TASK_CUSTOM_NAME_META_DATA.concat(BPMConstants.TASK_CUSTOM_NAME_SEPARATOR)
-					.concat(String.valueOf(taskInstanceId)), String.class.getName());
+			Collection<MetaData> data = metaDataHome.findAllByMetaDataNameAndType(
+					BPMConstants.TASK_CUSTOM_NAME_META_DATA.concat(BPMConstants.TASK_CUSTOM_NAME_SEPARATOR)
+					.concat(String.valueOf(taskInstanceId)), String.class.getName()
+			);
 			return ListUtil.isEmpty(data) ? null : data.iterator().next().getMetaDataValue();
 		} catch (FinderException e) {
 		} catch (Exception e) {
@@ -605,10 +603,10 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is, String filesFolder) {
 		return addAttachment(variable, fileName, description, is, filesFolder, true);
 	}
-	
+
 	@Override
 	@Transactional(readOnly = false)
-	public BinaryVariable addAttachment(Variable variable, String fileName, String description, 
+	public BinaryVariable addAttachment(Variable variable, String fileName, String description,
 			InputStream is, String filesFolder, boolean overwrite) {
 		IWApplicationContext iwac = IWMainApplication.getDefaultIWApplicationContext();
 		Collection<URI> uris = getLinksToVariables(is, filesFolder, fileName,iwac, overwrite);
@@ -665,7 +663,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 		return uris;
 	}
-	
+
 	private Collection<URI> getURIsFromTmpLocation(String folder, String name, InputStream is) {
 		getUploadedResourceResolver().uploadToTmpLocation(folder, name, is, false);
 		return getFileUploadManager().getFilesUris(folder, null, getUploadedResourceResolver());
