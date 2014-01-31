@@ -283,7 +283,7 @@ public class DefaultBPMProcessDefinitionW implements ProcessDefinitionW {
 		try {
 			ApplicationContext appContext = ELUtil.getInstance().getApplicationContext();
 			ProcessInstance pi = ti.getProcessInstance();
-			appContext.publishEvent(new VariableCreatedEvent(this, pi.getProcessDefinition().getName(), pi.getId(), variables));
+			appContext.publishEvent(new VariableCreatedEvent(this, pi.getProcessDefinition().getName(), pi.getId(), ti.getId(), variables));
 		} catch (Exception e) {
 			getLogger().log(Level.WARNING, "Error publishing VariableCreatedEvent for task instance: " + ti, e);
 		}
