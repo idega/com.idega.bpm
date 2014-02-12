@@ -141,12 +141,9 @@ public class XFormsViewFactory implements ViewFactory, IXFormViewFactory {
 
 	@Override
 	@Transactional(readOnly = true)
-	public Multimap<Long, TaskView> getAllViewsByProcessDefinitions(
-			Collection<Long> processDefinitionsIds) {
-
-		List<Object[]> procTaskViews = getBPMDAO().getProcessTasksViewsInfos(
-				processDefinitionsIds, XFormsView.VIEW_TYPE);
-		HashMultimap<Long, TaskView> pdsViews = new HashMultimap<Long, TaskView>();
+	public Multimap<Long, TaskView> getAllViewsByProcessDefinitions(Collection<Long> processDefinitionsIds) {
+		List<Object[]> procTaskViews = getBPMDAO().getProcessTasksViewsInfos(processDefinitionsIds, XFormsView.VIEW_TYPE);
+		HashMultimap<Long, TaskView> pdsViews = HashMultimap.create();
 
 		for (Object[] objects : procTaskViews) {
 

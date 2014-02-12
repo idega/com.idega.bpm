@@ -304,10 +304,15 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 		getLogger().info("Task instance (name=" + ti.getName() + ", ID=" + ti.getId() + ") was executed");
 
-		ApplicationContext appContext = ELUtil.getInstance().getApplicationContext();
-		appContext.publishEvent(new VariableCreatedEvent(this, pi.getProcessDefinition().getName(), piId, variables));
+		try {
+			ApplicationContext appContext = ELUtil.getInstance().getApplicationContext();
+			ProcessInstance pi = ti.getProcessInstance();
+			appContext.publishEvent(new VariableCreatedEvent(this, pi.getProcessDefinition().getName(), pi.getId(), ti.getId(), variables));
+		} catch (Exception e) {
+			getLogger().log(Level.WARNING, "Error publishing VariableCreatedEvent for task instance: " + ti, e);
+		}
 	}
-
+	
 	private VariableInstanceQuerier getVariableInstanceQuerier() {
 		if (querier == null)
 			ELUtil.getInstance().autowire(this);

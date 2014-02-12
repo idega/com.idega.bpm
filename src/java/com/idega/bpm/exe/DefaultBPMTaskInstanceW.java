@@ -519,16 +519,12 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		final Map<Locale, String> names;
 		final Long taskInstanceId = getTaskInstanceId();
 
-		// synchronized (cashTaskNames) {
-		// synchronizing on CASHED_TASK_NAMES map, as it's accessed from
-		// multiple threads
 		if (cachedTaskNames.containsKey(taskInstanceId)) {
 			names = cachedTaskNames.get(getTaskInstanceId());
 		} else {
 			names = new HashMap<Locale, String>(5);
 			cachedTaskNames.put(taskInstanceId, names);
 		}
-		// }
 
 		String name = null;
 		if (names.containsKey(locale)) {
@@ -542,7 +538,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 		return name;
 	}
-// FIXME
+
 	private String getNameFromMetaData(Long taskInstanceId) {
 		try {
 			MetaDataHome metaDataHome = (MetaDataHome) IDOLookup.getHome(MetaData.class);
@@ -642,6 +638,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is, String filesFolder) {
 		return addAttachment(variable, fileName, description, is, filesFolder, true);
 	}
+
 	@Override
 	@Transactional(readOnly = false)
 	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is, String filesFolder, boolean overwrite) {

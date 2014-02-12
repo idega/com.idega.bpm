@@ -17,10 +17,12 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.idega.core.business.DefaultSpringBean;
 import com.idega.core.localisation.business.ICLocaleBusiness;
 import com.idega.data.IDOLookup;
 import com.idega.idegaweb.IWBundle;
 import com.idega.idegaweb.IWMainApplication;
+import com.idega.idegaweb.IWResourceBundle;
 import com.idega.jbpm.identity.UserPersonalData;
 import com.idega.user.data.User;
 import com.idega.user.data.UserHome;
@@ -34,7 +36,7 @@ import com.idega.util.StringUtil;
  */
 @Service(SendMessagesHandler.BEAN_NAME)
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
-public class SendMessagesHandler implements ActionHandler {
+public class SendMessagesHandler extends DefaultSpringBean implements ActionHandler {
 
 	private static final long serialVersionUID = -7421283155844789254L;
 
@@ -58,7 +60,7 @@ public class SendMessagesHandler implements ActionHandler {
 
 	private String sendToCreator = null;
 	private String receiverMailVariableName = null;
-	
+
 	public String getReceiverMailVariableName() {
 		return receiverMailVariableName;
 	}
@@ -74,12 +76,10 @@ public class SendMessagesHandler implements ActionHandler {
 	public void setSendToCreator(String sendToCreator) {
 		this.sendToCreator = sendToCreator;
 	}
-	
+
 	public boolean isAddCreatorMail(){
-		return "true".equalsIgnoreCase(sendToCreator);
+		return Boolean.TRUE.toString().equalsIgnoreCase(sendToCreator);
 	}
-	
-	
 
 	private SendMessage sendMessage;
 
@@ -112,7 +112,7 @@ public class SendMessagesHandler implements ActionHandler {
 				msg.setRecipientUserId(upd.getUserId());
 			}
 		}
-		String receiverMail = getReceiverMailVariableName(); 
+		String receiverMail = getReceiverMailVariableName();
 		if(!StringUtil.isEmpty(receiverMail)){
 			String mail = (String) ectx.getVariable(receiverMail);
 			if(!StringUtil.isEmpty(mail)){
@@ -143,11 +143,36 @@ public class SendMessagesHandler implements ActionHandler {
 		msgs.setMessageValuesExp(getMessageValues());
 
 		Map<String, Locale> resolvedLocales = new HashMap<String, Locale>();
-		if (getMessageKey() == null && getSubjectKey() == null) {
+
+		boolean useInlineMessages = true;
+		String subjectKey = getSubjectKey();
+		String messageKey = getMessageKey();
+		String bundleIdentifier = null;
+		IWBundle bundle = null;
+		if (!StringUtil.isEmpty(subjectKey) && !StringUtil.isEmpty(messageKey) && !subjectKey.startsWith("#{") && !messageKey.startsWith("#{")) {
+			bundleIdentifier = getMessagesBundle();
+			if (bundleIdentifier == null) {
+				bundleIdentifier = "com.idega.bpm";
+			}
+
+			bundle = IWMainApplication.getDefaultIWMainApplication().getBundle(bundleIdentifier);
+			IWResourceBundle iwrb = bundle.getResourceBundle(getCurrentLocale());
+			@SuppressWarnings("deprecation")
+			String subjectLocalization = iwrb.getLocalizedString(subjectKey);
+			@SuppressWarnings("deprecation")
+			String messageLocalization = iwrb.getLocalizedString(messageKey);
+			if (subjectLocalization != null && messageLocalization != null &&
+				!subjectLocalization.equals(subjectKey) && !messageLocalization.equals(messageKey)
+			) {
+				useInlineMessages = false;
+			}
+		}
+
+		if (useInlineMessages) {
 			//	Using inline messages
 			if (getInlineSubject() != null && !getInlineSubject().isEmpty()) {
 				Map<Locale, String> subjects = new HashMap<Locale, String>(getInlineSubject().size());
-				for (Entry<String, String> entry : getInlineSubject().entrySet()) {
+				for (Entry<String, String> entry: getInlineSubject().entrySet()) {
 			    	Locale subjectLocale = getLocale(entry.getKey(), resolvedLocales);
 			    	subjects.put(subjectLocale, entry.getValue());
 				}
@@ -157,7 +182,7 @@ public class SendMessagesHandler implements ActionHandler {
 
 			if (getInlineMessage() != null && !getInlineMessage().isEmpty()) {
 				Map<Locale, String> messages = new HashMap<Locale, String>(getInlineMessage().size());
-				for (Entry<String, String> entry : getInlineMessage().entrySet()) {
+				for (Entry<String, String> entry: getInlineMessage().entrySet()) {
 					Locale msgLocale = getLocale(entry.getKey(), resolvedLocales);
 					messages.put(msgLocale, entry.getValue());
 				}
@@ -166,15 +191,9 @@ public class SendMessagesHandler implements ActionHandler {
 			}
 		} else {
 			//	Using message keys
-			String bundleIdentifier = getMessagesBundle();
-
-			if (bundleIdentifier == null)
-				bundleIdentifier = "com.idega.bpm";
-
-			final IWBundle iwb = IWMainApplication.getDefaultIWMainApplication().getBundle(bundleIdentifier);
-			msgs.setIwb(iwb);
-			msgs.setSubjectKey(getSubjectKey());
-			msgs.setMsgKey(getMessageKey());
+			msgs.setIwb(bundle);
+			msgs.setSubjectKey(subjectKey);
+			msgs.setMsgKey(messageKey);
 		}
 
 		return msgs;
@@ -291,5 +310,25 @@ public class SendMessagesHandler implements ActionHandler {
 
 	public void setFromAddress(String fromAddress) {
 		this.fromAddress = fromAddress;
+	}
+
+	private Boolean sendViaEmail = null;
+	private String alsoSendViaEmail;
+
+	public boolean isSendViaEmail() {
+		if (sendViaEmail != null) {
+			return sendViaEmail;
+		}
+
+		sendViaEmail = !StringUtil.isEmpty(alsoSendViaEmail) && Boolean.valueOf(alsoSendViaEmail);
+		return sendViaEmail;
+	}
+
+	public String getAlsoSendViaEmail() {
+		return alsoSendViaEmail;
+	}
+
+	public void setAlsoSendViaEmail(String alsoSendViaEmail) {
+		this.alsoSendViaEmail = alsoSendViaEmail;
 	}
 }
