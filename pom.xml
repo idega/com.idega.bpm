@@ -6,20 +6,11 @@
     <artifactId>com.idega.block.addon</artifactId>
     <version>5.0.0-SNAPSHOT</version>
   </parent>
-<<<<<<< HEAD
-  <name>Idega BPM API</name>
-  <artifactId>com.idega.bpm</artifactId>
   <packaging>jar</packaging>
+  <artifactId>com.idega.bpm</artifactId>
+  <name>Idega BPM API</name>
   <inceptionYear>2008</inceptionYear>
   <description>Default BPM implementation of Idega BPM API</description>
-
-=======
-  <packaging>jar</packaging>
-  <artifactId>com.idega.bpm</artifactId>
-  <name>Idega BPM</name>
-  <inceptionYear>2008</inceptionYear>
-  <description>Default BPM implementation of idega bpm engine api</description>
->>>>>>> f7ed021a0d9d39dbfc250c9486cd2f783e8bbfee
   <developers>
     <developer>
       <name>Vytautas Čivilis</name>
