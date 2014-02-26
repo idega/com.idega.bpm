@@ -149,19 +149,49 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 				(includedOnlySubProcessesNames == null && excludedSubProcessesNames != null && excludedSubProcessesNames.contains(processName));
 	}
 
-	private List<ProcessInstance> getAllSubprocesses(ProcessInstance processInstance){
-		List<ProcessInstance> subProcessInstances = getBpmDAO().getSubprocessInstancesOneLevel(processInstance.getId());
-		if(ListUtil.isEmpty(subProcessInstances)){
+	@Override
+	public List<Long> getIdsOfSubProcesses(final Long procInstId) {
+		if (procInstId == null) {
+			return null;
+		}
+
+		List<ProcessInstance> subProcesses = getAllSubprocesses(procInstId);
+		if (ListUtil.isEmpty(subProcesses)) {
+			return null;
+		}
+
+		List<Long> ids = new ArrayList<Long>();
+		for (ProcessInstance subProcess: subProcesses) {
+			ids.add(subProcess.getId());
+		}
+		return ids;
+	}
+
+	private List<ProcessInstance> getAllSubprocesses(ProcessInstance processInstance) {
+		if (processInstance == null) {
+			return null;
+		}
+
+		return getAllSubprocesses(processInstance.getId());
+	}
+
+	private List<ProcessInstance> getAllSubprocesses(Long procInstId) {
+		List<ProcessInstance> subProcessInstances = getBpmDAO().getSubprocessInstancesOneLevel(procInstId);
+		if(ListUtil.isEmpty(subProcessInstances)) {
 			return Collections.emptyList();
 		}
-		ArrayList<ProcessInstance> childSubProcessInstances = new ArrayList<ProcessInstance>(subProcessInstances);
-		for(ProcessInstance subProcess : subProcessInstances){
+		List<ProcessInstance> childSubProcessInstances = new ArrayList<ProcessInstance>(subProcessInstances);
+		for (ProcessInstance subProcess: subProcessInstances) {
 			childSubProcessInstances.addAll(getAllSubprocesses(subProcess));
 		}
 		return childSubProcessInstances;
 	}
-	private Collection<TaskInstance> getSubprocessesTaskInstances(ProcessInstance processInstance, final List<String> excludedSubProcessesNames,
-				final List<String> includedOnlySubProcessesNames) {
+
+	private Collection<TaskInstance> getSubprocessesTaskInstances(
+			ProcessInstance processInstance,
+			final List<String> excludedSubProcessesNames,
+			final List<String> includedOnlySubProcessesNames
+	) {
 		List<ProcessInstance> subProcessInstances = getAllSubprocesses(processInstance);
 
 		List<TaskInstance> taskInstances;
