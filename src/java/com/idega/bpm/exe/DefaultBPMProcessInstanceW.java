@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -66,6 +68,7 @@ import com.idega.user.util.UserComparator;
 import com.idega.util.CoreConstants;
 import com.idega.util.ListUtil;
 import com.idega.util.StringUtil;
+import com.idega.util.datastructures.map.MapUtil;
 import com.idega.util.expression.ELUtil;
 
 /**
@@ -166,9 +169,35 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 				(includedOnlySubProcessesNames == null && excludedSubProcessesNames != null && excludedSubProcessesNames.contains(processName));
 	}
 
+	@Override
+	public List<Long> getIdsOfSubProcesses(final Long procInstId) {
+		if (procInstId == null) {
+			return null;
+		}
+
+		List<ProcessInstance> subProcesses = getAllSubprocesses(procInstId);
+		if (ListUtil.isEmpty(subProcesses)) {
+			return null;
+		}
+
+		List<Long> ids = new ArrayList<Long>();
+		for (ProcessInstance subProcess: subProcesses) {
+			ids.add(subProcess.getId());
+		}
+		return ids;
+	}
+
 	private List<ProcessInstance> getAllSubprocesses(ProcessInstance processInstance) {
-		List<ProcessInstance> subProcessInstances = getBpmDAO().getSubprocessInstancesOneLevel(processInstance.getId());
-		if (ListUtil.isEmpty(subProcessInstances)) {
+		if (processInstance == null) {
+			return null;
+		}
+
+		return getAllSubprocesses(processInstance.getId());
+	}
+
+	private List<ProcessInstance> getAllSubprocesses(Long procInstId) {
+		List<ProcessInstance> subProcessInstances = getBpmDAO().getSubprocessInstancesOneLevel(procInstId);
+		if(ListUtil.isEmpty(subProcessInstances)) {
 			return Collections.emptyList();
 		}
 		List<ProcessInstance> childSubProcessInstances = new ArrayList<ProcessInstance>(subProcessInstances);
@@ -242,8 +271,49 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getSubmittedTaskInstances() {
-		List<String> emptyFilter = Collections.emptyList();
-		return getSubmittedTaskInstances(emptyFilter);
+		return getSubmittedTaskInstances(new ArrayList<String>(0));
+	}
+
+	@Override
+	public List<TaskInstanceW> getSubmittedTaskInstances(String taskInstanceName) {
+		if (StringUtil.isEmpty(taskInstanceName)) {
+			return null;
+		}
+
+		List<TaskInstanceW> allSubmittedTaskInstances = getSubmittedTaskInstances();
+		if (ListUtil.isEmpty(allSubmittedTaskInstances)) {
+			return null;
+		}
+
+		Map<Date, TaskInstanceW> tasksByName = new HashMap<Date, TaskInstanceW>();
+		for (TaskInstanceW tiW: allSubmittedTaskInstances) {
+			TaskInstance ti = tiW.getTaskInstance();
+			if (taskInstanceName.equals(ti.getName())) {
+				tasksByName.put(ti.getEnd(), tiW);
+			}
+		}
+
+		if (MapUtil.isEmpty(tasksByName)) {
+			return null;
+		}
+
+		List<TaskInstanceW> tasks = new ArrayList<TaskInstanceW>();
+		List<Date> dates = new ArrayList<Date>(tasksByName.keySet());
+		Collections.sort(dates);
+		for (Date date: dates) {
+			tasks.add(tasksByName.get(date));
+		}
+		return tasks;
+	}
+
+	@Override
+	public TaskInstanceW getLastSubmittedTaskInstance(String taskInstanceName) {
+		List<TaskInstanceW> submittedTaskInstances = getSubmittedTaskInstances(taskInstanceName);
+		if (ListUtil.isEmpty(submittedTaskInstances)) {
+			return null;
+		}
+
+		return submittedTaskInstances.get(submittedTaskInstances.size() - 1);
 	}
 
 	@Override
@@ -967,6 +1037,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
+<<<<<<< HEAD
 	public TaskInstanceW getTaskInstance(String taskName) {
 		if (StringUtil.isEmpty(taskName)) {
 			getLogger().warning("Task name is not provided");
@@ -1010,4 +1081,33 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	public String toString() {
 		return "Proc. inst. ID: " + getProcessInstanceId();
 	}
+=======
+	public Object getValueForTaskInstance(String taskInstanceName, String variable) {
+		List<TaskInstanceW> submittedTiWs = getSubmittedTaskInstances(taskInstanceName);
+		return getLatestValue(submittedTiWs, variable, submittedTiWs.size() - 1);
+	}
+
+	@Override
+	public Object getValueForTaskInstance(List<TaskInstanceW> submittedTiWs, String variable) {
+		if (ListUtil.isEmpty(submittedTiWs)) {
+			return null;
+		}
+		return getLatestValue(submittedTiWs, variable, submittedTiWs.size() - 1);
+	}
+
+	private Object getLatestValue(List<TaskInstanceW> submittedTiWs, String variable, int index) {
+		if (ListUtil.isEmpty(submittedTiWs) || index < 0 || index >= submittedTiWs.size()) {
+			return null;
+		}
+
+		Object value = submittedTiWs.get(index).getVariable(variable);
+		if (value != null) {
+			return value;
+		}
+
+		index--;
+		return getLatestValue(submittedTiWs, variable, index);
+	}
+
+>>>>>>> 8eebb42ef8f0cc4aa8e36acd73b2ae72275afbec
 }
