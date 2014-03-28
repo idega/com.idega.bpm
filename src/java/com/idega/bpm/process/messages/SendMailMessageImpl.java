@@ -136,7 +136,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		if (context instanceof ExecutionContext) {
 			ectx = (ExecutionContext) context;
 		} else {
-			getLogger().log(Level.WARNING, "Context " + context + (context == null ? "" : ", class: " + context.getClass()) +
+			getLogger().log(Level.WARNING, "Context " + context + (context == null ? " (not provided)" : ", class: " + context.getClass()) +
 					" is not instance of " + ExecutionContext.class.getName());
 		}
 
