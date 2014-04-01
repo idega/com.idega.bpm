@@ -344,18 +344,24 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 	@Override
 	@Transactional(readOnly = true)
-	public Collection<String> getTaskNodeTransitionsNames(String taskName) {
-		ProcessDefinition pdef = getProcessDefinition();
-		Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
+	public Collection<String> getTaskNodeTransitionsNames(final String taskName) {
+		return getBpmContext().execute(new JbpmCallback<Collection<String>>() {
 
-		TaskNode taskNode = task.getTaskNode();
-		if (taskNode != null) {
-			@SuppressWarnings("unchecked")
-			Map<String, Transition> leavingTransitions = taskNode.getLeavingTransitionsMap();
-			return leavingTransitions != null ? leavingTransitions.keySet() : null;
-		} else
-			// task node is null, when task in start node
-			return null;
+			@Override
+			public Collection<String> doInJbpm(JbpmContext context) throws JbpmException {
+				ProcessDefinition pdef = getProcessDefinition(context);
+				Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
+
+				TaskNode taskNode = task.getTaskNode();
+				if (taskNode != null) {
+					@SuppressWarnings("unchecked")
+					Map<String, Transition> leavingTransitions = taskNode.getLeavingTransitionsMap();
+					return leavingTransitions != null ? leavingTransitions.keySet() : null;
+				} else
+					// task node is null, when task in start node
+					return null;
+			}
+		});
 	}
 
 	@Override
