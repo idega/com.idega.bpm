@@ -17,6 +17,7 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.idega.bpm.BPMConstants;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.core.localisation.business.ICLocaleBusiness;
 import com.idega.data.IDOLookup;
@@ -152,7 +153,7 @@ public class SendMessagesHandler extends DefaultSpringBean implements ActionHand
 		if (!StringUtil.isEmpty(subjectKey) && !StringUtil.isEmpty(messageKey) && !subjectKey.startsWith("#{") && !messageKey.startsWith("#{")) {
 			bundleIdentifier = getMessagesBundle();
 			if (bundleIdentifier == null) {
-				bundleIdentifier = "com.idega.bpm";
+				bundleIdentifier = BPMConstants.IW_BUNDLE_STARTER;
 			}
 
 			bundle = IWMainApplication.getDefaultIWMainApplication().getBundle(bundleIdentifier);
