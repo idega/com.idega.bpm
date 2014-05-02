@@ -966,4 +966,9 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return getLatestValue(submittedTiWs, variable, index);
 	}
 
+	@Override
+	public String getProcessOwner() {
+		return null;
+	}
+
 }
