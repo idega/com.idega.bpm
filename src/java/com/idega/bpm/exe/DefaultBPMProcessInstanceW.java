@@ -1037,7 +1037,6 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-<<<<<<< HEAD
 	public TaskInstanceW getTaskInstance(String taskName) {
 		if (StringUtil.isEmpty(taskName)) {
 			getLogger().warning("Task name is not provided");
@@ -1061,27 +1060,10 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	public List<TaskInstanceW> getSubmittedTaskInstances(String name) {
-		if (StringUtil.isEmpty(name))
-			return null;
-
-		List<TaskInstanceW> submittedTasks = getSubmittedTaskInstances();
-		if (ListUtil.isEmpty(submittedTasks))
-			return null;
-
-		List<TaskInstanceW> filteredTasks = new ArrayList<TaskInstanceW>();
-		for (TaskInstanceW task: submittedTasks) {
-			if (name.equals(task.getTaskInstance().getName()))
-				filteredTasks.add(task);
-		}
-		return filteredTasks;
-	}
-
-	@Override
 	public String toString() {
 		return "Proc. inst. ID: " + getProcessInstanceId();
 	}
-=======
+
 	public Object getValueForTaskInstance(String taskInstanceName, String variable) {
 		List<TaskInstanceW> submittedTiWs = getSubmittedTaskInstances(taskInstanceName);
 		return getLatestValue(submittedTiWs, variable, submittedTiWs.size() - 1);
@@ -1109,5 +1091,4 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return getLatestValue(submittedTiWs, variable, index);
 	}
 
->>>>>>> 8eebb42ef8f0cc4aa8e36acd73b2ae72275afbec
 }

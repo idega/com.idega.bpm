@@ -9,7 +9,6 @@ import java.util.logging.Level;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -31,7 +30,7 @@ import com.idega.util.datastructures.map.MapUtil;
 
 @Service(BPMXFormPersistenceServiceImpl.BEAN_NAME)
 @Scope(BeanDefinition.SCOPE_SINGLETON)
-public class BPMXFormPersistenceServiceImpl extends DefaultSpringBean implements XFormPersistenceService, ApplicationListener {
+public class BPMXFormPersistenceServiceImpl extends DefaultSpringBean implements XFormPersistenceService, ApplicationListener<FormSavedEvent> {
 
 	public static final String BEAN_NAME = "bpmXFormPersistenceServiceImpl";
 
@@ -42,11 +41,9 @@ public class BPMXFormPersistenceServiceImpl extends DefaultSpringBean implements
 	private XFormsDAO xformsDAO;
 
 	@Override
-	public void onApplicationEvent(ApplicationEvent event) {
-		if (event instanceof FormSavedEvent) {
-			XFormSubmission submission = xformsDAO.find(XFormSubmission.class, ((FormSavedEvent) event).getSubmissionId());
-			doRegisterSavedForm(submission);
-		}
+	public void onApplicationEvent(FormSavedEvent event) {
+		XFormSubmission submission = xformsDAO.find(XFormSubmission.class, ((FormSavedEvent) event).getSubmissionId());
+		doRegisterSavedForm(submission);
 	}
 
 	public void doBindSubmissionsWithBPM() {
@@ -89,6 +86,10 @@ public class BPMXFormPersistenceServiceImpl extends DefaultSpringBean implements
 		String procDefName = form.getJBPMProcessDefinitionName();
 		if (StringUtil.isEmpty(procDefName)) {
 			getLogger().warning("Unknown process definition name for submission: " + submission);
+			return;
+		}
+		if ("standalone".equals(procDefName)) {
+			getLogger().info("Standalone form, no JBPM proc. definition exist for it");
 			return;
 		}
 
