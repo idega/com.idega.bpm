@@ -37,6 +37,7 @@ import com.idega.jbpm.exe.ProcessInstanceW;
 import com.idega.jbpm.identity.UserPersonalData;
 import com.idega.jbpm.process.business.messages.MessageValueContext;
 import com.idega.jbpm.process.business.messages.MessageValueHandler;
+import com.idega.jbpm.process.business.messages.TypeRef;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.presentation.IWContext;
 import com.idega.user.business.UserBusiness;
@@ -49,6 +50,7 @@ import com.idega.util.CoreUtil;
 import com.idega.util.ListUtil;
 import com.idega.util.SendMail;
 import com.idega.util.SendMailMessageValue;
+import com.idega.util.StringHandler;
 import com.idega.util.StringUtil;
 
 
@@ -168,8 +170,9 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		Locale preferredLocale = iwc != null ? iwc.getCurrentLocale() : defaultLocale;
 		final List<SendMailMessageValue> messageValuesToSend = new ArrayList<SendMailMessageValue>(emailAddresses.size());
 
-		if (mvCtx == null)
+		if (mvCtx == null) {
 			mvCtx = new MessageValueContext(3);
+		}
 
 		setBeans(mvCtx, iwc, piw, context);
 		final File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw, ectx);
@@ -269,8 +272,8 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			Map<Locale, String[]> unformattedForLocales,
 			Token tkn
 	) {
-		String unformattedSubject;
-		String unformattedMsg;
+		String unformattedSubject = null;
+		String unformattedMsg = null;
 
 		if (!unformattedForLocales.containsKey(preferredLocale)) {
 			unformattedSubject = msgs.getLocalizedSubject(preferredLocale);
@@ -284,18 +287,36 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			unformattedMsg = unf[1];
 		}
 
-		String formattedMsg;
-		String formattedSubject;
+		TypeRef[] dateAndTime = new TypeRef[] {TypeRef.CREATION_DATE, TypeRef.CREATION_TIME};
+		if (!StringUtil.isEmpty(unformattedSubject)) {
+			for (TypeRef typeRef: dateAndTime) {
+				if (unformattedSubject.indexOf(typeRef.getRef()) != -1) {
+					unformattedSubject = StringHandler.replace(unformattedSubject, typeRef.getRef(), (String) mvCtx.getValue(typeRef));
+				}
+			}
+		}
+		if (!StringUtil.isEmpty(unformattedMsg)) {
+			for (TypeRef typeRef: dateAndTime) {
+				if (unformattedMsg.indexOf(typeRef.getRef()) != -1) {
+					unformattedMsg = StringHandler.replace(unformattedMsg, typeRef.getRef(), (String) mvCtx.getValue(typeRef));
+				}
+			}
+		}
 
-		if (unformattedMsg == null)
+		String formattedMsg = null;
+		String formattedSubject = null;
+
+		if (unformattedMsg == null) {
 			formattedMsg = unformattedMsg;
-		else
+		} else {
 			formattedMsg = getFormattedMessage(unformattedMsg, msgs.getMessageValuesExp(), tkn, mvCtx);
+		}
 
-		if (unformattedSubject == null)
+		if (unformattedSubject == null) {
 			formattedSubject = unformattedSubject;
-		else
+		} else {
 			formattedSubject = getFormattedMessage(unformattedSubject, msgs.getSubjectValuesExp(), tkn, mvCtx);
+		}
 
 		formattedMsg = StringConverterUtility.loadConvert(formattedMsg);
 		formattedSubject = StringConverterUtility.loadConvert(formattedSubject);
