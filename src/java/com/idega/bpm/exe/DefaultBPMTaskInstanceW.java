@@ -46,7 +46,6 @@ import com.idega.core.file.util.MimeTypeUtil;
 import com.idega.data.IDOLookup;
 import com.idega.data.MetaData;
 import com.idega.data.MetaDataHome;
-import com.idega.hibernate.HibernateUtil;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
@@ -77,6 +76,7 @@ import com.idega.repository.RepositoryService;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.util.CoreConstants;
+import com.idega.util.DBUtil;
 import com.idega.util.IOUtil;
 import com.idega.util.ListUtil;
 import com.idega.util.StringHandler;
@@ -917,7 +917,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			return ids;
 		}
 
-		token = HibernateUtil.initializeAndUnproxy(token);
+		token = DBUtil.getInstance().initializeAndUnproxy(token);
 		if (token != null) {
 			ids.add(token.getId());
 		}
