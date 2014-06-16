@@ -27,7 +27,7 @@ public class DataConvertersFactory {
 		dataConverters = new HashMap<VariableDataType, DataConverter>();
 	}
 
-	public synchronized DataConverter createConverter(VariableDataType dataType) {
+	public DataConverter createConverter(VariableDataType dataType) {
 		return getDataConverters().get(dataType);
 	}
 

@@ -36,14 +36,13 @@ public class XFormsConverter implements Converter {
 	private DataConvertersFactory convertersFactory;
 	final private XPathUtil mappingXPUT = new XPathUtil("//*[@mapping]");
 
+	@Override
 	public Map<String, Object> convert(Object submissionData) {
 		Node sdNode = (Node)submissionData;
 
 		NodeList result;
 
-		synchronized (mappingXPUT) {
-			result = mappingXPUT.getNodeset(sdNode);
-		}
+		result = mappingXPUT.getNodeset(sdNode);
 
 		if(result.getLength() == 0)
 			return null;
@@ -70,6 +69,7 @@ public class XFormsConverter implements Converter {
 		return VariableDataType.getByStringRepresentation(strRepr);
 	}
 
+	@Override
 	public Object revert(Map<String, Object> variables, Object submissionData) {
 		if (MapUtil.isEmpty(variables))
 			return submissionData;
@@ -77,9 +77,7 @@ public class XFormsConverter implements Converter {
 		Node sdNode = (Node)submissionData;
 		NodeList result;
 
-		synchronized (mappingXPUT) {
-			result = mappingXPUT.getNodeset(sdNode);
-		}
+		result = mappingXPUT.getNodeset(sdNode);
 
 		if (result.getLength() == 0)
 			return null;

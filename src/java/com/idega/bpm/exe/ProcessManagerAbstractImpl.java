@@ -84,13 +84,9 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 	 */
 	protected abstract ProcessDefinitionW createPDW();
 
-	// synchronized because spring doesn't do it when autowiring beans (TODO: is
-	// this needed?)
-	public synchronized ProcessDefinitionW createProcessDefinition(long pdId) {
-
+	public ProcessDefinitionW createProcessDefinition(long pdId) {
 		ProcessDefinitionW pdw = createPDW();
 		pdw.setProcessDefinitionId(pdId);
-
 		return pdw;
 	}
 
@@ -101,13 +97,9 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 	 */
 	protected abstract ProcessInstanceW createPIW();
 
-	// synchronized because spring doesn't do it when autowiring beans (TODO: is
-	// this needed?)
-	public synchronized ProcessInstanceW createProcessInstance(long piId) {
-
+	public ProcessInstanceW createProcessInstance(long piId) {
 		ProcessInstanceW piw = createPIW();
 		piw.setProcessInstanceId(piId);
-
 		return piw;
 	}
 
@@ -118,14 +110,10 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 	 */
 	protected abstract TaskInstanceW createTIW();
 
-	// synchronized because spring doesn't do it when autowiring beans (TODO: is
-	// this needed?)
-	public synchronized TaskInstanceW createTaskInstance(long tiId) {
-
+	public TaskInstanceW createTaskInstance(long tiId) {
 		TaskInstanceW tiw = createTIW();
 		tiw.setTaskInstanceId(tiId);
 		tiw.setProcessManager(this);
-
 		return tiw;
 	}
 
