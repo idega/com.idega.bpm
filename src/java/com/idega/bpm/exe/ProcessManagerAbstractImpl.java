@@ -84,7 +84,7 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 	 */
 	protected abstract ProcessDefinitionW createPDW();
 
-	public ProcessDefinitionW createProcessDefinition(long pdId) {
+	public synchronized ProcessDefinitionW createProcessDefinition(long pdId) {
 		ProcessDefinitionW pdw = createPDW();
 		pdw.setProcessDefinitionId(pdId);
 		return pdw;
@@ -97,7 +97,7 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 	 */
 	protected abstract ProcessInstanceW createPIW();
 
-	public ProcessInstanceW createProcessInstance(long piId) {
+	public synchronized ProcessInstanceW createProcessInstance(long piId) {
 		ProcessInstanceW piw = createPIW();
 		piw.setProcessInstanceId(piId);
 		return piw;
@@ -110,7 +110,7 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 	 */
 	protected abstract TaskInstanceW createTIW();
 
-	public TaskInstanceW createTaskInstance(long tiId) {
+	public synchronized TaskInstanceW createTaskInstance(long tiId) {
 		TaskInstanceW tiw = createTIW();
 		tiw.setTaskInstanceId(tiId);
 		tiw.setProcessManager(this);
