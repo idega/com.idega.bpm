@@ -262,7 +262,11 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			}
 		}
 
-		return getEmailSenderHelper().getFileToAttach(filesInRepository);
+		String name = piw.getProcessIdentifier();
+		if (StringUtil.isEmpty(name)) {
+			name = String.valueOf(piw.getProcessInstanceId());
+		}
+		return getEmailSenderHelper().getFileToAttach(filesInRepository, name);
 	}
 
 	protected String[] getFormattedMessage(

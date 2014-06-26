@@ -28,7 +28,7 @@ import com.idega.util.SendMailMessageValue;
 @Service(SendMailMessageToRoles.BEAN_NAME)
 @SendMessageType("emailToRoles")
 @Scope(BeanDefinition.SCOPE_SINGLETON)
-public class SendMailMessageToRoles extends SendMailMessageImpl{
+public class SendMailMessageToRoles extends SendMailMessageImpl {
 
 	public static final String BEAN_NAME = "sendMailMessageToRoles";
 
@@ -83,8 +83,8 @@ public class SendMailMessageToRoles extends SendMailMessageImpl{
 						File attachment = mv.getAttachedFile();
 						SendMail.send(mv.getFrom(), mv.getTo(), mv.getCc(), mv.getBcc(),
 								mv.getReplyTo(), mv.getHost(), mv.getSubject(), mv.getText(),
-								mv.getHeaders(), false, true, attachment);
-
+								mv.getHeaders(), false, true, attachment
+						);
 					} catch (Exception me) {
 						String message = "Exception while sending email message: " + mv;
 						Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, message, me);
