@@ -22,7 +22,7 @@ public class LocalizedMessages {
 	private String from;
 	private String sendToRoles;
 	private Integer recipientUserId;
-	private List<String> sendToEmails, attachFiles;
+	private List<String> sendToEmails, attachFiles, sendCcEmails;
 	private String subjectValuesExp;
 	private String messageValuesExp;
 	private LocalizedMessageTransformator subjectTransformator;
@@ -166,9 +166,19 @@ public class LocalizedMessages {
 		this.attachFiles = attachFiles;
 	}
 
+	public List<String> getSendCcEmails() {
+		return sendCcEmails;
+	}
+
+	public void setSendCcEmails(List<String> sendCcEmails) {
+		this.sendCcEmails = sendCcEmails;
+	}
+
+
+
 	@Override
 	public String toString() {
-		return "To " + sendToEmails + " or/and to role(s): " + sendToRoles + ". Recipient user: " + getRecipientUserId() + ". Subject: " +
+		return "To " + sendToEmails + " CC " + sendCcEmails + " or/and to role(s): " + sendToRoles + ". Recipient user: " + getRecipientUserId() + ". Subject: " +
 				subjectValuesExp + "; message: " + messageValuesExp + ". Inline subjects: " + inlineSubjects + ", inline messages: " + inlineMessages;
 	}
 
