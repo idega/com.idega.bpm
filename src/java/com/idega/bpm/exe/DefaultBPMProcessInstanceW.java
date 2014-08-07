@@ -1064,6 +1064,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return "Proc. inst. ID: " + getProcessInstanceId();
 	}
 
+	@Override
 	public Object getValueForTaskInstance(String taskInstanceName, String variable) {
 		List<TaskInstanceW> submittedTiWs = getSubmittedTaskInstances(taskInstanceName);
 		return getLatestValue(submittedTiWs, variable, submittedTiWs.size() - 1);
@@ -1094,6 +1095,11 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	public String getProcessOwner() {
 		return null;
+	}
+
+	@Override
+	public List<ProcessInstance> getSubProcesses() {
+		return getAllSubprocesses(getProcessInstanceId());
 	}
 
 }
