@@ -950,4 +950,30 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		return variables;
 	}
 
+	@Override
+	public String getPDFName(Locale locale) {
+		String taskName = null;
+		try {
+			taskName = getName(locale);
+			if (StringUtil.isEmpty(taskName)) {
+				return null;
+			}
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Error getting name for task instance by ID: " + taskInstance + " and locale: " + locale, e);
+			return null;
+		}
+
+		String caseIdentifier = null;
+		try {
+			caseIdentifier = getProcessInstanceW().getProcessIdentifier();
+		} catch(Exception e) {
+			LOGGER.log(Level.WARNING, "Error getting case identifier for task instance: " + taskInstanceId, e);
+		}
+		if (StringUtil.isEmpty(caseIdentifier)) {
+			return taskName;
+		}
+
+		return new StringBuilder(taskName).append(CoreConstants.MINUS).append(caseIdentifier).toString();
+	}
+
 }

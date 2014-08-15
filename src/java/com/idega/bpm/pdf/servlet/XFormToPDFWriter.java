@@ -236,29 +236,8 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 		ProcessManager processManager = bpmFactory.getProcessManagerByTaskInstanceId(taskInstance);
 
 		TaskInstanceW tiw = processManager.getTaskInstance(taskInstance);
-		String taskName = null;
-
-		try {
-			taskName = tiw.getName(locale);
-
-			if (StringUtil.isEmpty(taskName))
-				return null;
-		} catch (Exception e) {
-			LOGGER.log(Level.WARNING, "Error getting name for task instance by ID: " + taskInstance + " and locale: " + locale, e);
-			return null;
-		}
-
-		String caseIdentifier = null;
-		try {
-			caseIdentifier = tiw.getProcessInstanceW().getProcessIdentifier();
-		} catch(Exception e) {
-			LOGGER.log(Level.WARNING, "Error getting case identifier for task instance: " + taskInstanceId, e);
-		}
-		if (StringUtil.isEmpty(caseIdentifier)) {
-			return taskName;
-		}
-
-		return new StringBuilder(taskName).append(CoreConstants.MINUS).append(caseIdentifier).toString();
+		String pdfName = tiw.getPDFName(locale);
+		return pdfName;
 	}
 
 	private String getLocalizedFormName(Submission submission, Locale locale) {
