@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.EmailValidator;
 import org.jbpm.graph.exe.ExecutionContext;
 import org.jbpm.graph.exe.ProcessInstance;
@@ -199,7 +200,27 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			}
 			String text = subjAndMsg[1];
 
-			SendMailMessageValue mail = new SendMailMessageValue(attachedFile, null, null, from, host, subject, text, email, null);
+			//Creating CC
+			List<String> ccEmailsList = msgs.getSendCcEmails();
+			String ccEmails = "";
+			if ((pi != null && pi.getProcessDefinition() != null && pi.getProcessDefinition().getName().equalsIgnoreCase(CoreConstants.ACOUSTIC_PERMISSION_PROCESS_NAME))
+				 || (msgs != null && StringUtils.isNotBlank(msgs.getSendToRoles()) && StringUtils.contains(msgs.getSendToRoles(), "acoustic"))
+				 || (msgs != null && StringUtils.isNotBlank(msgs.getLocalizedMessage(new Locale("is", "IS"))) && StringUtils.contains(msgs.getLocalizedMessage(new Locale("is", "IS")), "hljóðvistar")) ) {
+				if (ccEmailsList != null && ccEmailsList.size() > 0) {
+					for (String ccEmail : ccEmailsList) {
+						if (EmailValidator.getInstance().isValid(ccEmail)) {
+							ccEmails += ccEmail;
+							ccEmails += ";";
+						}
+					}
+				} else {
+					ccEmails = iwac.getApplicationSettings().getProperty(CoreConstants.PROP_EMAIL_ACOUSTICS_PERMISSION_CC, CoreConstants.EMAIL_ACOUSTICS_PERMISSION_DEFAULT_CC);
+				}
+			} else {
+				ccEmails = null;
+			}
+
+			SendMailMessageValue mail = new SendMailMessageValue(attachedFile, null, ccEmails, from, host, subject, text, email, null);
 			mail.setHeaders(getMailHeaders());
 			messageValuesToSend.add(mail);
 		}
