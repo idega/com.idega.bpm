@@ -438,8 +438,9 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 			return false;
 		}
 
+		String procDefName = getProcessDefinition().getName();
 		Collection<VariableInstanceInfo> vars = getVariableInstanceQuerier().getVariablesByProcessDefAndVariableName(
-				getProcessDefinition().getName(),
+				procDefName,
 				BPMConstants.VAR_MANAGER_ROLE
 		);
 		if (ListUtil.isEmpty(vars)) {
@@ -453,9 +454,22 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 			return Boolean.FALSE;
 		}
 
-		String roleName = (String) vars.iterator().next().getValue();
-		boolean hasRole = accessController.hasRole(user, roleName);
-		getLogger().info(user + " (ID: " + user.getId() + ") has role '" + roleName + "': " + hasRole);
-		return hasRole;
+		for (VariableInstanceInfo var: vars) {
+			if (var == null) {
+				continue;
+			}
+			String value = var.getValue();
+			if (StringUtil.isEmpty(value)) {
+				getLogger().warning("Value is unknown for variable: " + var);
+				continue;
+			}
+
+			boolean hasRole = accessController.hasRole(user, value);
+			getLogger().info(user + " (ID: " + user.getId() + ") has role '" + value + "': " + hasRole);
+			return hasRole;
+		}
+
+		getLogger().warning(user + " (ID: " + user.getId() + ") does not have manager role for proc. def.: " + procDefName);
+		return false;
 	}
 }
