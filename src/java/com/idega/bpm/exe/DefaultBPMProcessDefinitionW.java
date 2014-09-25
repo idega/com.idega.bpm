@@ -311,7 +311,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 			getLogger().log(Level.WARNING, "Error publishing VariableCreatedEvent for task instance: " + ti, e);
 		}
 	}
-	
+
 	private VariableInstanceQuerier getVariableInstanceQuerier() {
 		if (querier == null)
 			ELUtil.getInstance().autowire(this);
@@ -433,23 +433,29 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 	 */
 	@Override
 	public boolean hasManagerRole(User user) {
+		if (user == null) {
+			getLogger().warning("User is not provided");
+			return false;
+		}
+
 		Collection<VariableInstanceInfo> vars = getVariableInstanceQuerier().getVariablesByProcessDefAndVariableName(
 				getProcessDefinition().getName(),
 				BPMConstants.VAR_MANAGER_ROLE
 		);
 		if (ListUtil.isEmpty(vars)) {
+			getLogger().warning("No data found");
 			return Boolean.FALSE;
 		}
 
 		AccessController accessController = IWMainApplication.getDefaultIWMainApplication().getAccessController();
 		if (accessController == null) {
+			getLogger().warning("Access controller is not available");
 			return Boolean.FALSE;
 		}
 
-		if (accessController.hasRole(user, (String) vars.iterator().next().getValue())) {
-			return Boolean.TRUE;
-		}
-
-		return Boolean.FALSE;
+		String roleName = (String) vars.iterator().next().getValue();
+		boolean hasRole = accessController.hasRole(user, roleName);
+		getLogger().info(user + " (ID: " + user.getId() + ") has role '" + roleName + "': " + hasRole);
+		return hasRole;
 	}
 }
