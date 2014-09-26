@@ -464,9 +464,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 				continue;
 			}
 
-			boolean hasRole = accessController.hasRole(user, value);
-			getLogger().info(user + " (ID: " + user.getId() + ") has role '" + value + "': " + hasRole);
-			return hasRole;
+			return accessController.hasRole(user, value);
 		}
 
 		getLogger().warning(user + " (ID: " + user.getId() + ") does not have manager role for proc. def.: " + procDefName);

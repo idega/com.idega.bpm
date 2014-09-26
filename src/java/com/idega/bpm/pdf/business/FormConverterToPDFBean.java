@@ -247,20 +247,34 @@ public class FormConverterToPDFBean extends DefaultSpringBean implements FormCon
 		return component;
 	}
 
-	private String generatePDF(IWContext iwc, String taskInstanceId, String formId, String formSubmitionId, String pathInRepository,
-			String pdfName, String pathToForm) {
-		UIComponent viewer = getComponentToRender(iwc, taskInstanceId, formId, formSubmitionId);
-		if (viewer == null) {
-			LOGGER.warning("Unable to get viewer for " + taskInstanceId == null ? "xform: " + formId : "taskInstance: " + taskInstanceId);
+	private String generatePDF(
+			IWContext iwc,
+			String taskInstanceId,
+			String formId,
+			String formSubmitionId,
+			String pathInRepository,
+			String pdfName,
+			String pathToForm
+	) {
+		try {
+			UIComponent viewer = getComponentToRender(iwc, taskInstanceId, formId, formSubmitionId);
+			if (viewer == null) {
+				LOGGER.warning("Unable to get viewer for " + taskInstanceId == null ? "xform: " + formId : "taskInstance: " + taskInstanceId);
+				return null;
+			}
+
+			if (viewer instanceof PDFRenderedComponent) {
+				((PDFRenderedComponent) viewer).setPdfViewer(true);
+			}
+
+			boolean isFormViewer = (viewer instanceof FormViewer) || (viewer instanceof BPMCapableJSFComponent);
+			if (getGenerator().generatePDF(iwc, viewer, pdfName, pathInRepository, true, isFormViewer)) {
+				return pathToForm;
+			}
+		} catch (Exception e) {
+			LOGGER.log(Level.WARNING, "Error while generating PDF for " + taskInstanceId == null ? "xform: " + formId : "taskInstance: " + taskInstanceId, e);
 			return null;
 		}
-
-		if (viewer instanceof PDFRenderedComponent)
-			((PDFRenderedComponent) viewer).setPdfViewer(true);
-
-		boolean isFormViewer = (viewer instanceof FormViewer) || (viewer instanceof BPMCapableJSFComponent);
-		if (getGenerator().generatePDF(iwc, viewer, pdfName, pathInRepository, true, isFormViewer))
-			return pathToForm;
 
 		LOGGER.warning("Unable to generate PDF for " + taskInstanceId == null ? "xform: " + formId : "taskInstance: " + taskInstanceId);
 		return null;
