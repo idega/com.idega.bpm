@@ -76,6 +76,7 @@ import com.idega.repository.RepositoryService;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.util.CoreConstants;
+import com.idega.util.CoreUtil;
 import com.idega.util.DBUtil;
 import com.idega.util.IOUtil;
 import com.idega.util.ListUtil;
@@ -529,6 +530,8 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		String name = null;
 		if (names.containsKey(locale)) {
 			name = names.get(locale);
+		} else if (!StringUtil.isEmpty(name = getNameFromMetaData(taskInstanceId, locale))) {
+			names.put(locale, name);
 		} else if (!StringUtil.isEmpty(name = getNameFromMetaData(taskInstanceId))) {
 			names.put(locale, name);
 		} else {
@@ -537,6 +540,43 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		}
 
 		return name;
+	}
+
+	private String getNameFromMetaData(final Long taskInstanceId, final Locale locale) {
+		return getBpmContext().execute(new JbpmCallback<String>() {
+
+			@Override
+			public String doInJbpm(JbpmContext context) throws JbpmException {
+				try {
+					TaskInstance ti = context.getTaskInstance(taskInstanceId);
+					Long procDefId = ti.getProcessInstance().getProcessDefinition().getId();
+
+					String key = BPMConstants.TASK_CUSTOM_NAME_META_DATA.concat(CoreConstants.HASH)
+								.concat(ti.getName()).concat(CoreConstants.HASH)
+								.concat(String.valueOf(procDefId)).concat(CoreConstants.HASH)
+								.concat(locale.toString());
+
+					MetaDataHome metaDataHome = (MetaDataHome) IDOLookup.getHome(MetaData.class);
+
+					Collection<MetaData> data = metaDataHome.findAllByMetaDataNameAndType(key, String.class.getName());
+					if (ListUtil.isEmpty(data)) {
+						String nameFromView = getNameFromView(locale);
+						MetaData nameMeta = metaDataHome.create();
+						nameMeta.setName(key);
+						nameMeta.setValue(nameFromView);
+						nameMeta.setType(String.class.getName());
+						nameMeta.store();
+						return nameFromView;
+					} else {
+						return data.iterator().next().getMetaDataValue();
+					}
+				} catch (FinderException e) {
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return null;
+			}
+		});
 	}
 
 	private String getNameFromMetaData(Long taskInstanceId) {
@@ -582,16 +622,11 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	}
 
 	private IWMainApplication getIWMA() {
-
-		final IWContext iwc = IWContext.getCurrentInstance();
+		final IWContext iwc = CoreUtil.getIWContext();
 		final IWMainApplication iwma;
-		// trying to get iwma from iwc, if available, downgrading to default
-		// iwma, if not
 
 		if (iwc != null) {
-
 			iwma = iwc.getIWMainApplication();
-
 		} else {
 			iwma = IWMainApplication.getDefaultIWMainApplication();
 		}
