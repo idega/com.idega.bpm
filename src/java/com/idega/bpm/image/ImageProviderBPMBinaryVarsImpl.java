@@ -10,9 +10,14 @@ import org.springframework.stereotype.Service;
 
 import com.idega.block.image.business.ImagesProviderGeneric;
 import com.idega.block.image.presentation.AdvancedImage;
+import com.idega.core.accesscontrol.business.AccessController;
+import com.idega.idegaweb.IWMainApplication;
+import com.idega.jackrabbit.bean.JackrabbitRepositoryItem;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.repository.RepositoryService;
 import com.idega.repository.bean.RepositoryItem;
+import com.idega.user.data.bean.User;
+import com.idega.util.CoreConstants;
 
 /**
  * image provider by binary variables set
@@ -40,6 +45,11 @@ public class ImageProviderBPMBinaryVarsImpl implements ImagesProviderGeneric {
 
 		int realEnd = Math.min(endPosition, binaryVariables.size());
 
+		AccessController accessController = IWMainApplication.getDefaultIWMainApplication().getAccessController();
+		User superAdmin = null;
+		try {
+			superAdmin = accessController.getAdministratorUser();
+		} catch (Exception e) {}
 		for (int i = (startPosition - 1); i < realEnd; i++) {
 			AdvancedImage image = null;
 			BinaryVariable var = binaryVariables.get(i);
@@ -47,6 +57,13 @@ public class ImageProviderBPMBinaryVarsImpl implements ImagesProviderGeneric {
 
 			if (persistentResource instanceof RepositoryItem) {
 				RepositoryItem variableResource = (RepositoryItem) persistentResource;
+
+				String path = variableResource.getPath();
+				if (path != null && !path.startsWith(CoreConstants.WEBDAV_SERVLET_URI)) {
+					path = CoreConstants.WEBDAV_SERVLET_URI.concat(path);
+					variableResource = new JackrabbitRepositoryItem(path, superAdmin);
+				}
+
 				image = new AdvancedImage(variableResource);
 			} else if (persistentResource instanceof RepositoryService) {
 				image = new AdvancedImage(var.getIdentifier());
