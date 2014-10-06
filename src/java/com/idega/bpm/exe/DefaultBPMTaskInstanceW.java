@@ -138,6 +138,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Transactional(readOnly = true)
 	public TaskInstance getTaskInstance(JbpmContext context) {
 		taskInstance = context.getTaskInstance(getTaskInstanceId());
+		if (taskInstance == null) {
+			LOGGER.warning("Error getting task instance by ID: " + getTaskInstanceId());
+		}
 		return taskInstance;
 	}
 
@@ -275,8 +278,11 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Transactional(readOnly = false)
 	private void submit(JbpmContext context, ViewSubmission viewSubmission, boolean proceedProcess) {
 		TaskInstance taskInstance = getTaskInstance(context);
+		if (taskInstance == null) {
+			throw new ProcessException("Task instance (ID: " + getTaskInstanceId() + ") does not exist!", "Task instance does not exist");
+		}
 		if (taskInstance.hasEnded())
-			throw new ProcessException("Task instance (" + taskInstance.getId() + ") is already submitted", "Task instance is already submitted");
+			throw new ProcessException("Task instance (ID: " + taskInstance.getId() + ") is already submitted", "Task instance is already submitted");
 
 		Long piId = null, tiId = null;
 		Map<String, Object> variables = null;
@@ -843,6 +849,10 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			@Override
 			public ProcessInstanceW doInJbpm(JbpmContext context) throws JbpmException {
 				TaskInstance ti = context.getTaskInstance(getTaskInstanceId());
+				if (ti == null) {
+					return null;
+				}
+
 				Long piId = ti.getProcessInstance().getId();
 				return getProcessManager().getProcessInstance(piId);
 			}
