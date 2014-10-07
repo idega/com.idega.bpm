@@ -22,6 +22,7 @@ import javax.ejb.FinderException;
 import org.jbpm.JbpmContext;
 import org.jbpm.JbpmException;
 import org.jbpm.graph.def.Transition;
+import org.jbpm.graph.exe.ProcessInstance;
 import org.jbpm.graph.exe.Token;
 import org.jbpm.graph.node.TaskNode;
 import org.jbpm.taskmgmt.def.Task;
@@ -43,6 +44,7 @@ import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
 import com.idega.core.file.util.MimeTypeUtil;
+import com.idega.core.persistence.Param;
 import com.idega.data.IDOLookup;
 import com.idega.data.MetaData;
 import com.idega.data.MetaDataHome;
@@ -137,10 +139,21 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Override
 	@Transactional(readOnly = true)
 	public TaskInstance getTaskInstance(JbpmContext context) {
-		taskInstance = context.getTaskInstance(getTaskInstanceId());
-		if (taskInstance == null) {
-			LOGGER.warning("Error getting task instance by ID: " + getTaskInstanceId());
+		Long tiId = getTaskInstanceId();
+		if (tiId == null) {
+			LOGGER.warning("ID of task instance is unknown!");
+			return null;
 		}
+
+		taskInstance = context.getTaskInstance(tiId);
+		if (taskInstance == null) {
+			LOGGER.warning("Error getting task instance by ID: " + tiId + " from context, will try to load directly from DB");
+			taskInstance = getBpmFactory().getBPMDAO().getSingleResultByInlineQuery("from " + TaskInstance.class.getName() + " t where t.id = :id", TaskInstance.class, new Param("id", tiId));
+		}
+		if (taskInstance == null) {
+			LOGGER.warning("Failed to resolve task instance by ID: " + tiId);
+		}
+
 		return taskInstance;
 	}
 
@@ -281,17 +294,29 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		if (taskInstance == null) {
 			throw new ProcessException("Task instance (ID: " + getTaskInstanceId() + ") does not exist!", "Task instance does not exist");
 		}
-		if (taskInstance.hasEnded())
+		if (taskInstance.hasEnded()) {
 			throw new ProcessException("Task instance (ID: " + taskInstance.getId() + ") is already submitted", "Task instance is already submitted");
+		}
 
 		Long piId = null, tiId = null;
 		Map<String, Object> variables = null;
 		try {
-			piId = taskInstance.getProcessInstance().getId();
 			tiId = taskInstance.getId();
+
+			ProcessInstance pi = taskInstance.getProcessInstance();
+			if (pi == null) {
+				piId = viewSubmission.getProcessInstanceId();
+				if (piId == null) {
+					throw new ProcessException("Process instance is unknown for task instance (ID: " + tiId + ")", "Process instance is unknown for task instance (ID: " + tiId + ")");
+				}
+			}
+			if (piId == null && pi != null) {
+				piId = pi.getId();
+			}
 
 			variables = viewSubmission.resolveVariables();
 			if (variables == null) {
+				LOGGER.warning("Variables are unknown, resolving them for task instance: " + tiId);
 				TaskInstance ti = context.getTaskInstance(tiId);
 				@SuppressWarnings("unchecked")
 				Map<String, Object> taskVariables = ti.getVariables();
@@ -299,7 +324,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 				variables = viewSubmission.resolveVariables();
 			}
 
-			submitVariablesAndProceedProcess(context, taskInstance, variables, proceedProcess);
+			submitVariablesAndProceedProcess(context, piId, taskInstance, variables, proceedProcess);
 
 			// if priority was hidden, then setting to default priority after submission
 			if (taskInstance.getPriority() == PRIORITY_HIDDEN) {
@@ -313,15 +338,15 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	@Transactional(readOnly = false)
 	protected void submitVariablesAndProceedProcess(TaskInstance ti, Map<String, Object> variables, boolean proceed) {
-		submitVariablesAndProceedProcess(null, ti, variables, proceed);
+		submitVariablesAndProceedProcess(null, null, ti, variables, proceed);
 	}
 
 	@Transactional(readOnly = false)
-	private void submitVariablesAndProceedProcess(JbpmContext context, TaskInstance ti, Map<String, Object> variables, boolean proceed) {
+	private void submitVariablesAndProceedProcess(JbpmContext context, Long piId, TaskInstance ti, Map<String, Object> variables, boolean proceed) {
 		if (context == null) {
 			getVariablesHandler().submitVariables(variables, ti.getId(), true);
 		} else {
-			getVariablesHandler().submitVariables(context, variables, ti.getId(), true);
+			getVariablesHandler().submitVariables(context, variables, ti.getId(), piId, true);
 		}
 
 		if (proceed) {
@@ -428,7 +453,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 							view = getBpmFactory().getViewByTaskInstance(taskInstanceId, true, preferred);
 						} else {
 							// if not full load, then we just get view by task
-							view = getBpmFactory().getViewByTask(getTaskInstance(context).getTask().getId(), true, preferred);
+							TaskInstance tmpTaskInst = context.getTaskInstance(getTaskInstanceId());
+							Task task = tmpTaskInst.getTask();
+							view = getBpmFactory().getViewByTask(task.getId(), true, preferred);
 						}
 					}
 					if (loadForDisplay) {
@@ -848,7 +875,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 			@Override
 			public ProcessInstanceW doInJbpm(JbpmContext context) throws JbpmException {
-				TaskInstance ti = context.getTaskInstance(getTaskInstanceId());
+				TaskInstance ti = getTaskInstance(context);
 				if (ti == null) {
 					return null;
 				}
@@ -906,7 +933,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 				@Override
 				public List<ViewTaskBind> doInJbpm(JbpmContext context) throws JbpmException {
-					TaskInstance ti = context.getTaskInstance(getTaskInstanceId());
+					TaskInstance ti = getTaskInstance(context);
 					return getBpmFactory().getBPMDAO().getViewTaskBindsByTaskId(ti.getTask().getId());
 				}
 			});
