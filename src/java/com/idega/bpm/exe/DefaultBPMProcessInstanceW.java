@@ -551,16 +551,16 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	public TaskInstanceW getSingleUnfinishedTaskInstanceForTask(String taskName) {
 		List<TaskInstanceW> tiws = getUnfinishedTaskInstancesForTask(taskName);
-		TaskInstanceW tiw;
 
-		if (ListUtil.isEmpty(tiws))
-			tiw = null;
-		else {
-			if (tiws.size() > 1)
-				getLogger().warning("More than one unfinished task instance resolved for task=" + taskName + " in the process=" + getProcessInstanceId());
-
-			tiw = tiws.iterator().next();
+		if (ListUtil.isEmpty(tiws)) {
+			return null;
 		}
+
+		TaskInstanceW tiw = null;
+		if (tiws.size() > 1) {
+			getLogger().info("More than one unfinished task instance resolved for task=" + taskName + " in the process=" + getProcessInstanceId());
+		}
+		tiw = tiws.iterator().next();
 
 		return tiw;
 	}
@@ -952,18 +952,6 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	@Transactional(readOnly = false)
-	public boolean doSubmitSharedTask(String taskName, Map<String, Object> variables) {
-		List<TaskInstanceW> unfinishedTasks = getUnfinishedTaskInstancesForTask(taskName);
-		if (ListUtil.isEmpty(unfinishedTasks)) {
-			getLogger().warning("Unable to find shared task '" + taskName + "' for process instance with ID: " + getProcessInstanceId());
-			return false;
-		}
-
-		return doSubmitTask(unfinishedTasks.iterator().next(), variables);
-	}
-
-	@Override
 	public boolean doSubmitTask(String taskName, Map<String, Object> variables) {
 		TaskInstanceW tiW = getSubmittedTaskInstance(taskName, variables);
 		return tiW == null ? Boolean.FALSE : Boolean.TRUE;
@@ -982,18 +970,14 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			return null;
 		}
 
-		if (doSubmitTask(taskInstanceW, variables)) {
-			return taskInstanceW;
-		}
-
-		return null;
+		return getSubmitedTask(taskInstanceW, variables);
 	}
 
 	@Transactional(readOnly = false)
-	private boolean doSubmitTask(TaskInstanceW task, Map<String, Object> variables) {
+	private TaskInstanceW getSubmitedTask(TaskInstanceW task, Map<String, Object> variables) {
 		if (task == null) {
 			getLogger().warning("Task instance is not provided");
-			return Boolean.FALSE;
+			return null;
 		}
 
 		try {
@@ -1016,18 +1000,16 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			TaskInstanceW viewTIW = getBpmFactory().getProcessManagerByTaskInstanceId(viewTaskInstanceId).getTaskInstance(viewTaskInstanceId);
 			viewTIW.submit(viewSubmission);
 
-			return Boolean.TRUE;
+			return viewTIW;
 		} catch (Exception e) {
-			getLogger().log(Level.WARNING, "Error submiting task '" + task.getTaskInstance().getName() + "' for process instance: " +
-					getProcessInstanceId(), e);
+			getLogger().log(Level.WARNING, "Error submiting task '" + task.getTaskInstance().getName() + "' for process instance: " + getProcessInstanceId(), e);
 		}
 
-		return Boolean.FALSE;
+		return null;
 	}
 
 	@Override
-	public List<BPMDocument> getSubmittedDocumentsForUser(User user,
-			Locale locale) {
+	public List<BPMDocument> getSubmittedDocumentsForUser(User user, Locale locale) {
 		return getSubmittedDocumentsForUser(user, locale, false);
 	}
 
