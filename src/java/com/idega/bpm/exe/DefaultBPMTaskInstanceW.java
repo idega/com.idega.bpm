@@ -548,10 +548,10 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 	@Override
 	public String getName(Locale locale) {
-		final IWMainApplication iwma = getIWMA();
+		IWMainApplication iwma = getIWMA();
 		Map<Long, Map<Locale, String>> cachedTaskNames = IWCacheManager2.getInstance(iwma).getCache(CACHED_TASK_NAMES);
-		final Map<Locale, String> names;
-		final Long taskInstanceId = getTaskInstanceId();
+		Map<Locale, String> names = null;
+		Long taskInstanceId = getTaskInstanceId();
 
 		if (cachedTaskNames.containsKey(taskInstanceId)) {
 			names = cachedTaskNames.get(getTaskInstanceId());
@@ -563,9 +563,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		String name = null;
 		if (names.containsKey(locale)) {
 			name = names.get(locale);
-		} else if (!StringUtil.isEmpty(name = getNameFromMetaData(taskInstanceId, locale))) {
-			names.put(locale, name);
 		} else if (!StringUtil.isEmpty(name = getNameFromMetaData(taskInstanceId))) {
+			names.put(locale, name);
+		} else if (!StringUtil.isEmpty(name = getNameFromMetaData(taskInstanceId, locale))) {
 			names.put(locale, name);
 		} else {
 			name = getNameFromView(locale);
