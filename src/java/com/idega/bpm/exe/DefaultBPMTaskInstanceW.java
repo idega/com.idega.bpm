@@ -711,15 +711,17 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	@Transactional(readOnly = false)
 	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is, String filesFolder, boolean overwrite) {
 		Collection<URI> uris = getLinksToVariables(is, filesFolder, fileName, overwrite);
-		if (ListUtil.isEmpty(uris))
+		if (ListUtil.isEmpty(uris)) {
 			return null;
+		}
 
 		URI uri = uris.iterator().next();
 
 		List<BinaryVariable> binVars = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId(), variable);
 
-		if (binVars == null)
+		if (binVars == null) {
 			binVars = new ArrayList<BinaryVariable>(1);
+		}
 
 		Map<String, Object> vars = new HashMap<String, Object>(1);
 		String variableName = variable.getDefaultStringRepresentation();
@@ -803,8 +805,9 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 	public List<BinaryVariable> getAttachments() {
 		List<BinaryVariable> variableList = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId());
 		List<BinaryVariable> returnList = new ArrayList<BinaryVariable>();
-		if (ListUtil.isEmpty(variableList))
+		if (ListUtil.isEmpty(variableList)) {
 			return returnList;
+		}
 
 		RolesManager rolesManager = getBpmFactory().getRolesManager();
 
