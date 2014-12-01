@@ -323,7 +323,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 		unfinishedTaskInstances = filterTasksByUserPermission(user, unfinishedTaskInstances);
 
-		return getBPMDocuments(unfinishedTaskInstances, locale, doShowExternalEntity);
+		return getBPMDocuments(unfinishedTaskInstances, locale, doShowExternalEntity, false);
 	}
 
 	@Transactional(readOnly = true)
@@ -385,11 +385,11 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<BPMDocument> getSubmittedDocumentsForUser(User user, Locale locale, boolean doShowExternalEntity) {
+	public List<BPMDocument> getSubmittedDocumentsForUser(User user, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable) {
 		List<TaskInstanceW> submittedTaskInstances = getSubmittedTaskInstances(Arrays.asList(email_fetch_process_name));
 
 		submittedTaskInstances = filterDocumentsByUserPermission(user, submittedTaskInstances);
-		return getBPMDocuments(submittedTaskInstances, locale, doShowExternalEntity);
+		return getBPMDocuments(submittedTaskInstances, locale, doShowExternalEntity, checkIfSignable);
 	}
 
 	@Autowired(required=false)
@@ -403,7 +403,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return this.externalEntityInterface;
 	}
 
-	private List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiws, Locale locale, boolean doShowExternalEntity) {
+	private List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiws, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable) {
 		List<BPMDocument> documents = new ArrayList<BPMDocument>(tiws.size());
 
 		UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
@@ -462,7 +462,9 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			bpmDoc.setDocumentName(tiw.getName(locale));
 			bpmDoc.setCreateDate(ti.getCreate());
 			bpmDoc.setEndDate(ti.getEnd());
-			bpmDoc.setSignable(tiw.isSignable());
+			if (checkIfSignable) {
+				bpmDoc.setSignable(tiw.isSignable());
+			}
 			bpmDoc.setOrder(tiw.getOrder());
 
 			View view = tiw.getView();
@@ -807,14 +809,14 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		emailsTaskInstances = filterEmailsTaskInstances(emailsTaskInstances);
 
 		List<BPMEmailDocument> bpmEmailDocs = new ArrayList<BPMEmailDocument>(emailsTaskInstances.size());
-
-		for (TaskInstance emailTaskInstance : emailsTaskInstances) {
+		for (TaskInstance emailTaskInstance: emailsTaskInstances) {
 			Map<String, Object> vars = getVariablesHandler().populateVariables(emailTaskInstance.getId());
 
 			String subject = (String) vars.get(BPMConstants.VAR_SUBJECT);
 			String text = null;
-			if (fetchMessage)
+			if (fetchMessage) {
 				text = (String) vars.get(BPMConstants.VAR_TEXT);
+			}
 			String fromPersonal = (String) vars.get(BPMConstants.VAR_FROM);
 			String fromAddress = (String) vars.get(BPMConstants.VAR_FROM_ADDRESS);
 
@@ -1010,7 +1012,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	public List<BPMDocument> getSubmittedDocumentsForUser(User user, Locale locale) {
-		return getSubmittedDocumentsForUser(user, locale, false);
+		return getSubmittedDocumentsForUser(user, locale, false, false);
 	}
 
 	@Override

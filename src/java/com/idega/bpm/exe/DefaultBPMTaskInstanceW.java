@@ -462,6 +462,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 						Map<String, String> parameters = new HashMap<String, String>(1);
 						parameters.put(ProcessConstants.TASK_INSTANCE_ID, String.valueOf(taskInstanceId));
 						view.populateParameters(parameters);
+
 						view.populateVariables(getVariablesHandler().populateVariables(taskInstanceId));
 					}
 					view.setTaskInstanceId(taskInstanceId);
@@ -843,13 +844,25 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 		return attachmentsForVariable;
 	}
 
+	private Boolean signable = null;
+
 	@Override
 	@Transactional(readOnly = true)
 	public boolean isSignable() {
-		Map<String, Object> variablesMap = getVariablesHandler().populateVariables(getTaskInstanceId());
+		if (signable != null) {
+			return signable;
+		}
 
-		return variablesMap.get(allowSigningVariableRepresentation) != null &&
-				variablesMap.get(allowSigningVariableRepresentation).equals(Boolean.TRUE.toString());
+		signable = getBpmContext().execute(new JbpmCallback<Boolean>() {
+
+			@Override
+			public Boolean doInJbpm(JbpmContext context) throws JbpmException {
+				TaskInstance ti = context.getTaskInstance(getTaskInstanceId());
+				Object allowedSigning = ti.getVariable(allowSigningVariableRepresentation);
+				return allowedSigning == null ? false : Boolean.TRUE.toString().equals(allowedSigning.toString());
+			}
+		});
+		return signable;
 	}
 
 	@Override
@@ -937,7 +950,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 				@Override
 				public List<ViewTaskBind> doInJbpm(JbpmContext context) throws JbpmException {
 					TaskInstance ti = getTaskInstance(context);
-					return getBpmFactory().getBPMDAO().getViewTaskBindsByTaskId(ti.getTask().getId());
+					return ti == null ? null : getBpmFactory().getBPMDAO().getViewTaskBindsByTaskId(ti.getTask().getId());
 				}
 			});
 
