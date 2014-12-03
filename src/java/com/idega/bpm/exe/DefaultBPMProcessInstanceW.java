@@ -34,6 +34,7 @@ import com.idega.block.process.business.CaseManagersProvider;
 import com.idega.block.process.business.CasesRetrievalManager;
 import com.idega.block.process.business.ExternalEntityInterface;
 import com.idega.bpm.BPMConstants;
+import com.idega.bpm.security.TaskPermissionManager;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
@@ -331,6 +332,8 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		final PermissionsFactory permissionsFactory = getBpmFactory().getPermissionsFactory();
 		final RolesManager rolesManager = getBpmFactory().getRolesManager();
 
+		final Map<String, TaskPermissionManager> tasksManagers = getBeansOfType(TaskPermissionManager.class);
+
 		return getBpmContext().execute(new JbpmCallback<List<TaskInstanceW>>() {
 
 			@Override
@@ -345,6 +348,18 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 						// TODO: add user into permission
 						Permission permission = permissionsFactory.getTaskInstanceSubmitPermission(false, ti);
 						rolesManager.checkPermission(permission);
+
+						//	Checking custom business logic
+						if (!MapUtil.isEmpty(tasksManagers)) {
+							Boolean visible = true;
+							String procDefName = tiw.getProcessInstanceW(context).getProcessDefinitionW(context).getProcessDefinition(context).getName();
+							for (Iterator<TaskPermissionManager> tasksManagersIter = tasksManagers.values().iterator(); (visible && tasksManagersIter.hasNext());) {
+								visible = tasksManagersIter.next().isTaskVisible(tiw, procDefName);
+							}
+							if (!visible) {
+								iterator.remove();
+							}
+						}
 					} catch (BPMAccessControlException e) {
 						iterator.remove();
 					}

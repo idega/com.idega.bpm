@@ -35,10 +35,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.idega.block.process.variables.Variable;
 import com.idega.bpm.BPMConstants;
+import com.idega.bpm.security.TaskPermissionManager;
 import com.idega.bpm.xformsview.XFormsView;
 import com.idega.business.IBOLookup;
 import com.idega.business.IBOLookupException;
 import com.idega.business.IBORuntimeException;
+import com.idega.core.business.DefaultSpringBean;
 import com.idega.core.cache.IWCacheManager2;
 import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
@@ -94,7 +96,7 @@ import com.idega.util.expression.ELUtil;
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
 @Service("defaultTIW")
 @Transactional(readOnly = false)
-public class DefaultBPMTaskInstanceW implements TaskInstanceW {
+public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskInstanceW {
 
 	private static final Logger LOGGER = Logger.getLogger(DefaultBPMTaskInstanceW.class.getName());
 
@@ -298,6 +300,7 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			throw new ProcessException("Task instance (ID: " + taskInstance.getId() + ") is already submitted", "Task instance is already submitted");
 		}
 
+		boolean success = true;
 		Long piId = null, tiId = null;
 		Map<String, Object> variables = null;
 		try {
@@ -307,11 +310,17 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			if (pi == null) {
 				piId = viewSubmission.getProcessInstanceId();
 				if (piId == null) {
+					success = false;
 					throw new ProcessException("Process instance is unknown for task instance (ID: " + tiId + ")", "Process instance is unknown for task instance (ID: " + tiId + ")");
 				}
 			}
 			if (piId == null && pi != null) {
 				piId = pi.getId();
+			}
+
+			if (!canSubmit(context, pi, piId, tiId)) {
+				success = false;
+				throw new ProcessException("Task instance (ID: " + tiId + ") can not be submited. Process instance ID: " + piId, "Task instance (ID: " + tiId + ") can not be submited. Process instance ID: " + piId);
 			}
 
 			variables = viewSubmission.resolveVariables();
@@ -332,8 +341,25 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 			}
 			context.save(taskInstance);
 		} finally {
-			ELUtil.getInstance().publishEvent(new TaskInstanceSubmitted(this, piId, tiId, variables));
+			if (success) {
+				ELUtil.getInstance().publishEvent(new TaskInstanceSubmitted(this, piId, tiId, variables));
+			}
 		}
+	}
+
+	private boolean canSubmit(JbpmContext context, ProcessInstance pi, Long piId, Long tiId) {
+		Map<String, TaskPermissionManager> tasksManagers = getBeansOfType(TaskPermissionManager.class);
+		if (MapUtil.isEmpty(tasksManagers)) {
+			return true;
+		}
+
+		Boolean canSubmit = true;
+		pi = pi == null ? context.getProcessInstance(piId) : pi;
+		String procDefName = context.getGraphSession().getProcessDefinition(pi.getProcessDefinition().getId()).getName();
+		for (Iterator<TaskPermissionManager> tasksManagersIter = tasksManagers.values().iterator(); (canSubmit && tasksManagersIter.hasNext());) {
+			canSubmit = tasksManagersIter.next().canSubmitTask(tiId, procDefName);
+		}
+		return canSubmit;
 	}
 
 	@Transactional(readOnly = false)
@@ -891,15 +917,21 @@ public class DefaultBPMTaskInstanceW implements TaskInstanceW {
 
 			@Override
 			public ProcessInstanceW doInJbpm(JbpmContext context) throws JbpmException {
-				TaskInstance ti = getTaskInstance(context);
-				if (ti == null) {
-					return null;
-				}
-
-				Long piId = ti.getProcessInstance().getId();
-				return getProcessManager().getProcessInstance(piId);
+				return getProcessInstanceW(context);
 			}
 		});
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ProcessInstanceW getProcessInstanceW(JbpmContext context) {
+		TaskInstance ti = getTaskInstance(context);
+		if (ti == null) {
+			return null;
+		}
+
+		Long piId = ti.getProcessInstance().getId();
+		return getProcessManager().getProcessInstance(piId);
 	}
 
 	public PermissionsFactory getPermissionsFactory() {
