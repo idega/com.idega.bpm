@@ -5,8 +5,8 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.idega.bpm.company.event.CompanyCreatedEvent;
 import com.idega.business.IBOLookup;
+import com.idega.event.CompanyCreatedEvent;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.identity.CompanyData;
 import com.idega.jbpm.identity.UserPersonalData;
@@ -49,7 +49,16 @@ public class CreateCompanyHandler extends CreateUserHandler {
 			throw new RuntimeException("User was not found by personal id: " + getUserData().getPersonalId());
 		}
 
-		ELUtil.getInstance().publishEvent(new CompanyCreatedEvent(this, createdUser, getCompanyData()));
+		ELUtil.getInstance().publishEvent(
+			new CompanyCreatedEvent(
+				this,
+				createdUser,
+				getCompanyData().getSsn(),
+				getCompanyData().getName(),
+				getCompanyData().getAddress(),
+				getCompanyData().getPostalCode()
+			)
+		);
 	}
 
 	private User getUser() throws Exception {
