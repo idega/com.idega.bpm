@@ -24,7 +24,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.idega.block.email.business.EmailSenderHelper;
+import com.idega.block.process.business.CaseBusiness;
+import com.idega.block.process.data.Case;
 import com.idega.builder.bean.AdvancedProperty;
+import com.idega.business.IBOLookup;
 import com.idega.core.accesscontrol.business.AccessController;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.core.contact.data.Email;
@@ -135,6 +138,16 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		return null;
 	}
 
+	private Case getCase(ProcessInstanceW piw) {
+		try {
+			CaseBusiness caseBusiness = IBOLookup.getServiceInstance(IWMainApplication.getDefaultIWApplicationContext(), CaseBusiness.class);
+			return caseBusiness.getCaseByIdentifier(piw.getProcessIdentifier());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	@Override
 	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
 		ExecutionContext ectx = null;
@@ -171,11 +184,16 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		Locale preferredLocale = iwc != null ? iwc.getCurrentLocale() : defaultLocale;
 		final List<SendMailMessageValue> messageValuesToSend = new ArrayList<SendMailMessageValue>(emailAddresses.size());
 
+
+		Case theCase = getCase(piw);
 		if (mvCtx == null) {
-			mvCtx = new MessageValueContext(3);
+			mvCtx = new MessageValueContext(theCase == null ? 3: 4);
+		}
+		setBeans(mvCtx, iwc, piw, context);
+		if (theCase != null) {
+			mvCtx.setValue(MessageValueContext.caseBean, theCase);
 		}
 
-		setBeans(mvCtx, iwc, piw, context);
 		final File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw, ectx);
 
 		UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
@@ -224,7 +242,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		sendMails(messageValuesToSend);
 	}
 
-	protected void setBeans(MessageValueContext mvCtx,IWContext iwc, ProcessInstanceW piw, Object context){
+	protected void setBeans(MessageValueContext mvCtx, IWContext iwc, ProcessInstanceW piw, Object context) {
 		mvCtx.setValue(MessageValueContext.updBean, getUserPersonalData(context));
 		mvCtx.setValue(MessageValueContext.piwBean, piw);
 		mvCtx.setValue(MessageValueContext.iwcBean, iwc);
