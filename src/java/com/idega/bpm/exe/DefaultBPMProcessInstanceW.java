@@ -1066,6 +1066,11 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	public Object getValueForTaskInstance(String taskInstanceName, String variable) {
 		List<TaskInstanceW> submittedTiWs = getSubmittedTaskInstances(taskInstanceName);
+		if (ListUtil.isEmpty(submittedTiWs)) {
+			getLogger().info("Task with name " + taskInstanceName + " was not submitted yet. Can not get value for " + variable);
+			return null;
+		}
+
 		return getLatestValue(submittedTiWs, variable, submittedTiWs.size() - 1);
 	}
 
