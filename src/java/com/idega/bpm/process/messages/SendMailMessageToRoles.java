@@ -15,6 +15,7 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.idega.core.contact.data.Email;
 import com.idega.jbpm.exe.ProcessInstanceW;
 import com.idega.jbpm.identity.UserPersonalData;
 import com.idega.jbpm.process.business.messages.MessageValueContext;
@@ -32,8 +33,19 @@ public class SendMailMessageToRoles extends SendMailMessageImpl {
 
 	public static final String BEAN_NAME = "sendMailMessageToRoles";
 
-	protected void addUserEmailsToList(List<String> emails,User user) throws EJBException, RemoteException{
-		emails.add(user.getUsersEmail().getEmailAddress());
+	protected void addUserEmailsToList(List<String> emails,User user) throws EJBException, RemoteException {
+		Email email = null;
+		try {
+			email = user == null ? null : user.getUsersEmail();
+		} catch (Exception e) {}
+
+		if (email != null) {
+			if (emails == null) {
+				emails = new ArrayList<String>();
+			}
+
+			emails.add(email.getEmailAddress());
+		}
 	}
 
 	@Override
