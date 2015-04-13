@@ -18,7 +18,7 @@ public class CasesBPMAssetProperties {
 					addExportContacts = false,
 					showUserCompany = false,
 					showLastLoginDate = false;
-	
+
 	public boolean isNameFromExternalEntity() {
 		return isNameFromExternalEntity;
 	}

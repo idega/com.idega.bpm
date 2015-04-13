@@ -1071,7 +1071,8 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			return null;
 		}
 
-		return getLatestValue(submittedTiWs, variable, submittedTiWs.size() - 1);
+		Map<String, Object> values = getLatestValues(submittedTiWs, Arrays.asList(variable), submittedTiWs.size() - 1, null);
+		return MapUtil.isEmpty(values) ? null : values.get(values);
 	}
 
 	@Override
@@ -1079,21 +1080,47 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		if (ListUtil.isEmpty(submittedTiWs)) {
 			return null;
 		}
-		return getLatestValue(submittedTiWs, variable, submittedTiWs.size() - 1);
+
+		Map<String, Object> values = getLatestValues(submittedTiWs, Arrays.asList(variable), submittedTiWs.size() - 1, null);
+		return MapUtil.isEmpty(values) ? null : values.get(values);
 	}
 
-	private Object getLatestValue(List<TaskInstanceW> submittedTiWs, String variable, int index) {
-		if (ListUtil.isEmpty(submittedTiWs) || index < 0 || index >= submittedTiWs.size()) {
+	@Override
+	public <T> Map<String, T> getValuesForTaskInstance(String taskInstanceName, List<String> variables) {
+		List<TaskInstanceW> submittedTiWs = getSubmittedTaskInstances(taskInstanceName);
+		if (ListUtil.isEmpty(submittedTiWs)) {
+			getLogger().info("Task with name " + taskInstanceName + " was not submitted yet. Can not get values for " + variables);
 			return null;
 		}
 
-		Object value = submittedTiWs.get(index).getVariable(variable);
-		if (value != null) {
-			return value;
+		return getLatestValues(submittedTiWs, variables, submittedTiWs.size() - 1, null);
+	}
+
+	private <T> Map<String, T> getLatestValues(List<TaskInstanceW> submittedTiWs, List<String> variables, int index, Map<String, T> results) {
+		if (ListUtil.isEmpty(variables) || ListUtil.isEmpty(submittedTiWs) || index < 0 || index >= submittedTiWs.size()) {
+			return results;
+		}
+
+		if (results == null) {
+			results = new HashMap<String, T>();
+		}
+
+		List<String> loaded = new ArrayList<String>();
+		TaskInstanceW tiW = submittedTiWs.get(index);
+		for (String variable: variables) {
+			Object value = tiW.getVariable(variable);
+			if (value != null) {
+				results.put(variable, (T) value);
+				loaded.add(variable);
+			}
+		}
+		if (!ListUtil.isEmpty(loaded)) {
+			variables = new ArrayList<String>(variables);
+			variables.removeAll(loaded);
 		}
 
 		index--;
-		return getLatestValue(submittedTiWs, variable, index);
+		return getLatestValues(submittedTiWs, variables, index, results);
 	}
 
 	@Override
