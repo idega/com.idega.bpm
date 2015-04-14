@@ -36,6 +36,7 @@ import com.idega.block.process.business.ExternalEntityInterface;
 import com.idega.bpm.BPMConstants;
 import com.idega.bpm.security.TaskPermissionManager;
 import com.idega.core.business.DefaultSpringBean;
+import com.idega.core.persistence.Param;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
 import com.idega.jbpm.data.VariableInstanceQuerier;
@@ -66,6 +67,7 @@ import com.idega.jbpm.view.ViewSubmission;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.user.util.UserComparator;
+import com.idega.util.ArrayUtil;
 import com.idega.util.CoreConstants;
 import com.idega.util.ListUtil;
 import com.idega.util.StringUtil;
@@ -528,41 +530,41 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	List<TaskInstanceW> getUnfinishedTaskInstancesForTask(JbpmContext context, String taskName, Integer... prioritiesToFilter) {
-		Collection<TaskInstance> taskInstances = getUnfilteredProcessTaskInstances();
-		if (ListUtil.isEmpty(taskInstances)) {
-			return wrapTaskInstances(taskInstances);
+		String query = "select ti.name, ti.id from " + TaskInstance.class.getName() + " ti where ti.processInstance.id = :piId and ti.end is null and ti.processInstance.end is null";
+		List<Param> params = new ArrayList<Param>();
+		params.add(new Param("piId", getProcessInstanceId()));
+
+		if (!StringUtil.isEmpty(taskName)) {
+			query += " and ti.task.name = :taskName";
+			params.add(new Param("taskName", taskName));
+		}
+		if (!ArrayUtil.isEmpty(prioritiesToFilter)) {
+			query += " and ti.priority not in (:priorities)";
+			params.add(new Param("priorities", Arrays.asList(prioritiesToFilter)));
+		}
+		query += " order by ti.start desc";
+
+		List<Object[]> data = getBpmDAO().getResultListByInlineQuery(
+				query,
+				Object[].class,
+				ArrayUtil.convertListToArray(params)
+		);
+		if (ListUtil.isEmpty(data)) {
+			return Collections.emptyList();
 		}
 
-		List<Integer> prioritiesToFilterList = Arrays.asList(prioritiesToFilter);
-		boolean filterByTaskName = !StringUtil.isEmpty(taskName);
-		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator.hasNext();) {
-			TaskInstance ti = iterator.next();
-
-			// removing hidden, ended task instances, and task instances of ended
-			// processes (i.e. subprocesses), also leaving on task for taskName, if taskName
-			// provided
-			Long id = null;
-			try {
-				if (ti == null) {
-					getLogger().warning("Task instance is null in a collection of task instances: " + taskInstances);
-					iterator.remove();
-				} else {
-					id = ti.getId();
-					ProcessInstance pi = ti.getProcessInstance();
-					if (ti.hasEnded()
-							|| prioritiesToFilterList.contains(ti.getPriority())
-					        || (pi == null || pi.hasEnded())
-					        || (filterByTaskName && !taskName.equals(context.getTaskInstance(id).getTask().getName())))
-						iterator.remove();
-				}
-			} catch (Exception e) {
-				getLogger().log(Level.WARNING, "Error while getting unfinished tasks for the task (name=" + taskName + "). Unable to resolve if a task (id=" + id +
-						") is unfinished - removing it!", e);
-				iterator.remove();
+		Map<String, Long> taskInstancesIds = new HashMap<String, Long>();
+		for (Object[] entry: data) {
+			String name = (String) entry[0];
+			if (taskInstancesIds.containsKey(name)) {
+				continue;
 			}
+
+			Number id = (Number) entry[1];
+			taskInstancesIds.put(name, id.longValue());
 		}
 
-		return wrapTaskInstances(taskInstances);
+		return getTaskInstances(taskInstancesIds.values());
 	}
 
 	@Override
