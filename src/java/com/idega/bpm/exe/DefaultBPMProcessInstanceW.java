@@ -530,7 +530,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	List<TaskInstanceW> getUnfinishedTaskInstancesForTask(JbpmContext context, String taskName, Integer... prioritiesToFilter) {
-		String query = "select ti.name, ti.id from " + TaskInstance.class.getName() + " ti where ti.processInstance.id = :piId and ti.end is null and ti.processInstance.end is null";
+		/*String query = "select ti.name, ti.id from " + TaskInstance.class.getName() + " ti where ti.processInstance.id = :piId and ti.end is null and ti.processInstance.end is null";
 		List<Param> params = new ArrayList<Param>();
 		params.add(new Param("piId", getProcessInstanceId()));
 
@@ -562,6 +562,53 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 			Number id = (Number) entry[1];
 			taskInstancesIds.put(name, id.longValue());
+		}
+
+		return getTaskInstances(taskInstancesIds.values());*/
+
+		Collection<TaskInstance> taskInstances = getUnfilteredProcessTaskInstances();
+		if (ListUtil.isEmpty(taskInstances)) {
+			return wrapTaskInstances(taskInstances);
+		}
+
+		Map<String, Long> taskInstancesIds = new HashMap<String, Long>();
+
+		List<Integer> prioritiesToFilterList = Arrays.asList(prioritiesToFilter);
+		boolean filterByTaskName = !StringUtil.isEmpty(taskName);
+		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator.hasNext();) {
+			TaskInstance ti = iterator.next();
+
+			// removing hidden, ended task instances, and task instances of ended
+			// processes (i.e. subprocesses), also leaving on task for taskName, if taskName
+			// provided
+			Long id = null;
+			try {
+				if (ti == null) {
+					getLogger().warning("Task instance is null in a collection of task instances: " + taskInstances);
+					iterator.remove();
+				} else {
+					id = ti.getId();
+					ProcessInstance pi = ti.getProcessInstance();
+					if (ti.hasEnded()
+							|| prioritiesToFilterList.contains(ti.getPriority())
+					        || (pi == null || pi.hasEnded())
+					        || (filterByTaskName && !taskName.equals(context.getTaskInstance(id).getTask().getName())))
+						iterator.remove();
+				}
+			} catch (Exception e) {
+				getLogger().log(Level.WARNING, "Error while getting unfinished tasks for the task (name=" + taskName + "). Unable to resolve if a task (id=" + id +
+						") is unfinished - removing it!", e);
+				iterator.remove();
+			}
+		}
+
+		for (TaskInstance ti: taskInstances) {
+			String name = ti.getName();
+			if (taskInstancesIds.containsKey(name)) {
+				continue;
+			}
+
+			taskInstancesIds.put(name, ti.getId());
 		}
 
 		return getTaskInstances(taskInstancesIds.values());
