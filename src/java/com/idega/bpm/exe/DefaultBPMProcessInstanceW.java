@@ -585,14 +585,26 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	private List<TaskInstanceW> wrapTaskInstances(Collection<TaskInstance> taskInstances) {
-		List<TaskInstanceW> instances = new ArrayList<TaskInstanceW>(taskInstances == null ? 0 : taskInstances.size());
-
 		if (ListUtil.isEmpty(taskInstances)) {
-			return instances;
+			return Collections.emptyList();
 		}
 
+		List<Long> ids = new ArrayList<Long>(taskInstances.size());
 		for (TaskInstance instance : taskInstances) {
-			TaskInstanceW tiw = getProcessManager().getTaskInstance(instance.getId());
+			ids.add(instance.getId());
+		}
+
+		return getTaskInstances(ids);
+	}
+
+	private List<TaskInstanceW> getTaskInstances(Collection<Long> taskInstancesIds) {
+		if (ListUtil.isEmpty(taskInstancesIds)) {
+			return Collections.emptyList();
+		}
+
+		List<TaskInstanceW> instances = new ArrayList<TaskInstanceW>(taskInstancesIds.size());
+		for (Long id: taskInstancesIds) {
+			TaskInstanceW tiw = getProcessManager().getTaskInstance(id);
 			instances.add(tiw);
 		}
 		return instances;
