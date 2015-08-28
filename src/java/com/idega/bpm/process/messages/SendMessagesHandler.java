@@ -125,7 +125,7 @@ public class SendMessagesHandler extends DefaultSpringBean implements ActionHand
 		}
 		msg.setSendToEmails(sendToEmails);
 
-		getSendMessage().send(null, upd, ectx.getProcessInstance(), msg, tkn);
+		getSendMessage().send(null, upd == null ? ectx : upd, ectx.getProcessInstance(), msg, tkn);
 	}
 
 	protected Locale getLocale(String key, Map<String, Locale> knownLocales) {

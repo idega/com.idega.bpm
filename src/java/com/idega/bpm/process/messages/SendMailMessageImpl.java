@@ -90,8 +90,9 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		} else {
 			emailAddresses = new ArrayList<String>(1);
 		}
-		if (upd != null && upd.getUserEmail() != null)
+		if (upd != null && upd.getUserEmail() != null) {
 			emailAddresses.add(upd.getUserEmail());
+		}
 
 		if (ListUtil.isEmpty(sendToEmails)) {
 			String sendToRoles = msgs.getSendToRoles();
@@ -110,7 +111,6 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 				}
 			}
 		}
-
 
 		Integer receipientId = msgs.getRecipientUserId();
 		if(receipientId != null){
@@ -133,8 +133,9 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	}
 
 	protected UserPersonalData getUserPersonalData(Object context) {
-		if (context instanceof UserPersonalData)
+		if (context instanceof UserPersonalData) {
 			return (UserPersonalData) context;
+		}
 		return null;
 	}
 
@@ -171,7 +172,12 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		final Locale defaultLocale = iwma.getDefaultLocale();
 
 		long pid = pi.getId();
-		ProcessInstanceW piw = getBpmFactory().getProcessManagerByProcessInstanceId(pid).getProcessInstance(pid);
+		ProcessInstanceW piw = null;
+		if (context instanceof ExecutionContext) {
+			piw = getBpmFactory().getProcessInstanceW(((ExecutionContext) context).getJbpmContext(), pid);
+		} else {
+			piw = getBpmFactory().getProcessManagerByProcessInstanceId(pid).getProcessInstance(pid);
+		}
 
 		Map<Locale, String[]> unformattedForLocales = new HashMap<Locale, String[]>(5);
 
@@ -183,7 +189,6 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 
 		Locale preferredLocale = iwc != null ? iwc.getCurrentLocale() : defaultLocale;
 		final List<SendMailMessageValue> messageValuesToSend = new ArrayList<SendMailMessageValue>(emailAddresses.size());
-
 
 		Case theCase = getCase(piw);
 		if (mvCtx == null) {
@@ -243,7 +248,10 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	}
 
 	protected void setBeans(MessageValueContext mvCtx, IWContext iwc, ProcessInstanceW piw, Object context) {
-		mvCtx.setValue(MessageValueContext.updBean, getUserPersonalData(context));
+		UserPersonalData upd = getUserPersonalData(context);
+		if (upd != null) {
+			mvCtx.setValue(MessageValueContext.updBean, upd);
+		}
 		mvCtx.setValue(MessageValueContext.piwBean, piw);
 		mvCtx.setValue(MessageValueContext.iwcBean, iwc);
 	}
