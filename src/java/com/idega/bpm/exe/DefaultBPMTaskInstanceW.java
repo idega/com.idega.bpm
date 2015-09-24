@@ -1162,23 +1162,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 			return Boolean.valueOf(result.getValue());
 		}
 
-		Boolean renderable = null;
-		UIComponent component = null;
-		try {
-			View view = getView();
-			view.setSubmitted(isSubmitted());
-
-			component = view.getViewForDisplay();
-			if (component instanceof PDFRenderedComponent) {
-				renderable = !((PDFRenderedComponent) component).isPdfViewer();
-			}
-
-			if (renderable == null) {
-				renderable = view.hasViewForDisplay();
-			}
-		} catch (Exception e) {}
-
-		renderable = renderable == null ? Boolean.FALSE : renderable;
+		Boolean renderable = isTaskInstanceRenderable(this);
 
 		try {
 			MetaDataHome metaDataHome = getMetadata();
@@ -1189,6 +1173,22 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 		renderableCache.put(result.getId(), String.valueOf(renderable));
 		return renderable;
+	}
+
+	private Boolean isTaskInstanceRenderable(TaskInstanceW taskInstance) {
+		UIComponent component = null;
+		try {
+			View view = taskInstance.getView();
+			view.setSubmitted(taskInstance.isSubmitted());
+
+			component = view.getViewForDisplay();
+			if (component instanceof PDFRenderedComponent) {
+				return !((PDFRenderedComponent) component).isPdfViewer();
+			}
+
+			return view.hasViewForDisplay();
+		} catch(Exception e) {}
+		return Boolean.FALSE;
 	}
 
 	@Override
