@@ -64,9 +64,9 @@ public class BPMTaskPDFPrinter extends AttachmentWriter {
 	}
 
 	protected BPMFactory getBpmFactory() {
-
-		if(bpmFactory == null)
+		if (bpmFactory == null) {
 			ELUtil.getInstance().autowire(this);
+		}
 
 		return bpmFactory;
 	}
