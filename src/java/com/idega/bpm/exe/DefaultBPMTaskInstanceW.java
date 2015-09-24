@@ -1139,7 +1139,11 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 				try {
 					TaskInstance ti = context.getTaskInstance(taskInstanceId);
 					Long procDefId = ti.getProcessInstance().getProcessDefinition().getId();
-					result = new AdvancedProperty("TASK_IS_RENDERABLE_" + procDefId);
+					String key = "TASK_IS_RENDERABLE_" + ti.getName() + "_" + procDefId;
+					if (key.length() >= 255) {
+						key = key.substring(0, 254);
+					}
+					result = new AdvancedProperty(key);
 
 					if (renderableCache.containsKey(result.getId())) {
 						result.setValue(renderableCache.get(result.getId()));
@@ -1203,7 +1207,11 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 				try {
 					TaskInstance ti = context.getTaskInstance(taskInstanceId);
 					Long procDefId = ti.getProcessInstance().getProcessDefinition().getId();
-					result = new AdvancedProperty("TASK_HAS_VIEW_" + procDefId);
+					String key = "TASK_HAS_VIEW_" + ti.getName() + "_" + procDefId;
+					if (key.length() >= 255) {
+						key = key.substring(0, 254);
+					}
+					result = new AdvancedProperty(key);
 
 					if (hasViewForDisplayCache.containsKey(result.getId())) {
 						result.setValue(hasViewForDisplayCache.get(result.getId()));
