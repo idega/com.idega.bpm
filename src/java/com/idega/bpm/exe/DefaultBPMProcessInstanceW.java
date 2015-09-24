@@ -36,7 +36,6 @@ import com.idega.block.process.business.ExternalEntityInterface;
 import com.idega.bpm.BPMConstants;
 import com.idega.bpm.security.TaskPermissionManager;
 import com.idega.core.business.DefaultSpringBean;
-import com.idega.core.persistence.Param;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
 import com.idega.jbpm.data.VariableInstanceQuerier;
@@ -60,6 +59,7 @@ import com.idega.jbpm.identity.permission.Access;
 import com.idega.jbpm.identity.permission.BPMTypedPermission;
 import com.idega.jbpm.identity.permission.PermissionsFactory;
 import com.idega.jbpm.rights.Right;
+import com.idega.jbpm.utils.JBPMUtil;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
@@ -67,7 +67,6 @@ import com.idega.jbpm.view.ViewSubmission;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.user.util.UserComparator;
-import com.idega.util.ArrayUtil;
 import com.idega.util.CoreConstants;
 import com.idega.util.ListUtil;
 import com.idega.util.StringUtil;
@@ -245,30 +244,38 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	List<TaskInstanceW> getSubmittedTaskInstances(List<String> excludedSubProcessesNames, Integer... prioritiesToFilter) {
-		Collection<TaskInstance> taskInstances = getProcessTaskInstances(excludedSubProcessesNames, null);
-		if (ListUtil.isEmpty(taskInstances)) {
+		boolean measure = JBPMUtil.isPerformanceMeasurementOn();
+		long start = measure ? System.currentTimeMillis() : 0;
+		try {
+			Collection<TaskInstance> taskInstances = getProcessTaskInstances(excludedSubProcessesNames, null);
+			if (ListUtil.isEmpty(taskInstances)) {
+				return wrapTaskInstances(taskInstances);
+			}
+
+			List<Integer> prioritiesToFilterList = Arrays.asList(prioritiesToFilter);
+
+			for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator.hasNext();) {
+				TaskInstance ti = iterator.next();
+
+				try {
+					if (ti == null) {
+						getLogger().warning("Task instance is null in a collection of task instances: " + taskInstances);
+						iterator.remove();
+					} else if (!ti.hasEnded() || prioritiesToFilterList.contains(ti.getPriority()))
+						// simply filtering out the not ended task instances
+						iterator.remove();
+				} catch (Exception e) {
+					getLogger().log(Level.WARNING, "Error while getting submitted tasks for processes: " + excludedSubProcessesNames, e);
+					iterator.remove();
+				}
+			}
+
 			return wrapTaskInstances(taskInstances);
-		}
-
-		List<Integer> prioritiesToFilterList = Arrays.asList(prioritiesToFilter);
-
-		for (Iterator<TaskInstance> iterator = taskInstances.iterator(); iterator.hasNext();) {
-			TaskInstance ti = iterator.next();
-
-			try {
-				if (ti == null) {
-					getLogger().warning("Task instance is null in a collection of task instances: " + taskInstances);
-					iterator.remove();
-				} else if (!ti.hasEnded() || prioritiesToFilterList.contains(ti.getPriority()))
-					// simply filtering out the not ended task instances
-					iterator.remove();
-			} catch (Exception e) {
-				getLogger().log(Level.WARNING, "Error while getting submitted tasks for processes: " + excludedSubProcessesNames, e);
-				iterator.remove();
+		} finally {
+			if (measure) {
+				getLogger().info("Got all submitted task instances in: " + (System.currentTimeMillis() - start + " ms"));
 			}
 		}
-
-		return wrapTaskInstances(taskInstances);
 	}
 
 	@Override
@@ -329,75 +336,76 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return getBPMDocuments(unfinishedTaskInstances, locale, doShowExternalEntity, false);
 	}
 
+	//	TODO: improve performance!
 	@Transactional(readOnly = true)
 	private List<TaskInstanceW> filterTasksByUserPermission(User user, final List<TaskInstanceW> unfinishedTaskInstances) {
-		final PermissionsFactory permissionsFactory = getBpmFactory().getPermissionsFactory();
-		final RolesManager rolesManager = getBpmFactory().getRolesManager();
+		boolean measure = JBPMUtil.isPerformanceMeasurementOn();
+		long start = measure ? System.currentTimeMillis() : 0;
+		try {
+			final PermissionsFactory permissionsFactory = getBpmFactory().getPermissionsFactory();
+			final RolesManager rolesManager = getBpmFactory().getRolesManager();
 
-		final Map<String, TaskPermissionManager> tasksManagers = getBeansOfType(TaskPermissionManager.class);
+			final Map<String, TaskPermissionManager> tasksManagers = getBeansOfType(TaskPermissionManager.class);
 
-		return getBpmContext().execute(new JbpmCallback<List<TaskInstanceW>>() {
+			for (Iterator<TaskInstanceW> iterator = unfinishedTaskInstances.iterator(); iterator.hasNext();) {
+				TaskInstanceW tiw = iterator.next();
+				try {
+					// Checks if task instance is eligible for viewing for user provided
 
-			@Override
-			public List<TaskInstanceW> doInJbpm(JbpmContext context) throws JbpmException {
-				for (Iterator<TaskInstanceW> iterator = unfinishedTaskInstances.iterator(); iterator.hasNext();) {
-					TaskInstanceW tiw = iterator.next();
-					TaskInstance ti = tiw.getTaskInstance();
+					// TODO: add user into permission
+					Permission permission = permissionsFactory.getTaskInstanceSubmitPermission(false, tiw.getTaskInstanceId());
+					rolesManager.checkPermission(permission);
 
-					try {
-						// Checks if task instance is eligible for viewing for user provided
-
-						// TODO: add user into permission
-						Permission permission = permissionsFactory.getTaskInstanceSubmitPermission(false, ti);
-						rolesManager.checkPermission(permission);
-
-						//	Checking custom business logic
-						if (!MapUtil.isEmpty(tasksManagers)) {
-							Boolean visible = true;
-							String procDefName = tiw.getProcessInstanceW(context).getProcessDefinitionW(context).getProcessDefinition(context).getName();
-							for (Iterator<TaskPermissionManager> tasksManagersIter = tasksManagers.values().iterator(); (visible && tasksManagersIter.hasNext());) {
-								visible = tasksManagersIter.next().isTaskVisible(tiw, procDefName);
-							}
-							if (!visible) {
-								iterator.remove();
-							}
+					//	Checking custom business logic
+					if (!MapUtil.isEmpty(tasksManagers)) {
+						Boolean visible = true;
+						String procDefName = tiw.getProcessInstanceW().getProcessDefinitionW().getProcessDefinition().getName();
+						for (Iterator<TaskPermissionManager> tasksManagersIter = tasksManagers.values().iterator(); (visible && tasksManagersIter.hasNext());) {
+							visible = tasksManagersIter.next().isTaskVisible(tiw, procDefName);
 						}
-					} catch (BPMAccessControlException e) {
-						iterator.remove();
+						if (!visible) {
+							iterator.remove();
+						}
 					}
+				} catch (BPMAccessControlException e) {
+					iterator.remove();
 				}
-
-				return unfinishedTaskInstances;
 			}
-		});
+
+			return unfinishedTaskInstances;
+		} finally {
+			if (measure) {
+				getLogger().info("Filtered out tasks (from unfinished task instances: " + unfinishedTaskInstances + ") by user's (" + user + ") permission in " + (System.currentTimeMillis() - start ) + " ms");
+			}
+		}
 	}
 
 	@Transactional(readOnly = true)
 	private List<TaskInstanceW> filterDocumentsByUserPermission(User user, final List<TaskInstanceW> submittedTaskInstances) {
-		final PermissionsFactory permissionsFactory = getBpmFactory().getPermissionsFactory();
-		final RolesManager rolesManager = getBpmFactory().getRolesManager();
+		boolean measure = JBPMUtil.isPerformanceMeasurementOn();
+		long start = measure ? System.currentTimeMillis() : 0;
+		try {
+			final PermissionsFactory permissionsFactory = getBpmFactory().getPermissionsFactory();
+			final RolesManager rolesManager = getBpmFactory().getRolesManager();
 
-		return getBpmContext().execute(new JbpmCallback<List<TaskInstanceW>>() {
+			for (Iterator<TaskInstanceW> iterator = submittedTaskInstances.iterator(); iterator.hasNext();) {
+				TaskInstanceW tiw = iterator.next();
+				try {
+					// Check if task instance is eligible for viewing for user provided
 
-			@Override
-			public List<TaskInstanceW> doInJbpm(JbpmContext context) throws JbpmException {
-				for (Iterator<TaskInstanceW> iterator = submittedTaskInstances.iterator(); iterator.hasNext();) {
-					TaskInstanceW tiw = iterator.next();
-					TaskInstance ti = tiw.getTaskInstance();
-
-					try {
-						// Check if task instance is eligible for viewing for user provided
-
-						// TODO: add user into permission
-						Permission permission = permissionsFactory.getTaskInstanceViewPermission(true, ti);
-						rolesManager.checkPermission(permission);
-					} catch (BPMAccessControlException e) {
-						iterator.remove();
-					}
+					// TODO: add user into permission
+					Permission permission = permissionsFactory.getTaskInstanceViewPermission(true, tiw.getTaskInstanceId());
+					rolesManager.checkPermission(permission);
+				} catch (BPMAccessControlException e) {
+					iterator.remove();
 				}
-				return submittedTaskInstances;
 			}
-		});
+			return submittedTaskInstances;
+		} finally {
+			if (measure) {
+				getLogger().info("Filtered out submitted task instances (" + submittedTaskInstances + ") by user's permission in: " + (System.currentTimeMillis() - start + " ms"));
+			}
+		}
 	}
 
 	@Override
@@ -421,76 +429,89 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	private List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiws, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable) {
-		List<BPMDocument> documents = new ArrayList<BPMDocument>(tiws.size());
+		boolean measure = JBPMUtil.isPerformanceMeasurementOn();
+		long start = measure ? System.currentTimeMillis() : 0;
+		try {
+			List<BPMDocument> documents = new ArrayList<BPMDocument>(tiws.size());
 
-		UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
-		for (TaskInstanceW tiw : tiws) {
-			TaskInstance ti = tiw.getTaskInstance();
+			UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
+			tiws.stream().forEach((tiw) -> {
+				TaskInstance ti = tiw.getTaskInstance();
 
-			// creating document representation
-			BPMDocumentImpl bpmDoc = new BPMDocumentImpl();
+				// creating document representation
+				BPMDocumentImpl bpmDoc = new BPMDocumentImpl();
 
-			// get submitted by
-			String actorId = ti.getActorId();
-			String actorName = null;
+				// get submitted by
+				String actorId = ti.getActorId();
+				String actorName = null;
 
-			if (actorId != null) {
-				try {
-					User usr = userBusiness.getUser(Integer.parseInt(actorId));
+				if (actorId != null) {
+					try {
+						User usr = userBusiness.getUser(Integer.parseInt(actorId));
 
-					if (!doShowExternalEntity) {
-						actorName = usr.getName();
-					} else {
-						ExternalEntityInterface eei = getExternalEntityInterface();
-						if (eei != null) {
-							actorName = eei.getName(usr);
-						}
-
-						if (StringUtil.isEmpty(actorName)) {
+						if (!doShowExternalEntity) {
 							actorName = usr.getName();
 						} else {
-							actorName = actorName + " (" + usr.getName() + ")";
-						}
-					}
+							ExternalEntityInterface eei = getExternalEntityInterface();
+							if (eei != null) {
+								actorName = eei.getName(usr);
+							}
 
-				} catch (Exception e) {
-					getLogger().log(Level.SEVERE, "Exception while resolving actor name for actorId: " + actorId, e);
+							if (StringUtil.isEmpty(actorName)) {
+								actorName = usr.getName();
+							} else {
+								actorName = actorName + " (" + usr.getName() + ")";
+							}
+						}
+
+					} catch (Exception e) {
+						getLogger().log(Level.SEVERE, "Exception while resolving actor name for actorId: " + actorId, e);
+						actorName = CoreConstants.EMPTY;
+					}
+				} else {
 					actorName = CoreConstants.EMPTY;
 				}
-			} else
-				actorName = CoreConstants.EMPTY;
 
-			String submittedBy;
-			String assignedTo;
+				String submittedBy = null, assignedTo = null;
 
-			if (ti.getEnd() == null) {
-				// task
-				submittedBy = CoreConstants.EMPTY;
-				assignedTo = actorName;
-			} else {
-				// document
-				submittedBy = actorName;
-				assignedTo = CoreConstants.EMPTY;
+				if (ti.getEnd() == null) {
+					// task
+					submittedBy = CoreConstants.EMPTY;
+					assignedTo = actorName;
+				} else {
+					// document
+					submittedBy = actorName;
+					assignedTo = CoreConstants.EMPTY;
+				}
+
+				bpmDoc.setTaskInstanceId(ti.getId());
+				bpmDoc.setAssignedToName(assignedTo);
+				bpmDoc.setSubmittedByName(submittedBy);
+
+				String name = tiw.getName(locale);
+				bpmDoc.setDocumentName(name);
+
+				bpmDoc.setCreateDate(ti.getCreate());
+				bpmDoc.setEndDate(ti.getEnd());
+				if (checkIfSignable) {
+					bpmDoc.setSignable(tiw.isSignable());
+				}
+
+				bpmDoc.setOrder(tiw.getOrder());
+
+				boolean hasView = tiw.hasViewForDisplay();
+				bpmDoc.setHasViewUI(hasView);
+
+				documents.add(bpmDoc);
+			});
+
+			return documents;
+		} finally {
+			if (measure) {
+				getLogger().info("Got BPM docs for task instances: " + tiws + ", locale: " + locale + ", doShowExternalEntity: " + doShowExternalEntity +
+						", checkIfSignable: " + checkIfSignable + " in " + (System.currentTimeMillis() - start) + " ms");
 			}
-
-			bpmDoc.setTaskInstanceId(ti.getId());
-			bpmDoc.setAssignedToName(assignedTo);
-			bpmDoc.setSubmittedByName(submittedBy);
-			bpmDoc.setDocumentName(tiw.getName(locale));
-			bpmDoc.setCreateDate(ti.getCreate());
-			bpmDoc.setEndDate(ti.getEnd());
-			if (checkIfSignable) {
-				bpmDoc.setSignable(tiw.isSignable());
-			}
-			bpmDoc.setOrder(tiw.getOrder());
-
-			View view = tiw.getView();
-			bpmDoc.setHasViewUI(view.hasViewForDisplay());
-
-			documents.add(bpmDoc);
 		}
-
-		return documents;
 	}
 
 	@Override
@@ -507,14 +528,26 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getAllUnfinishedTaskInstances() {
-		return getBpmContext().execute(new JbpmCallback<List<TaskInstanceW>>() {
+		boolean measure = JBPMUtil.isPerformanceMeasurementOn();
+		long start = measure ? System.currentTimeMillis() : 0;
+		try {
+			return getBpmContext().execute(new JbpmCallback<List<TaskInstanceW>>() {
 
-			@Override
-			public List<TaskInstanceW> doInJbpm(JbpmContext context) throws JbpmException {
-				return getUnfinishedTaskInstancesForTask(context, null, DefaultBPMTaskInstanceW.PRIORITY_HIDDEN,
-						DefaultBPMTaskInstanceW.PRIORITY_VALID_HIDDEN);
+				@Override
+				public List<TaskInstanceW> doInJbpm(JbpmContext context) throws JbpmException {
+					return getUnfinishedTaskInstancesForTask(
+							context,
+							null,
+							DefaultBPMTaskInstanceW.PRIORITY_HIDDEN,
+							DefaultBPMTaskInstanceW.PRIORITY_VALID_HIDDEN
+					);
+				}
+			});
+		} finally {
+			if (measure) {
+				getLogger().info("Got all unfinished task instances in: " + (System.currentTimeMillis() - start + " ms"));
 			}
-		});
+		}
 	}
 
 	@Override
@@ -922,7 +955,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 					iterator.remove();
 				} else {
 					try {
-						Permission permission = getPermissionsFactory().getTaskInstanceViewPermission(true, taskInstance);
+						Permission permission = getPermissionsFactory().getTaskInstanceViewPermission(true, taskInstance.getId());
 						getBpmFactory().getRolesManager().checkPermission(permission);
 					} catch (BPMAccessControlException e) {
 						iterator.remove();
