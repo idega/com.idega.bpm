@@ -18,6 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ejb.FinderException;
+import javax.faces.component.UIComponent;
 
 import org.jbpm.JbpmContext;
 import org.jbpm.JbpmException;
@@ -37,6 +38,7 @@ import com.idega.block.process.variables.Variable;
 import com.idega.bpm.BPMConstants;
 import com.idega.bpm.security.TaskPermissionManager;
 import com.idega.bpm.xformsview.XFormsView;
+import com.idega.builder.bean.AdvancedProperty;
 import com.idega.business.IBOLookup;
 import com.idega.business.IBOLookupException;
 import com.idega.business.IBORuntimeException;
@@ -48,6 +50,7 @@ import com.idega.core.file.tmp.TmpFilesManager;
 import com.idega.core.file.util.MimeTypeUtil;
 import com.idega.core.persistence.Param;
 import com.idega.data.IDOLookup;
+import com.idega.data.IDOLookupException;
 import com.idega.data.MetaData;
 import com.idega.data.MetaDataHome;
 import com.idega.idegaweb.IWMainApplication;
@@ -76,6 +79,7 @@ import com.idega.jbpm.variables.impl.BinaryVariableImpl;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewSubmission;
 import com.idega.presentation.IWContext;
+import com.idega.presentation.PDFRenderedComponent;
 import com.idega.repository.RepositoryService;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
@@ -616,27 +620,54 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 								.concat(String.valueOf(procDefId)).concat(CoreConstants.HASH)
 								.concat(locale.toString());
 
-					MetaDataHome metaDataHome = (MetaDataHome) IDOLookup.getHome(MetaData.class);
+					MetaDataHome metaDataHome = getMetadata();
 
 					Collection<MetaData> data = metaDataHome.findAllByMetaDataNameAndType(key, String.class.getName());
 					if (ListUtil.isEmpty(data)) {
 						String nameFromView = getNameFromView(locale);
-						MetaData nameMeta = metaDataHome.create();
-						nameMeta.setName(key);
-						nameMeta.setValue(nameFromView);
-						nameMeta.setType(String.class.getName());
-						nameMeta.store();
+						doCreateMetadata(metaDataHome, key, nameFromView);
 						return nameFromView;
 					} else {
 						return data.iterator().next().getMetaDataValue();
 					}
-				} catch (FinderException e) {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 				return null;
 			}
 		});
+	}
+
+	private MetaDataHome getMetadata() {
+		MetaDataHome metaDataHome = null;
+		try {
+			metaDataHome = (MetaDataHome) IDOLookup.getHome(MetaData.class);
+		} catch (IDOLookupException e) {
+			e.printStackTrace();
+		}
+		return metaDataHome;
+	}
+
+	private void doCreateMetadata(MetaDataHome metaDataHome, String key, String value) throws Exception {
+		MetaData nameMeta = metaDataHome.create();
+		nameMeta.setName(key);
+		nameMeta.setValue(value);
+		nameMeta.setType(String.class.getName());
+		nameMeta.store();
+	}
+
+	private String getValueFromMetadata(String key) {
+		try {
+			MetaDataHome metaDataHome = getMetadata();
+
+			Collection<MetaData> data = metaDataHome.findAllByMetaDataNameAndType(key, String.class.getName());
+			if (!ListUtil.isEmpty(data)) {
+				return data.iterator().next().getMetaDataValue();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	private String getNameFromMetaData(Long taskInstanceId) {
@@ -1094,6 +1125,119 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 		}
 
 		return new StringBuilder(taskName).append(CoreConstants.MINUS).append(caseIdentifier).toString();
+	}
+
+	@Override
+	public boolean isRenderable() {
+		final Map<String, String> renderableCache = getCache("renderableTaskInstancesCache", 604800, 1000);
+
+		AdvancedProperty result = getBpmContext().execute(new JbpmCallback<AdvancedProperty>() {
+
+			@Override
+			public AdvancedProperty doInJbpm(JbpmContext context) throws JbpmException {
+				AdvancedProperty result = null;
+				try {
+					TaskInstance ti = context.getTaskInstance(taskInstanceId);
+					Long procDefId = ti.getProcessInstance().getProcessDefinition().getId();
+					result = new AdvancedProperty("TASK_IS_RENDERABLE_" + procDefId);
+
+					if (renderableCache.containsKey(result.getId())) {
+						result.setValue(renderableCache.get(result.getId()));
+						return result;
+					}
+
+					String hasView = getValueFromMetadata(result.getId());
+					if (!StringUtil.isEmpty(hasView)) {
+						result.setValue(hasView);
+						renderableCache.put(result.getId(), hasView);
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return result;
+			}
+		});
+
+		if (result != null && !StringUtil.isEmpty(result.getValue())) {
+			return Boolean.valueOf(result.getValue());
+		}
+
+		Boolean renderable = null;
+		UIComponent component = null;
+		try {
+			View view = getView();
+			view.setSubmitted(isSubmitted());
+
+			component = view.getViewForDisplay();
+			if (component instanceof PDFRenderedComponent) {
+				renderable = !((PDFRenderedComponent) component).isPdfViewer();
+			}
+
+			if (renderable == null) {
+				renderable = view.hasViewForDisplay();
+			}
+		} catch (Exception e) {}
+
+		renderable = renderable == null ? Boolean.FALSE : renderable;
+
+		try {
+			MetaDataHome metaDataHome = getMetadata();
+			doCreateMetadata(metaDataHome, result.getId(), String.valueOf(renderable));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		renderableCache.put(result.getId(), String.valueOf(renderable));
+		return renderable;
+	}
+
+	@Override
+	public boolean hasViewForDisplay() {
+		final Map<String, String> hasViewForDisplayCache = getCache("hasViewForDisplayTaskInstancesCache", 604800, 1000);
+
+		AdvancedProperty result = getBpmContext().execute(new JbpmCallback<AdvancedProperty>() {
+
+			@Override
+			public AdvancedProperty doInJbpm(JbpmContext context) throws JbpmException {
+				AdvancedProperty result = null;
+				try {
+					TaskInstance ti = context.getTaskInstance(taskInstanceId);
+					Long procDefId = ti.getProcessInstance().getProcessDefinition().getId();
+					result = new AdvancedProperty("TASK_HAS_VIEW_" + procDefId);
+
+					if (hasViewForDisplayCache.containsKey(result.getId())) {
+						result.setValue(hasViewForDisplayCache.get(result.getId()));
+						return result;
+					}
+
+					String hasView = getValueFromMetadata(result.getId());
+					if (!StringUtil.isEmpty(hasView)) {
+						result.setValue(hasView);
+						hasViewForDisplayCache.put(result.getId(), hasView);
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return result;
+			}
+		});
+
+		if (result != null && !StringUtil.isEmpty(result.getValue())) {
+			return Boolean.valueOf(result.getValue());
+		}
+
+		View view = getView();
+		boolean hasView = view.hasViewForDisplay();
+
+		try {
+			MetaDataHome metaDataHome = getMetadata();
+			doCreateMetadata(metaDataHome, result.getId(), String.valueOf(hasView));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		hasViewForDisplayCache.put(result.getId(), String.valueOf(hasView));
+		return hasView;
 	}
 
 }
