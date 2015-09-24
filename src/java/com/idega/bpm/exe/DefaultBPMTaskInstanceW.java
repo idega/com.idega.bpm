@@ -1137,7 +1137,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 			public AdvancedProperty doInJbpm(JbpmContext context) throws JbpmException {
 				AdvancedProperty result = null;
 				try {
-					TaskInstance ti = context.getTaskInstance(taskInstanceId);
+					TaskInstance ti = getTaskInstance(context);
 					Long procDefId = ti.getProcessInstance().getProcessDefinition().getId();
 					String key = "TASK_IS_RENDERABLE_" + ti.getName() + "_" + procDefId;
 					if (key.length() >= 255) {
@@ -1205,7 +1205,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 			public AdvancedProperty doInJbpm(JbpmContext context) throws JbpmException {
 				AdvancedProperty result = null;
 				try {
-					TaskInstance ti = context.getTaskInstance(taskInstanceId);
+					TaskInstance ti = getTaskInstance(context);
 					Long procDefId = ti.getProcessInstance().getProcessDefinition().getId();
 					String key = "TASK_HAS_VIEW_" + ti.getName() + "_" + procDefId;
 					if (key.length() >= 255) {
