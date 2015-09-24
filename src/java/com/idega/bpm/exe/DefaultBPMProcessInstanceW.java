@@ -390,14 +390,29 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 			for (Iterator<TaskInstanceW> iterator = submittedTaskInstances.iterator(); iterator.hasNext();) {
 				TaskInstanceW tiw = iterator.next();
+				long permissionCheckedIn = 0;
 				try {
 					// Check if task instance is eligible for viewing for user provided
 
 					// TODO: add user into permission
+					long permissionCreated = measure ? System.currentTimeMillis() : 0;
 					Permission permission = permissionsFactory.getTaskInstanceViewPermission(true, tiw.getTaskInstanceId());
+					if (measure) {
+						getLogger().info("Permission for " + tiw + " created in " + (System.currentTimeMillis() - permissionCreated) + " ms");
+
+						permissionCheckedIn = System.currentTimeMillis();
+					}
+
 					rolesManager.checkPermission(permission);
+					if (measure) {
+						getLogger().info("Permission for " + tiw + " checked in " + (System.currentTimeMillis() - permissionCheckedIn) + " ms");
+					}
 				} catch (BPMAccessControlException e) {
 					iterator.remove();
+
+					if (measure) {
+						getLogger().info("Permission for " + tiw + " checked in " + (System.currentTimeMillis() - permissionCheckedIn) + " ms");
+					}
 				}
 			}
 			return submittedTaskInstances;
