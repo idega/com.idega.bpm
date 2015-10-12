@@ -1,6 +1,7 @@
 package com.idega.bpm.xformsview;
 
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.chiba.xml.xforms.connector.AbstractConnector;
@@ -21,6 +22,7 @@ import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessDefinitionW;
 import com.idega.jbpm.exe.ProcessInstanceW;
 import com.idega.jbpm.exe.TaskInstanceW;
+import com.idega.util.CoreUtil;
 import com.idega.util.expression.ELUtil;
 
 /**
@@ -62,14 +64,17 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 
 		Long piId = null;
 		String procDefName = null;
+		boolean error = false;
 		Map<String, Object> variables = null;
+		TaskInstanceW tiW = null;
+		ProcessInstanceW piW = null;
 		try {
 			if (taskInstanceId != null) {
 				BPMFactory bpmFactory = getBpmFactory();
 				xformsViewSubmission.setTaskInstanceId(taskInstanceId);
-				TaskInstanceW tiW = bpmFactory.getProcessManagerByTaskInstanceId(taskInstanceId).getTaskInstance(taskInstanceId);
+				tiW = bpmFactory.getProcessManagerByTaskInstanceId(taskInstanceId).getTaskInstance(taskInstanceId);
 
-				ProcessInstanceW piW = tiW.getProcessInstanceW();
+				piW = tiW.getProcessInstanceW();
 				piId = piW.getProcessInstanceId();
 				procDefName = piW.getProcessDefinitionW().getProcessDefinition().getName();
 
@@ -101,10 +106,18 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 
 			getFileUploadManager().cleanup(null, submissionInstance, getUploadedResourceResolver());
 			return variables;
+		} catch (Exception e) {
+			error = true;
+			String message = "Error submitting view for task instance: " + tiW + ", proc. inst. " + piW + ", proc. def. name: " + procDefName;
+			Logger.getLogger(getClass().getName()).log(Level.WARNING, message, e);
+			CoreUtil.sendExceptionNotification(message, e);
 		} finally {
-			if (procDefName != null && piId != null)
+			if (!error && procDefName != null && piId != null) {
 				ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, piId, variables));
+			}
 		}
+
+		return variables;
 	}
 
 	public BPMFactory getBpmFactory() {
