@@ -99,25 +99,25 @@ public class SendMessagesHandler extends DefaultSpringBean implements ActionHand
 		msg.setSendToRoles(sendToRoles);
 		msg.setAttachFiles(getAttachFiles());
 		msg.setRecipientUserId(recipientUserId);
-		if(isAddCreatorMail()){
-			if(upd == null){
-				try{
+		if (isAddCreatorMail()) {
+			if (upd == null) {
+				try {
 					String pId = (String) ectx.getVariable("string_userPersonalId");
 					UserHome userHome = (UserHome) IDOLookup.getHome(User.class);
 					User user = userHome.findByPersonalID(pId);
 					msg.setRecipientUserId(Integer.valueOf(user.getId()));
-				}catch (Exception e) {
+				} catch (Exception e) {
 					Logger.getLogger(SendMessagesHandler.class.getName()).log(Level.WARNING, "Failed getting user data", e);
 				}
-			}else{
+			} else {
 				msg.setRecipientUserId(upd.getUserId());
 			}
 		}
 		String receiverMail = getReceiverMailVariableName();
-		if(!StringUtil.isEmpty(receiverMail)){
+		if (!StringUtil.isEmpty(receiverMail)) {
 			String mail = (String) ectx.getVariable(receiverMail);
-			if(!StringUtil.isEmpty(mail)){
-				if(sendToEmails == null){
+			if (!StringUtil.isEmpty(mail)) {
+				if (sendToEmails == null) {
 					sendToEmails = new ArrayList<String>();
 				}
 				sendToEmails.add(mail);

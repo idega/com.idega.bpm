@@ -109,11 +109,19 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 						}
 					}
 				}
+
+				if (sendToRoles.indexOf("owner") != -1) {
+					String ownerEmail = (String) pi.getContextInstance().getVariable("string_ownerEmailAddress");
+					if (com.idega.util.EmailValidator.getInstance().isValid(ownerEmail) && !emailAddresses.contains(ownerEmail)) {
+						getLogger().info("Resolved owner's email ('" + ownerEmail + "') from application, it was not among receivers: " + emailAddresses + ". Proc. inst. ID: " + pi.getId());
+						emailAddresses.add(ownerEmail);
+					}
+				}
 			}
 		}
 
 		Integer receipientId = msgs.getRecipientUserId();
-		if(receipientId != null){
+		if (receipientId != null) {
 			try{
 				UserHome userHome = (UserHome) IDOLookup.getHome(User.class);
 				User user = userHome.findByPrimaryKey(receipientId);
@@ -124,7 +132,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 					Email email = emails.iterator().next();
 					emailAddresses.add(email.getEmailAddress());
 				}
-			}catch (Exception e) {
+			} catch (Exception e) {
 				getLogger().log(Level.WARNING, "Failed getting mail of user " + receipientId, e);
 			}
 		}

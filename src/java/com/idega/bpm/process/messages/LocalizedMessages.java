@@ -174,8 +174,6 @@ public class LocalizedMessages {
 		this.sendCcEmails = sendCcEmails;
 	}
 
-
-
 	@Override
 	public String toString() {
 		return "To " + sendToEmails + " CC " + sendCcEmails + " or/and to role(s): " + sendToRoles + ". Recipient user: " + getRecipientUserId() + ". Subject: " +
