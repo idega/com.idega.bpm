@@ -84,7 +84,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	protected List<String> getMailsToSendTo(Object context, LocalizedMessages msgs, ProcessInstance pi) {
 		List<String> sendToEmails = msgs.getSendToEmails();
 		UserPersonalData upd = getUserPersonalData(context);
-		final List<String> emailAddresses;
+		List<String> emailAddresses = null;
 		if (sendToEmails != null) {
 			emailAddresses = new ArrayList<String>(sendToEmails);
 		} else {
@@ -109,26 +109,27 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 						}
 					}
 				}
+			}
+		}
 
-				if (sendToRoles.indexOf("owner") != -1) {
-					String ownerEmail = (String) pi.getContextInstance().getVariable("string_ownerEmailAddress");
-					if (com.idega.util.EmailValidator.getInstance().isValid(ownerEmail) && !emailAddresses.contains(ownerEmail)) {
-						getLogger().info("Resolved owner's email ('" + ownerEmail + "') from application, it was not among receivers: " + emailAddresses + ". Proc. inst. ID: " + pi.getId());
-						emailAddresses.add(ownerEmail);
-					}
-				}
+		String sendToRoles = msgs.getSendToRoles();
+		if (sendToRoles != null && sendToRoles.indexOf("owner") != -1) {
+			String ownerEmail = (String) pi.getContextInstance().getVariable("string_ownerEmailAddress");
+			if (com.idega.util.EmailValidator.getInstance().isValid(ownerEmail) && !emailAddresses.contains(ownerEmail)) {
+				getLogger().info("Resolved owner's email ('" + ownerEmail + "') from application, it was not among receivers: " + emailAddresses + ". Proc. inst. ID: " + pi.getId());
+				emailAddresses.add(ownerEmail);
 			}
 		}
 
 		Integer receipientId = msgs.getRecipientUserId();
 		if (receipientId != null) {
-			try{
+			try {
 				UserHome userHome = (UserHome) IDOLookup.getHome(User.class);
 				User user = userHome.findByPrimaryKey(receipientId);
 				Collection<Email> emails = user.getEmails();
-				if(ListUtil.isEmpty(emails)){
+				if (ListUtil.isEmpty(emails)) {
 					getLogger().log(Level.WARNING, "User " + receipientId + "has no email");
-				}else{
+				} else {
 					Email email = emails.iterator().next();
 					emailAddresses.add(email.getEmailAddress());
 				}
