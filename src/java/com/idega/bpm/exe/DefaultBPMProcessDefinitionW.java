@@ -47,6 +47,7 @@ import com.idega.jbpm.identity.BPMUser;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewSubmission;
+import com.idega.presentation.IWContext;
 import com.idega.user.data.User;
 import com.idega.util.ListUtil;
 import com.idega.util.StringUtil;
@@ -470,4 +471,15 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 		getLogger().warning(user + " (ID: " + user.getId() + ") does not have manager role for proc. def.: " + procDefName);
 		return false;
 	}
+
+	@Override
+	public boolean isAvailable(IWContext iwc) {
+		return true;
+	}
+
+	@Override
+	public String getNotAvailableLink(IWContext iwc) {
+		return null;
+	}
+
 }
