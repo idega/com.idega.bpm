@@ -209,51 +209,56 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		}
 
 		final File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw, ectx);
-
-		UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
-		for (String email: emailAddresses) {
-			if (StringUtil.isEmpty(email)) {
-				continue;
-			}
-
-			Object userBean = mvCtx.getValue(MessageValueContext.userBean);
-			Object updBean = mvCtx.getValue(MessageValueContext.updBean);
-			if (userBean == null && updBean == null) {
-				Collection<User> users = userBusiness.getUsersByEmail(email);
-				if (!ListUtil.isEmpty(users)) {
-					mvCtx.setValue(MessageValueContext.userBean, users.iterator().next());
+		try {
+			UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
+			for (String email: emailAddresses) {
+				if (StringUtil.isEmpty(email)) {
+					continue;
 				}
-			}
 
-			String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
-			String subject = getSubject();
-			if (StringUtil.isEmpty(subject)) {
-				subject = subjAndMsg[0];
-			}
-			String text = subjAndMsg[1];
+				Object userBean = mvCtx.getValue(MessageValueContext.userBean);
+				Object updBean = mvCtx.getValue(MessageValueContext.updBean);
+				if (userBean == null && updBean == null) {
+					Collection<User> users = userBusiness.getUsersByEmail(email);
+					if (!ListUtil.isEmpty(users)) {
+						mvCtx.setValue(MessageValueContext.userBean, users.iterator().next());
+					}
+				}
 
-			//Creating CC
-			List<String> ccEmailsList = msgs.getSendCcEmails();
-			StringBuilder ccEmails = null;
-			if (!ListUtil.isEmpty(ccEmailsList)) {
-				ccEmails = new StringBuilder();
-				for (Iterator<String> ccEmailsIter = ccEmailsList.iterator(); ccEmailsIter.hasNext();) {
-					String ccEmail = ccEmailsIter.next();
-					if (EmailValidator.getInstance().isValid(ccEmail)) {
-						ccEmails.append(ccEmail);
-						if (ccEmailsIter.hasNext()) {
-							ccEmails.append(CoreConstants.SEMICOLON);
+				String[] subjAndMsg = getFormattedMessage(mvCtx, preferredLocale, msgs, unformattedForLocales, tkn);
+				String subject = getSubject();
+				if (StringUtil.isEmpty(subject)) {
+					subject = subjAndMsg[0];
+				}
+				String text = subjAndMsg[1];
+
+				//Creating CC
+				List<String> ccEmailsList = msgs.getSendCcEmails();
+				StringBuilder ccEmails = null;
+				if (!ListUtil.isEmpty(ccEmailsList)) {
+					ccEmails = new StringBuilder();
+					for (Iterator<String> ccEmailsIter = ccEmailsList.iterator(); ccEmailsIter.hasNext();) {
+						String ccEmail = ccEmailsIter.next();
+						if (EmailValidator.getInstance().isValid(ccEmail)) {
+							ccEmails.append(ccEmail);
+							if (ccEmailsIter.hasNext()) {
+								ccEmails.append(CoreConstants.SEMICOLON);
+							}
 						}
 					}
 				}
+
+				SendMailMessageValue mail = new SendMailMessageValue(attachedFile, null, ccEmails == null ? null : ccEmails.toString(), from, host, subject, text, email, null);
+				mail.setHeaders(getMailHeaders());
+				messageValuesToSend.add(mail);
 			}
 
-			SendMailMessageValue mail = new SendMailMessageValue(attachedFile, null, ccEmails == null ? null : ccEmails.toString(), from, host, subject, text, email, null);
-			mail.setHeaders(getMailHeaders());
-			messageValuesToSend.add(mail);
+			sendMails(messageValuesToSend);
+		} finally {
+			if (attachedFile != null && attachedFile.exists() && attachedFile.canWrite()) {
+				attachedFile.delete();
+			}
 		}
-
-		sendMails(messageValuesToSend);
 	}
 
 	protected void setBeans(MessageValueContext mvCtx, IWContext iwc, ProcessInstanceW piw, Object context) {
@@ -266,22 +271,25 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	}
 
 	protected void sendMails(final List<SendMailMessageValue> messages) {
-		if (ListUtil.isEmpty(messages))
+		if (ListUtil.isEmpty(messages)) {
 			return;
+		}
 
 		new Thread(new Runnable() {
+
 			@Override
 			public void run() {
-				for (SendMailMessageValue mv : messages) {
+				for (SendMailMessageValue mv: messages) {
 					try {
 						SendMail.send(mv);
 					} catch (Exception me) {
 						String message = "Exception while sending email message: " + mv;
-						getLogger().log(Level.SEVERE, message, me);
+						getLogger().log(Level.WARNING, message, me);
 						CoreUtil.sendExceptionNotification(message, me);
 					}
 				}
 			}
+
 		}).start();
 	}
 
