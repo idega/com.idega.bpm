@@ -71,8 +71,10 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 
 	@Autowired
 	private BPMFactory bpmFactory;
+
 	@Autowired
 	private MessageValueHandler messageValueHandler;
+
 	@Autowired
 	private EmailSenderHelper emailSenderHelper;
 
