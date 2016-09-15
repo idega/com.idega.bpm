@@ -50,21 +50,22 @@ public class SendMailMessageToRoles extends SendMailMessageImpl {
 
 	@Override
 	protected List<String> getMailsToSendTo(Object context,LocalizedMessages msgs,ProcessInstance pi){
-		ArrayList<String> emails = new ArrayList<String>();
+		List<String> emails = new ArrayList<String>();
 		List<String> mails = msgs.getSendToEmails();
-		if(!ListUtil.isEmpty(mails)){
+		if (!ListUtil.isEmpty(mails)) {
 			emails.addAll(mails);
 		}
+
 		Collection<User> users = getUsersToSendMessageTo(msgs.getSendToRoles(), pi);
-		if(ListUtil.isEmpty(users)){
+		if (ListUtil.isEmpty(users)) {
 			return emails;
 		}
-		for(User user : users){
+
+		for (User user: users) {
 			try {
 				addUserEmailsToList(emails,user);
 			} catch (Exception e) {
-				getLogger().log(Level.WARNING, "failed sending message of process instance " + pi.getId()
-						+ " to user " + user.getId(), e);
+				getLogger().log(Level.WARNING, "failed sending message of process instance " + pi.getId() + " to user " + user.getId(), e);
 				continue;
 			}
 		}
@@ -83,24 +84,42 @@ public class SendMailMessageToRoles extends SendMailMessageImpl {
 	}
 
 	@Override
-	protected void sendMails(final List<SendMailMessageValue> messages) {
-		if (ListUtil.isEmpty(messages))
+	protected void sendMails(final List<SendMailMessageValue> messages, final File attachedFile) {
+		if (ListUtil.isEmpty(messages)) {
 			return;
+		}
 
 		new Thread(new Runnable() {
+
 			@Override
 			public void run() {
-				for (SendMailMessageValue mv : messages) {
-					try {
-						File attachment = mv.getAttachedFile();
-						SendMail.send(mv.getFrom(), mv.getTo(), mv.getCc(), mv.getBcc(),
-								mv.getReplyTo(), mv.getHost(), mv.getSubject(), mv.getText(),
-								mv.getHeaders(), false, true, attachment
-						);
-					} catch (Exception me) {
-						String message = "Exception while sending email message: " + mv;
-						Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, message, me);
-						CoreUtil.sendExceptionNotification(message, me);
+				try {
+					for (SendMailMessageValue mv: messages) {
+						try {
+							File attachment = mv.getAttachedFile();
+							SendMail.send(
+									mv.getFrom(),
+									mv.getTo(),
+									mv.getCc(),
+									mv.getBcc(),
+									mv.getReplyTo(),
+									mv.getHost(),
+									mv.getSubject(),
+									mv.getText(),
+									mv.getHeaders(),
+									false,
+									false,
+									attachment
+							);
+						} catch (Exception me) {
+							String message = "Exception while sending email message: " + mv;
+							Logger.getLogger(this.getClass().getName()).log(Level.WARNING, message, me);
+							CoreUtil.sendExceptionNotification(message, me);
+						}
+					}
+				} finally {
+					if (attachedFile != null && attachedFile.exists() && attachedFile.canWrite()) {
+						attachedFile.delete();
 					}
 				}
 			}
