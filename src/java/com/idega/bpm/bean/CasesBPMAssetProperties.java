@@ -17,7 +17,9 @@ public class CasesBPMAssetProperties {
 					showUserProfilePicture = Boolean.TRUE,
 					addExportContacts = false,
 					showUserCompany = false,
-					showLastLoginDate = false;
+					showLastLoginDate = false,
+					allowToReloadCaseView = true,
+					showSettingsButton = true;
 
 	public boolean isNameFromExternalEntity() {
 		return isNameFromExternalEntity;
@@ -162,4 +164,21 @@ public class CasesBPMAssetProperties {
 	public void setShowLastLoginDate(boolean showLastLoginDate) {
 		this.showLastLoginDate = showLastLoginDate;
 	}
+
+	public boolean isAllowToReloadCaseView() {
+		return allowToReloadCaseView;
+	}
+
+	public void setAllowToReloadCaseView(boolean allowToReloadCaseView) {
+		this.allowToReloadCaseView = allowToReloadCaseView;
+	}
+
+	public boolean isShowSettingsButton() {
+		return showSettingsButton;
+	}
+
+	public void setShowSettingsButton(boolean showSettingsButton) {
+		this.showSettingsButton = showSettingsButton;
+	}
+
 }
