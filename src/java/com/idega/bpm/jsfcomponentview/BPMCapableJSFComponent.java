@@ -2,6 +2,8 @@ package com.idega.bpm.jsfcomponentview;
 
 import java.util.Locale;
 
+import com.idega.jbpm.view.JSFComponentView;
+
 /**
  *  Interface that should be implemented by jsf component, which will be used
  * 	as bmp view.
