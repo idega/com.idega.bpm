@@ -13,11 +13,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.idega.block.form.business.FormConverterToPDF;
 import com.idega.block.form.data.dao.XFormsDAO;
-import com.idega.bpm.BPMConstants;
 import com.idega.core.file.util.MimeTypeUtil;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.io.DownloadWriter;
 import com.idega.io.MediaWritable;
+import com.idega.jbpm.BPMConstants;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessManager;
@@ -235,7 +235,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 
 		ProcessManager processManager = bpmFactory.getProcessManagerByTaskInstanceId(taskInstance);
 
-		TaskInstanceW tiw = processManager.getTaskInstance(taskInstance);
+		TaskInstanceW tiw = getBpmFactory().getTaskInstanceW(taskInstance);
 		String pdfName = tiw.getPDFName(locale);
 		return pdfName;
 	}

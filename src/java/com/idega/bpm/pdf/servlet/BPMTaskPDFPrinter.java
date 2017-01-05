@@ -45,9 +45,7 @@ public class BPMTaskPDFPrinter extends AttachmentWriter {
 
 			Long taskInstanceId = Long.valueOf(taskIdStr);
 
-			TaskInstanceW taskInstanceW = getBpmFactory()
-					.getProcessManagerByTaskInstanceId(taskInstanceId)
-					.getTaskInstance(taskInstanceId);
+			TaskInstanceW taskInstanceW = getBpmFactory().getTaskInstanceW(taskInstanceId);
 			List<BinaryVariable> attachmentsForVar = taskInstanceW.getAttachments(variable);
 //			TODO: check if this is correct implementation (expecting only one attachment for variable)
 			binaryVariable = !ListUtil.isEmpty(attachmentsForVar) ? attachmentsForVar.iterator().next() : null;

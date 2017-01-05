@@ -18,11 +18,11 @@ import com.idega.block.form.business.FormConverterToPDF;
 import com.idega.block.form.presentation.FormViewer;
 import com.idega.block.process.variables.Variable;
 import com.idega.block.process.variables.VariableDataType;
-import com.idega.bpm.BPMConstants;
 import com.idega.bpm.jsfcomponentview.BPMCapableJSFComponent;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.graphics.generator.business.PDFGenerator;
 import com.idega.idegaweb.IWBundle;
+import com.idega.jbpm.BPMConstants;
 import com.idega.jbpm.artifacts.presentation.ProcessArtifacts;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.TaskInstanceW;
@@ -119,7 +119,7 @@ public class FormConverterToPDFBean extends DefaultSpringBean implements FormCon
 
 		TaskInstanceW taskInstance = null;
 		try {
-			taskInstance = getBpmFactory().getProcessManagerByTaskInstanceId(taskId).getTaskInstance(taskId);
+			taskInstance = getBpmFactory().getTaskInstanceW(taskId);
 		} catch (Exception e) {
 			LOGGER.log(Level.WARNING, "Error getting task instance by id: " + taskInstanceId, e);
 		}

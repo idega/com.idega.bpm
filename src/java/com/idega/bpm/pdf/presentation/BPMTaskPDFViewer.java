@@ -10,17 +10,17 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.idega.bpm.BPMConstants;
 import com.idega.bpm.jsfcomponentview.BPMCapableJSFComponent;
-import com.idega.bpm.jsfcomponentview.JSFComponentView;
 import com.idega.bpm.pdf.servlet.BPMTaskPDFPrinter;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.idegaweb.IWResourceBundle;
 import com.idega.io.MediaWritable;
+import com.idega.jbpm.BPMConstants;
 import com.idega.jbpm.bean.VariableInstanceType;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.TaskInstanceW;
+import com.idega.jbpm.view.JSFComponentView;
 import com.idega.presentation.IWBaseComponent;
 import com.idega.presentation.IWContext;
 import com.idega.presentation.Layer;
@@ -116,7 +116,7 @@ public class BPMTaskPDFViewer extends IWBaseComponent implements BPMCapableJSFCo
 
 		try {
 			TaskInstanceW taskInstance = getBPMFactory().getTaskInstanceW(taskInstanceId);
-			String systemName = taskInstance.getTaskInstance().getName();
+			String systemName = taskInstance.getName();
 			String localizationKey = StringHandler.stripNonRomanCharacters(systemName);
 			return iwrb.getLocalizedString("pdf_task." + localizationKey, systemName);
 		} catch (Exception e) {
