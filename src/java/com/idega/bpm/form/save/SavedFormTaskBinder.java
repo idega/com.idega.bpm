@@ -11,7 +11,7 @@ import com.idega.block.form.save.FormSavePhasePluginParams;
 import com.idega.block.form.submission.XFormSubmissionInstance;
 import com.idega.block.process.variables.Variable;
 import com.idega.block.process.variables.VariableDataType;
-import com.idega.bpm.xformsview.XFormParameters;
+import com.idega.jbpm.data.XFormParameters;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.TaskInstanceW;
 import com.idega.transaction.TransactionContext;

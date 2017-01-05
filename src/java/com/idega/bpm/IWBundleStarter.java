@@ -2,10 +2,10 @@ package com.idega.bpm;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.idega.bpm.xform.BPMXFormPersistenceServiceImpl;
 import com.idega.idegaweb.IWBundle;
 import com.idega.idegaweb.IWBundleStartable;
 import com.idega.idegaweb.IWMainApplicationSettings;
+import com.idega.jbpm.business.impl.BPMXFormPersistenceServiceImpl;
 import com.idega.util.CoreUtil;
 import com.idega.util.expression.ELUtil;
 

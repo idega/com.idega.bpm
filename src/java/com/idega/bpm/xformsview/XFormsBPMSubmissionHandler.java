@@ -16,12 +16,14 @@ import com.idega.core.file.tmp.TmpFileResolver;
 import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
 import com.idega.jbpm.BPMContext;
+import com.idega.jbpm.data.dao.IXFormViewFactory;
 import com.idega.jbpm.event.ProcessInstanceCreatedEvent;
 import com.idega.jbpm.exe.BPMFactory;
 import com.idega.jbpm.exe.ProcessConstants;
 import com.idega.jbpm.exe.ProcessDefinitionW;
 import com.idega.jbpm.exe.ProcessInstanceW;
 import com.idega.jbpm.exe.TaskInstanceW;
+import com.idega.jbpm.view.XFormsViewSubmission;
 import com.idega.util.CoreUtil;
 import com.idega.util.expression.ELUtil;
 
@@ -72,11 +74,11 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 			if (taskInstanceId != null) {
 				BPMFactory bpmFactory = getBpmFactory();
 				xformsViewSubmission.setTaskInstanceId(taskInstanceId);
-				tiW = bpmFactory.getProcessManagerByTaskInstanceId(taskInstanceId).getTaskInstance(taskInstanceId);
+				tiW = bpmFactory.getTaskInstanceW(taskInstanceId);
 
 				piW = tiW.getProcessInstanceW();
 				piId = piW.getProcessInstanceId();
-				procDefName = piW.getProcessDefinitionW().getProcessDefinition().getName();
+				procDefName = piW.getProcessDefinitionW().getName();
 
 				tiW.submit(xformsViewSubmission);
 				variables = xformsViewSubmission.resolveVariables();

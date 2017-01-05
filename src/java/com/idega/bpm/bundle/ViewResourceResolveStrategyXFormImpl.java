@@ -4,10 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.idega.bpm.xformsview.XFormsView;
 import com.idega.jbpm.bundle.ProcessBundleResources;
 import com.idega.jbpm.view.ViewResource;
 import com.idega.jbpm.view.ViewResourceResolveStrategy;
+import com.idega.jbpm.view.XFormsView;
 import com.idega.util.StringUtil;
 import com.idega.xformsmanager.business.DocumentManagerFactory;
 

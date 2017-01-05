@@ -7,10 +7,10 @@ import javax.xml.parsers.DocumentBuilder;
 
 import org.w3c.dom.Document;
 
-import com.idega.bpm.xformsview.XFormsView;
 import com.idega.idegaweb.IWMainApplication;
 import com.idega.jbpm.bundle.ProcessBundleResources;
 import com.idega.jbpm.view.ViewResource;
+import com.idega.jbpm.view.XFormsView;
 import com.idega.util.IOUtil;
 import com.idega.util.xml.XmlUtil;
 import com.idega.xformsmanager.business.DocumentManager;
