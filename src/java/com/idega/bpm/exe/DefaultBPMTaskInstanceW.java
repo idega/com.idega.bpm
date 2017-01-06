@@ -1248,4 +1248,28 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 		return hasView;
 	}
 
+	@Override
+	public Date getEnd() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Date getStart() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Date getCreate() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getActorId() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

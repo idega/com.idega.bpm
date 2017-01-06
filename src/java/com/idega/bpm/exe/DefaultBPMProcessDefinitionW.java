@@ -482,4 +482,10 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 		return null;
 	}
 
+	@Override
+	public String getName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
