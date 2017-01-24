@@ -2,7 +2,7 @@ package com.idega.bpm.bean;
 
 public class CasesBPMAssetProperties {
 
-	private String caseId, processorType, commentsPersistenceManagerIdentifier,specialBackPage;
+	private String caseId, processorType, commentsPersistenceManagerIdentifier,specialBackPage, inactiveTasksToShow;
 
 	private boolean usePDFDownloadColumn = true,
 					allowPDFSigning = true,
@@ -179,6 +179,14 @@ public class CasesBPMAssetProperties {
 
 	public void setShowSettingsButton(boolean showSettingsButton) {
 		this.showSettingsButton = showSettingsButton;
+	}
+
+	public String getInactiveTasksToShow() {
+		return inactiveTasksToShow;
+	}
+
+	public void setInactiveTasksToShow(String inactiveTasksToShow) {
+		this.inactiveTasksToShow = inactiveTasksToShow;
 	}
 
 }
