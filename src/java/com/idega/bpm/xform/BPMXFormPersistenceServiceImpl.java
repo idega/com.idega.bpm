@@ -42,8 +42,7 @@ public class BPMXFormPersistenceServiceImpl extends DefaultSpringBean implements
 
 	@Override
 	public void onApplicationEvent(FormSavedEvent event) {
-		XFormSubmission submission = xformsDAO.find(XFormSubmission.class, ((FormSavedEvent) event).getSubmissionId());
-		doRegisterSavedForm(submission);
+		doRegisterSavedForm(event.getSubmissionId());
 	}
 
 	public void doBindSubmissionsWithBPM() {
@@ -64,6 +63,17 @@ public class BPMXFormPersistenceServiceImpl extends DefaultSpringBean implements
 		} catch (Exception e) {
 			getLogger().log(Level.WARNING, "Error binding XForm submissions with BPM", e);
 		}
+	}
+
+	@Transactional(readOnly = false)
+	private void doRegisterSavedForm(Long submissionId) {
+		if (submissionId == null) {
+			getLogger().warning("Submission ID is not provided");
+			return;
+		}
+
+		XFormSubmission submission = xformsDAO.find(XFormSubmission.class, submissionId);
+		doRegisterSavedForm(submission);
 	}
 
 	@Transactional(readOnly = false)
