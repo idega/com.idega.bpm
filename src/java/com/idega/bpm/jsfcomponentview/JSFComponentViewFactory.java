@@ -1,6 +1,8 @@
 package com.idega.bpm.jsfcomponentview;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.jbpm.taskmgmt.def.Task;
@@ -62,4 +64,9 @@ public class JSFComponentViewFactory implements ViewFactory {
 	public TaskView getTaskView(Task task) {
 		return null;
 	}
+
+	public Map<String, Class<? extends View>> getViewMap() {
+		return Collections.emptyMap();
+	}
+
 }
