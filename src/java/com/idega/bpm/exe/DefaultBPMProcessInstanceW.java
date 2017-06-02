@@ -470,88 +470,98 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			boolean taskInstance = resultType.getName().equals(TaskInstanceW.class.getName());
 
 			UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
-			tiws.stream().forEach((tiw) -> {
-				TaskInstance ti = tiw.getTaskInstance();
-				boolean canAdd = true;
-				if (!ListUtil.isEmpty(tasksNamesToReturn) && !tasksNamesToReturn.contains(ti.getTask().getName())) {
-					canAdd = false;
-				}
 
-				if (canAdd) {
-					if (bpmDocument) {
-						// creating document representation
-						BPMDocumentImpl bpmDoc = new BPMDocumentImpl();
+			getBpmContext().execute(new JbpmCallback<Void>() {
 
-						// get submitted by
-						String actorId = ti.getActorId();
-						String actorName = null;
+				@Override
+				public Void doInJbpm(JbpmContext context) throws JbpmException {
+					tiws.stream().forEach((tiw) -> {
+						TaskInstance ti = tiw.getTaskInstance(context);
+						boolean canAdd = true;
+						if (!ListUtil.isEmpty(tasksNamesToReturn)) {
+							String name = ti.getName();
+							canAdd = tasksNamesToReturn.contains(name);
+						}
 
-						if (actorId != null) {
-							try {
-								User usr = userBusiness.getUser(Integer.parseInt(actorId));
+						if (canAdd) {
+							if (bpmDocument) {
+								// creating document representation
+								BPMDocumentImpl bpmDoc = new BPMDocumentImpl();
 
-								if (!doShowExternalEntity) {
-									actorName = usr.getName();
+								// get submitted by
+								String actorId = ti.getActorId();
+								String actorName = null;
+
+								if (actorId != null) {
+									try {
+										User usr = userBusiness.getUser(Integer.parseInt(actorId));
+
+										if (!doShowExternalEntity) {
+											actorName = usr.getName();
+										} else {
+											ExternalEntityInterface eei = getExternalEntityInterface();
+											if (eei != null) {
+												actorName = eei.getName(usr);
+											}
+
+											if (StringUtil.isEmpty(actorName)) {
+												actorName = usr.getName();
+											} else {
+												actorName = actorName + " (" + usr.getName() + ")";
+											}
+										}
+
+									} catch (Exception e) {
+										getLogger().log(Level.SEVERE, "Exception while resolving actor name for actorId: " + actorId, e);
+										actorName = CoreConstants.EMPTY;
+									}
 								} else {
-									ExternalEntityInterface eei = getExternalEntityInterface();
-									if (eei != null) {
-										actorName = eei.getName(usr);
-									}
-
-									if (StringUtil.isEmpty(actorName)) {
-										actorName = usr.getName();
-									} else {
-										actorName = actorName + " (" + usr.getName() + ")";
-									}
+									actorName = CoreConstants.EMPTY;
 								}
 
-							} catch (Exception e) {
-								getLogger().log(Level.SEVERE, "Exception while resolving actor name for actorId: " + actorId, e);
-								actorName = CoreConstants.EMPTY;
+								String submittedBy = null, assignedTo = null;
+
+								if (ti.getEnd() == null) {
+									// task
+									submittedBy = CoreConstants.EMPTY;
+									assignedTo = actorName;
+								} else {
+									// document
+									submittedBy = actorName;
+									assignedTo = CoreConstants.EMPTY;
+								}
+
+								bpmDoc.setTaskInstanceId(ti.getId());
+								bpmDoc.setAssignedToName(assignedTo);
+								bpmDoc.setSubmittedByName(submittedBy);
+
+								String name = tiw.getName(locale);
+								bpmDoc.setDocumentName(name);
+
+								bpmDoc.setCreateDate(ti.getCreate());
+								bpmDoc.setEndDate(ti.getEnd());
+								if (checkIfSignable) {
+									bpmDoc.setSignable(tiw.isSignable());
+								}
+
+								bpmDoc.setOrder(tiw.getOrder());
+
+								boolean hasView = tiw.hasViewForDisplay();
+								bpmDoc.setHasViewUI(hasView);
+
+								@SuppressWarnings("unchecked")
+								T result = (T) bpmDoc;
+								results.add(result);
+							} else if (taskInstance) {
+								@SuppressWarnings("unchecked")
+								T result = (T) tiw;
+								results.add(result);
 							}
-						} else {
-							actorName = CoreConstants.EMPTY;
 						}
-
-						String submittedBy = null, assignedTo = null;
-
-						if (ti.getEnd() == null) {
-							// task
-							submittedBy = CoreConstants.EMPTY;
-							assignedTo = actorName;
-						} else {
-							// document
-							submittedBy = actorName;
-							assignedTo = CoreConstants.EMPTY;
-						}
-
-						bpmDoc.setTaskInstanceId(ti.getId());
-						bpmDoc.setAssignedToName(assignedTo);
-						bpmDoc.setSubmittedByName(submittedBy);
-
-						String name = tiw.getName(locale);
-						bpmDoc.setDocumentName(name);
-
-						bpmDoc.setCreateDate(ti.getCreate());
-						bpmDoc.setEndDate(ti.getEnd());
-						if (checkIfSignable) {
-							bpmDoc.setSignable(tiw.isSignable());
-						}
-
-						bpmDoc.setOrder(tiw.getOrder());
-
-						boolean hasView = tiw.hasViewForDisplay();
-						bpmDoc.setHasViewUI(hasView);
-
-						@SuppressWarnings("unchecked")
-						T result = (T) bpmDoc;
-						results.add(result);
-					} else if (taskInstance) {
-						@SuppressWarnings("unchecked")
-						T result = (T) tiw;
-						results.add(result);
-					}
+					});
+					return null;
 				}
+
 			});
 
 			return results;
