@@ -327,13 +327,17 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	@Transactional(readOnly = true)
 	public List<BPMDocument> getTaskDocumentsForUser(User user, Locale locale, boolean doShowExternalEntity) {
+		return getTaskDocumentsForUser(user, locale, doShowExternalEntity, null);
+	}
+	@Override
+	@Transactional(readOnly = true)
+	public List<BPMDocument> getTaskDocumentsForUser(User user, Locale locale, boolean doShowExternalEntity, List<String> tasksNamesToReturn) {
 		List<TaskInstanceW> unfinishedTaskInstances = getAllUnfinishedTaskInstances();
 
 		unfinishedTaskInstances = filterTasksByUserPermission(user, unfinishedTaskInstances);
 
-		return getBPMDocuments(unfinishedTaskInstances, locale, doShowExternalEntity, false);
+		return getBPMDocuments(unfinishedTaskInstances, locale, doShowExternalEntity, false, tasksNamesToReturn, BPMDocument.class);
 	}
 
 	//	TODO: improve performance!
@@ -424,12 +428,25 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	@Transactional(readOnly = true)
 	public List<BPMDocument> getSubmittedDocumentsForUser(User user, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable) {
+		return getSubmittedDocumentsForUser(user, locale, doShowExternalEntity, checkIfSignable, null);
+	}
+	@Override
+	public List<BPMDocument> getSubmittedDocumentsForUser(User user, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable, List<String> tasksNamesToReturn) {
+		return getSubmittedTasksForUser(user, locale, doShowExternalEntity, checkIfSignable, tasksNamesToReturn, BPMDocument.class);
+	}
+
+	@Override
+	public List<TaskInstanceW> getSubmittedTasksForUser(User user, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable, List<String> tasksNamesToReturn) {
+		return getSubmittedTasksForUser(user, locale, doShowExternalEntity, checkIfSignable, tasksNamesToReturn, TaskInstanceW.class);
+	}
+
+	@Transactional(readOnly = true)
+	private <T> List<T> getSubmittedTasksForUser(User user, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable, List<String> tasksNamesToReturn, Class<T> resultType) {
 		List<TaskInstanceW> submittedTaskInstances = getSubmittedTaskInstances(Arrays.asList(email_fetch_process_name));
 
 		submittedTaskInstances = filterDocumentsByUserPermission(user, submittedTaskInstances);
-		return getBPMDocuments(submittedTaskInstances, locale, doShowExternalEntity, checkIfSignable);
+		return getBPMDocuments(submittedTaskInstances, locale, doShowExternalEntity, checkIfSignable, tasksNamesToReturn, resultType);
 	}
 
 	@Autowired(required=false)
@@ -443,84 +460,101 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return this.externalEntityInterface;
 	}
 
-	private List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiws, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable) {
+	private <T> List<T> getBPMDocuments(List<TaskInstanceW> tiws, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable, List<String> tasksNamesToReturn, Class<T> resultType) {
 		boolean measure = JBPMUtil.isPerformanceMeasurementOn();
 		long start = measure ? System.currentTimeMillis() : 0;
 		try {
-			List<BPMDocument> documents = new ArrayList<BPMDocument>(tiws.size());
+			List<T> results = new ArrayList<>();
+
+			boolean bpmDocument = resultType.getName().equals(BPMDocument.class.getName());
+			boolean taskInstance = resultType.getName().equals(TaskInstanceW.class.getName());
 
 			UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
 			tiws.stream().forEach((tiw) -> {
 				TaskInstance ti = tiw.getTaskInstance();
+				boolean canAdd = true;
+				if (!ListUtil.isEmpty(tasksNamesToReturn) && !tasksNamesToReturn.contains(ti.getTask().getName())) {
+					canAdd = false;
+				}
 
-				// creating document representation
-				BPMDocumentImpl bpmDoc = new BPMDocumentImpl();
+				if (canAdd) {
+					if (bpmDocument) {
+						// creating document representation
+						BPMDocumentImpl bpmDoc = new BPMDocumentImpl();
 
-				// get submitted by
-				String actorId = ti.getActorId();
-				String actorName = null;
+						// get submitted by
+						String actorId = ti.getActorId();
+						String actorName = null;
 
-				if (actorId != null) {
-					try {
-						User usr = userBusiness.getUser(Integer.parseInt(actorId));
+						if (actorId != null) {
+							try {
+								User usr = userBusiness.getUser(Integer.parseInt(actorId));
 
-						if (!doShowExternalEntity) {
-							actorName = usr.getName();
+								if (!doShowExternalEntity) {
+									actorName = usr.getName();
+								} else {
+									ExternalEntityInterface eei = getExternalEntityInterface();
+									if (eei != null) {
+										actorName = eei.getName(usr);
+									}
+
+									if (StringUtil.isEmpty(actorName)) {
+										actorName = usr.getName();
+									} else {
+										actorName = actorName + " (" + usr.getName() + ")";
+									}
+								}
+
+							} catch (Exception e) {
+								getLogger().log(Level.SEVERE, "Exception while resolving actor name for actorId: " + actorId, e);
+								actorName = CoreConstants.EMPTY;
+							}
 						} else {
-							ExternalEntityInterface eei = getExternalEntityInterface();
-							if (eei != null) {
-								actorName = eei.getName(usr);
-							}
-
-							if (StringUtil.isEmpty(actorName)) {
-								actorName = usr.getName();
-							} else {
-								actorName = actorName + " (" + usr.getName() + ")";
-							}
+							actorName = CoreConstants.EMPTY;
 						}
 
-					} catch (Exception e) {
-						getLogger().log(Level.SEVERE, "Exception while resolving actor name for actorId: " + actorId, e);
-						actorName = CoreConstants.EMPTY;
+						String submittedBy = null, assignedTo = null;
+
+						if (ti.getEnd() == null) {
+							// task
+							submittedBy = CoreConstants.EMPTY;
+							assignedTo = actorName;
+						} else {
+							// document
+							submittedBy = actorName;
+							assignedTo = CoreConstants.EMPTY;
+						}
+
+						bpmDoc.setTaskInstanceId(ti.getId());
+						bpmDoc.setAssignedToName(assignedTo);
+						bpmDoc.setSubmittedByName(submittedBy);
+
+						String name = tiw.getName(locale);
+						bpmDoc.setDocumentName(name);
+
+						bpmDoc.setCreateDate(ti.getCreate());
+						bpmDoc.setEndDate(ti.getEnd());
+						if (checkIfSignable) {
+							bpmDoc.setSignable(tiw.isSignable());
+						}
+
+						bpmDoc.setOrder(tiw.getOrder());
+
+						boolean hasView = tiw.hasViewForDisplay();
+						bpmDoc.setHasViewUI(hasView);
+
+						@SuppressWarnings("unchecked")
+						T result = (T) bpmDoc;
+						results.add(result);
+					} else if (taskInstance) {
+						@SuppressWarnings("unchecked")
+						T result = (T) tiw;
+						results.add(result);
 					}
-				} else {
-					actorName = CoreConstants.EMPTY;
 				}
-
-				String submittedBy = null, assignedTo = null;
-
-				if (ti.getEnd() == null) {
-					// task
-					submittedBy = CoreConstants.EMPTY;
-					assignedTo = actorName;
-				} else {
-					// document
-					submittedBy = actorName;
-					assignedTo = CoreConstants.EMPTY;
-				}
-
-				bpmDoc.setTaskInstanceId(ti.getId());
-				bpmDoc.setAssignedToName(assignedTo);
-				bpmDoc.setSubmittedByName(submittedBy);
-
-				String name = tiw.getName(locale);
-				bpmDoc.setDocumentName(name);
-
-				bpmDoc.setCreateDate(ti.getCreate());
-				bpmDoc.setEndDate(ti.getEnd());
-				if (checkIfSignable) {
-					bpmDoc.setSignable(tiw.isSignable());
-				}
-
-				bpmDoc.setOrder(tiw.getOrder());
-
-				boolean hasView = tiw.hasViewForDisplay();
-				bpmDoc.setHasViewUI(hasView);
-
-				documents.add(bpmDoc);
 			});
 
-			return documents;
+			return results;
 		} finally {
 			if (measure) {
 				getLogger().info("Got BPM docs for task instances: " + tiws + ", locale: " + locale + ", doShowExternalEntity: " + doShowExternalEntity +
