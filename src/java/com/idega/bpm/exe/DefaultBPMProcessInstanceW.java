@@ -460,6 +460,10 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return this.externalEntityInterface;
 	}
 
+	public List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiWs, Locale locale) {
+		return getBPMDocuments(tiWs, locale, false, false, null, BPMDocument.class);
+	}
+
 	private <T> List<T> getBPMDocuments(List<TaskInstanceW> tiws, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable, List<String> tasksNamesToReturn, Class<T> resultType) {
 		boolean measure = JBPMUtil.isPerformanceMeasurementOn();
 		long start = measure ? System.currentTimeMillis() : 0;
@@ -477,16 +481,18 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 				public Void doInJbpm(JbpmContext context) throws JbpmException {
 					tiws.stream().forEach((tiw) -> {
 						TaskInstance ti = tiw.getTaskInstance(context);
+						String taskName = ti.getName();
+
 						boolean canAdd = true;
 						if (!ListUtil.isEmpty(tasksNamesToReturn)) {
-							String name = ti.getName();
-							canAdd = tasksNamesToReturn.contains(name);
+							canAdd = tasksNamesToReturn.contains(taskName);
 						}
 
 						if (canAdd) {
 							if (bpmDocument) {
 								// creating document representation
 								BPMDocumentImpl bpmDoc = new BPMDocumentImpl();
+								bpmDoc.setTaskName(taskName);
 
 								// get submitted by
 								String actorId = ti.getActorId();
