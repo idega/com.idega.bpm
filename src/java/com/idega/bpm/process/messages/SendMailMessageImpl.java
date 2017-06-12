@@ -210,6 +210,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			mvCtx.setValue(MessageValueContext.caseBean, theCase);
 		}
 
+		List<User> usersConnectedToProcess = null;
 		File attachedFile = getAttachedFile(msgs.getAttachFiles(), piw, ectx);
 		UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
 		for (String email: emailAddresses) {
@@ -220,9 +221,29 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			Object userBean = mvCtx.getValue(MessageValueContext.userBean);
 			Object updBean = mvCtx.getValue(MessageValueContext.updBean);
 			if (userBean == null && updBean == null) {
+				User user = null;
 				Collection<User> users = userBusiness.getUsersByEmail(email);
 				if (!ListUtil.isEmpty(users)) {
-					mvCtx.setValue(MessageValueContext.userBean, users.iterator().next());
+					usersConnectedToProcess = usersConnectedToProcess == null ? piw.getUsersConnectedToProcess() : usersConnectedToProcess;
+					if (ListUtil.isEmpty(usersConnectedToProcess)) {
+						getLogger().warning("Unable to find users connected to process " + pid + ", case: " + theCase);
+						continue;
+					}
+
+					for (Iterator<User> usersIter = users.iterator(); (user == null && usersIter.hasNext());) {
+						user = usersIter.next();
+						if (user != null && !ListUtil.isEmpty(usersConnectedToProcess) && usersConnectedToProcess.contains(user)) {
+						} else {
+							user = null;
+						}
+					}
+				}
+
+				if (user == null) {
+					getLogger().warning("Unable to find user by email " + email + " connected to process " + pid + ", case: " + theCase);
+				} else {
+					getLogger().info("Found user (" + user + ") connected to process " + pid + ", case: " + theCase);
+					mvCtx.setValue(MessageValueContext.userBean, user);
 				}
 			}
 
