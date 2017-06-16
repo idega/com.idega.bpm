@@ -460,6 +460,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return this.externalEntityInterface;
 	}
 
+	@Override
 	public List<BPMDocument> getBPMDocuments(List<TaskInstanceW> tiWs, Locale locale) {
 		return getBPMDocuments(tiWs, locale, false, false, null, BPMDocument.class);
 	}
@@ -1146,11 +1147,12 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			return null;
 		}
 
-		return getSubmitedTask(taskInstanceW, variables);
+		return getSubmitedTask(taskInstanceW, null, variables);
 	}
 
+	@Override
 	@Transactional(readOnly = false)
-	private TaskInstanceW getSubmitedTask(TaskInstanceW task, Map<String, Object> variables) {
+	public TaskInstanceW getSubmitedTask(TaskInstanceW task, ViewSubmission viewSubmission, Map<String, Object> variables) {
 		if (task == null) {
 			getLogger().warning("Task instance is not provided");
 			return null;
@@ -1158,7 +1160,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 		try {
 			View view = task.loadView();
-			ViewSubmission viewSubmission = getBpmFactory().getViewSubmission();
+			viewSubmission = viewSubmission == null ? getBpmFactory().getViewSubmission() : viewSubmission;
 
 			Map<String, Object> currentVariables = view.resolveVariables();
 			if (currentVariables == null) {
