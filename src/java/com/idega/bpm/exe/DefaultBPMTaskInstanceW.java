@@ -768,8 +768,13 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	}
 
 	@Override
+	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is, String filesFolder, boolean overwrite){
+		return addAttachment(variable, fileName, description, is, filesFolder, overwrite, null);
+	}
+
+	@Override
 	@Transactional(readOnly = false)
-	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is, String filesFolder, boolean overwrite) {
+	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is, String filesFolder, boolean overwrite, String source) {
 		Collection<URI> uris = getLinksToVariables(is, filesFolder, fileName, overwrite);
 		if (ListUtil.isEmpty(uris)) {
 			return null;
@@ -795,6 +800,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 			Map<String, Object> metadata = new HashMap<String, Object>();
 			metadata.put(JBPMConstants.OVERWRITE, Boolean.FALSE);
 			metadata.put(JBPMConstants.PATH_IN_REPOSITORY, filesFolder + fileName);
+			if (source != null) metadata.put(JBPMConstants.SOURCE, source);
 			binVar.setMetadata(metadata);
 			binVar.setPersistedToRepository(true);
 		}
