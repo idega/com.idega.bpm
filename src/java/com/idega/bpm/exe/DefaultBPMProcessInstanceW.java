@@ -489,6 +489,11 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 							canAdd = tasksNamesToReturn.contains(taskName);
 						}
 
+						String name = tiw.getName(locale);
+						if (StringUtil.isEmpty(name)) {
+							canAdd = false;
+						}
+
 						if (canAdd) {
 							if (bpmDocument) {
 								// creating document representation
@@ -541,8 +546,6 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 								bpmDoc.setTaskInstanceId(ti.getId());
 								bpmDoc.setAssignedToName(assignedTo);
 								bpmDoc.setSubmittedByName(submittedBy);
-
-								String name = tiw.getName(locale);
 								bpmDoc.setDocumentName(name);
 
 								bpmDoc.setCreateDate(ti.getCreate());
@@ -702,7 +705,13 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		}
 
 		for (TaskInstance ti: taskInstances) {
+			if (ti == null) {
+				continue;
+			}
 			String name = ti.getName();
+			if (StringUtil.isEmpty(name)) {
+				continue;
+			}
 			if (taskInstancesIds.containsKey(name)) {
 				continue;
 			}
@@ -1271,7 +1280,9 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		for (String variable: variables) {
 			Object value = tiW.getVariable(variable);
 			if (value != null) {
-				results.put(variable, (T) value);
+				@SuppressWarnings("unchecked")
+				T latestValue = (T) value;
+				results.put(variable, latestValue);
 				loaded.add(variable);
 			}
 		}

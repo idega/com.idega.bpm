@@ -469,7 +469,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 					List<String> preferred = new ArrayList<String>(1);
 					preferred.add(XFormsView.VIEW_TYPE);
 
-					View view;
+					View view = null;
 
 					if (taskInstance.hasEnded()) {
 						view = getBpmFactory().getViewByTaskInstance(taskInstanceId, false, preferred, forcedTypes);
@@ -497,7 +497,11 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 						view.populateVariables(getVariablesHandler().populateVariables(taskInstanceId));
 					}
-					view.setTaskInstanceId(taskInstanceId);
+					if (view == null) {
+						getLogger().warning("Error getting view for task instance: " + taskInstanceId);
+					} else {
+						view.setTaskInstanceId(taskInstanceId);
+					}
 
 					return view;
 				}
@@ -690,6 +694,10 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	@Transactional(readOnly = true)
 	String getNameFromView(Locale locale) {
 		View taskInstanceView = getView();
+		if (taskInstanceView == null) {
+			return CoreConstants.EMPTY;
+		}
+
 		taskInstanceView.setTaskInstanceId(getTaskInstanceId());
 		return taskInstanceView.getDisplayName(locale);
 	}
@@ -1191,6 +1199,10 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 		UIComponent component = null;
 		try {
 			View view = taskInstance.getView();
+			if (view == null) {
+				return Boolean.FALSE;
+			}
+
 			view.setSubmitted(taskInstance.isSubmitted());
 
 			component = view.getViewForDisplay();
@@ -1243,7 +1255,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 		}
 
 		View view = getView();
-		boolean hasView = view.hasViewForDisplay();
+		boolean hasView = view != null && view.hasViewForDisplay();
 
 		try {
 			MetaDataHome metaDataHome = getMetadata();
