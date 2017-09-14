@@ -410,7 +410,19 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 							", unable to end task. All available transitions: " + allTransitions);
 				}
 			} else {
-				ti.end();
+				try {
+					for (String varName: variables.keySet()) {
+						if (!ti.hasVariableLocally(varName)) {
+							ti.setVariableLocally(varName, variables.get(varName));
+						}
+					}
+
+					ti.end();
+				} catch (Exception e) {
+					String error = "Unable to end task instance " + ti.getId() + ", proc. inst. ID: " + piId + ", variables: " + variables;
+					getLogger().log(Level.WARNING, error, e);
+					throw new RuntimeException(error, e);
+				}
 			}
 		} else {
 			ti.setEnd(new Date());
