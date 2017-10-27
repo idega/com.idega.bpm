@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,8 +52,6 @@ import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 @Service
 @Scope(BeanDefinition.SCOPE_SINGLETON)
 public class ObjectCollectionConverter extends DefaultSpringBean implements DataConverter {
-
-	private static final Logger LOGGER = Logger.getLogger(ObjectCollectionConverter.class.getName());
 
 	private static final String listElName = "list";
 	private static final String rowElName = "row";
