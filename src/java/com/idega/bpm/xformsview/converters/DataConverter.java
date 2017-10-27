@@ -13,6 +13,7 @@ import com.idega.block.process.variables.VariableDataType;
 public interface DataConverter {
 
 	public abstract Object convert(Element o);
+	public abstract Object convert(String value);
 	public abstract Element revert(Object o, Element e);
 	public abstract VariableDataType getDataType();
 }

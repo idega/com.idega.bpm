@@ -20,6 +20,7 @@ import com.idega.core.file.tmp.TmpFileResolverType;
 import com.idega.core.file.tmp.TmpFilesManager;
 import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.impl.BinaryVariableImpl;
+import com.idega.util.StringUtil;
 
 /**
  * @author <a href="mailto:civilis@idega.com">Vytautas Čivilis</a>
@@ -55,6 +56,25 @@ public class FileConverter implements DataConverter {
 
 		return null;
 	}
+
+	@Override
+	public Object convert(String uri) {
+		if (StringUtil.isEmpty(uri)) {
+			return null;
+		}
+
+		List<BinaryVariable> binVars = new ArrayList<BinaryVariable>(1);
+		try {
+			BinaryVariableImpl binaryVariable = new BinaryVariableImpl();
+			binaryVariable.setUri(new URI(uri));
+			binVars.add(binaryVariable);
+		} catch (Exception e) {
+			Logger.getLogger(getClass().getName()).log(Level.WARNING, "Error converting '" + uri + "' into binary variable", e);
+		}
+
+		return binVars;
+	}
+
 	@Override
 	public Element revert(Object o, Element e) {
 		Logger.getLogger(getClass().getName()).log(Level.WARNING, "UNSUPPORTED OPERATION");

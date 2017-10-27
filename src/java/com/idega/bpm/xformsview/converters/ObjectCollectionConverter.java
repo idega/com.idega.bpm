@@ -1,6 +1,7 @@
 package com.idega.bpm.xformsview.converters;
 
 import java.io.Serializable;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,7 +10,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,12 +24,18 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import com.idega.block.process.variables.VariableDataType;
 import com.idega.bpm.xformsview.converters.bean.JSONFixer;
 import com.idega.builder.bean.AdvancedProperty;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
+import com.idega.util.ListUtil;
 import com.idega.util.StringHandler;
 import com.idega.util.StringUtil;
 import com.idega.util.datastructures.map.MapUtil;
@@ -44,6 +53,8 @@ import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 @Service
 @Scope(BeanDefinition.SCOPE_SINGLETON)
 public class ObjectCollectionConverter extends DefaultSpringBean implements DataConverter {
+
+	private static final Logger LOGGER = Logger.getLogger(ObjectCollectionConverter.class.getName());
 
 	private static final String listElName = "list";
 	private static final String rowElName = "row";
@@ -68,6 +79,93 @@ public class ObjectCollectionConverter extends DefaultSpringBean implements Data
 		}
 
 		return rowList;
+	}
+
+	@Override
+	public Object convert(String content) {
+		List<String> rowList = new ArrayList<>();
+
+		if (StringUtil.isEmpty(content)) {
+			return rowList;
+		}
+
+		try {
+			JsonParser jsonParser = new JsonParser();
+			JsonReader jsonReader = new JsonReader(new StringReader(content));
+			jsonReader.setLenient(true);
+			JsonElement element = jsonParser.parse(jsonReader);
+			if (element instanceof JsonObject) {
+				doParseContent((JsonObject) element, rowList);
+			} else if (element instanceof JsonArray) {
+				JsonArray array = (JsonArray) element;
+				for (Iterator<JsonElement> arrayIter = array.iterator(); arrayIter.hasNext();) {
+					JsonElement arrayElement = arrayIter.next();
+					if (arrayElement instanceof JsonObject) {
+						doParseContent((JsonObject) arrayElement, rowList);
+					}
+				}
+			}
+		} catch (Exception e) {
+			getLogger().log(Level.WARNING, "Error converting '" + content + "' into object", e);
+		}
+
+		return rowList;
+	}
+
+	private void doParseContent(JsonObject json, List<String> rowList) {
+		Set<Map.Entry<String, JsonElement>> mapEntries = json.entrySet();
+		if (ListUtil.isEmpty(mapEntries)) {
+			return;
+		}
+
+		for (Map.Entry<String, JsonElement> mapEntry: mapEntries) {
+			JsonElement mapEntryValue = mapEntry.getValue();
+			if (!(mapEntryValue instanceof JsonObject)) {
+				continue;
+			}
+
+			JsonObject entriesJSON = (JsonObject) mapEntryValue;
+			Set<Map.Entry<String, JsonElement>> entriesSet = entriesJSON.entrySet();
+			if (ListUtil.isEmpty(entriesSet)) {
+				continue;
+			}
+
+			for (Map.Entry<String, JsonElement> entry: entriesSet) {
+				JsonElement entryValue = entry.getValue();
+				if (!(entryValue instanceof JsonArray)) {
+					continue;
+				}
+
+				JsonArray rowValues = (JsonArray) entryValue;
+				HierarchicalStreamDriver driver = new JettisonMappedXmlDriver();
+				Map<String, String> columnMap = new LinkedHashMap<>();
+				for (Iterator<JsonElement> rowValuesIter = rowValues.iterator(); rowValuesIter.hasNext();) {
+					JsonElement rowValue = rowValuesIter.next();
+					if (!(rowValue instanceof JsonObject)) {
+						continue;
+					}
+
+					JsonObject rowColumnObject = (JsonObject) rowValue;
+					Set<Map.Entry<String, JsonElement>> rowColumnObjectSet = rowColumnObject.entrySet();
+					if (ListUtil.isEmpty(rowColumnObjectSet)) {
+						continue;
+					}
+
+					for (Map.Entry<String, JsonElement> rowColumnObjectEntry: rowColumnObjectSet) {
+						JsonElement rowColumnObjectEntryValues = rowColumnObjectEntry.getValue();
+						if (!(rowColumnObjectEntryValues instanceof JsonArray)) {
+							continue;
+						}
+
+						JsonArray rowColumnObjectEntryValuesArray = (JsonArray) rowColumnObjectEntryValues;
+						JsonElement key = rowColumnObjectEntryValuesArray.get(0);
+						JsonElement value = rowColumnObjectEntryValuesArray.get(1);
+						columnMap.put(key.getAsString(), value.getAsString());
+					}
+				}
+				rowList.add(getSerializedObjectToJSON(columnMap, driver));
+			}
+		}
 	}
 
 	@Override

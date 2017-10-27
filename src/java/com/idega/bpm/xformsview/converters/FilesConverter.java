@@ -26,6 +26,7 @@ import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.BinaryVariablesHandler;
 import com.idega.jbpm.variables.impl.BinaryVariableImpl;
 import com.idega.util.ListUtil;
+import com.idega.util.StringUtil;
 import com.idega.util.xml.XPathUtil;
 
 /**
@@ -74,6 +75,17 @@ public class FilesConverter implements DataConverter {
 		}
 
 		return null;
+	}
+
+	@Override
+	public Object convert(String uri) {
+		List<BinaryVariable> binVars = new ArrayList<>();
+
+		if (StringUtil.isEmpty(uri)) {
+			return binVars;
+		}
+
+		return binVars;
 	}
 
 	private String getDescriptionByUri(String identifier, Object resource, URI uri) {

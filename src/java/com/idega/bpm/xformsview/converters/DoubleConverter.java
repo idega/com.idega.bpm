@@ -20,6 +20,11 @@ public class DoubleConverter implements DataConverter {
 	@Override
 	public Object convert(Element o) {
 		String value = o.getTextContent();
+		return convert(value);
+	}
+
+	@Override
+	public Object convert(String value) {
 		return StringUtil.isEmpty(value) ? Double.valueOf(-1) : Double.valueOf(value);
 	}
 
