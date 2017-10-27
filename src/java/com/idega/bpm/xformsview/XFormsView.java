@@ -39,6 +39,8 @@ import com.idega.xformsmanager.business.DocumentManagerFactory;
  */
 public class XFormsView implements View {
 
+	private static final Logger LOGGER = Logger.getLogger(XFormsView.class.getName());
+
 	public static final String VIEW_TYPE = "xforms";
 	public static final String FORM_TYPE = "bpm";
 
@@ -126,16 +128,14 @@ public class XFormsView implements View {
 			Document xformWithData = getFormDocumentWithData();
 			xform = xformWithData == null ? null : xformWithData.getXformsDocument();
 		} catch (Exception e) {
-			e.printStackTrace();
-			CoreUtil.sendExceptionNotification("Error rendering XForm: unable to load XML document or populate variables. View ID: " + viewId +
-					", task instance ID: " + taskInstanceId, e);
+			LOGGER.log(Level.WARNING, "Error getting XForm in XML. View ID: " + viewId + ", task instance ID: " + taskInstanceId, e);
+			CoreUtil.sendExceptionNotification("Error rendering XForm: unable to load XML document or populate variables. View ID: " + viewId + ", task instance ID: " + taskInstanceId, e);
 		}
 		if (xform == null) {
 			IWBundle bundle = application.getBundle(BPMConstants.IW_BUNDLE_STARTER);
 			IWResourceBundle iwrb = iwc == null ? bundle.getResourceBundle(Locale.ENGLISH) : bundle.getResourceBundle(iwc);
 			Layer errorBlock = new Layer();
-			Heading2 errorLabel = new Heading2(iwrb.getLocalizedString("error_rendering_xform",
-					"Sorry, some error occurred. We are working on it. Please, try later..."));
+			Heading2 errorLabel = new Heading2(iwrb.getLocalizedString("error_rendering_xform", "Sorry, some error occurred. We are working on it. Please, try later..."));
 			errorBlock.add(errorLabel);
 			String action = "closeAllLoadingMessages();";
 			if (iwc != null && !CoreUtil.isSingleComponentRenderingProcess(iwc))
