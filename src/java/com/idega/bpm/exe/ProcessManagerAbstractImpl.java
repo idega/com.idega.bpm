@@ -1,5 +1,6 @@
 package com.idega.bpm.exe;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,9 +37,11 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 	private CaseManagersProvider caseManagersProvider;
 
 	@Override
-	public ProcessDefinitionW getProcessDefinition(long pdId) {
-
-		return createProcessDefinition(pdId);
+	public ProcessDefinitionW getProcessDefinition(Serializable pdId) {
+		if (pdId instanceof Number) {
+			return createProcessDefinition(((Number) pdId).longValue());
+		}
+		return null;
 	}
 
 	@Override

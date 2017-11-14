@@ -1,5 +1,6 @@
 package com.idega.bpm.exe;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -366,13 +367,17 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 	}
 
 	@Override
-	public Long getProcessDefinitionId() {
-		return processDefinitionId;
+	public <T extends Serializable> T getProcessDefinitionId() {
+		@SuppressWarnings("unchecked")
+		T id = (T) processDefinitionId;
+		return id;
 	}
 
 	@Override
-	public void setProcessDefinitionId(Long processDefinitionId) {
-		this.processDefinitionId = processDefinitionId;
+	public void setProcessDefinitionId(Serializable processDefinitionId) {
+		if (processDefinitionId instanceof Number) {
+			this.processDefinitionId = ((Number) processDefinitionId).longValue();
+		}
 	}
 
 	public BPMFactory getBpmFactory() {
