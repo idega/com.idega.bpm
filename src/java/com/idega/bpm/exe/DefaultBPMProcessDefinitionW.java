@@ -144,7 +144,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 	@Override
 	@Transactional(readOnly = false)
-	public Long startProcess(final ViewSubmission viewSubmission) {
+	public <T extends Serializable> T startProcess(final ViewSubmission viewSubmission) {
 		Long processDefinitionId = viewSubmission.getProcessDefinitionId();
 
 		if (!processDefinitionId.equals(getProcessDefinitionId()))
@@ -196,7 +196,9 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 		}
 
 		try {
-			return piId;
+			@SuppressWarnings("unchecked")
+			T result = (T) piId;
+			return result;
 		} finally {
 			if (procDefName != null)
 				notifyAboutNewProcess(procDefName, piId, variables);
