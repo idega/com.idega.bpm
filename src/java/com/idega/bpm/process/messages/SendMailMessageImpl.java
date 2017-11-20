@@ -162,6 +162,29 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 
 	@Override
 	public void send(MessageValueContext mvCtx, final Object context, final ProcessInstance pi, final LocalizedMessages msgs, final Token tkn) {
+		final List<String> emailAddresses = getMailsToSendTo(context, msgs, pi);
+		send(emailAddresses, mvCtx, context, pi, msgs, tkn);
+	}
+
+	@Override
+	public void send(MessageValueContext mvCtx, Object context, ProcessInstance pi, LocalizedMessages msgs, Token tkn, List<User> receivers) {
+		List<String> emailAddresses = new ArrayList<>();
+		if (!ListUtil.isEmpty(receivers)) {
+			UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
+			for (User receiver: receivers) {
+				Email email = null;
+				try {
+					email = userBusiness.getUsersMainEmail(receiver);
+				} catch (Exception e) {}
+				if (email != null) {
+					emailAddresses.add(email.getEmailAddress());
+				}
+			}
+		}
+		send(emailAddresses, mvCtx, context, pi, msgs, tkn);
+	}
+
+	private void send(List<String> emailAddresses, MessageValueContext mvCtx, Object context, ProcessInstance pi, LocalizedMessages msgs, Token tkn) {
 		ExecutionContext ectx = null;
 		if (context instanceof ExecutionContext) {
 			ectx = (ExecutionContext) context;
@@ -174,7 +197,6 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		final IWMainApplication iwma = iwc == null ? getApplication() : IWMainApplication.getIWMainApplication(iwc);
 		final IWApplicationContext iwac = iwma.getIWApplicationContext();
 
-		final List<String> emailAddresses = getMailsToSendTo(context, msgs, pi);
 		if (ListUtil.isEmpty(emailAddresses)) {
 			getLogger().warning("No recipients resolved for " + msgs);
 			return;
@@ -419,8 +441,8 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		return getMessageValueHandler().getFormattedMessage(unformattedMessage,	messageValues, tkn, mvCtx);
 	}
 
-	private Collection<User> getAllUsersByRoles(String[] roles, ProcessInstance pi) {
-		Collection<User> allUsers = new ArrayList<User>();
+	private List<User> getAllUsersByRoles(String[] roles, ProcessInstance pi) {
+		List<User> allUsers = new ArrayList<User>();
 		for (String string: roles) {
 			Set<String> rolesNamesSet = new HashSet<String>(roles.length);
 			rolesNamesSet.add(string);
@@ -454,8 +476,8 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 		return allUsers;
 	}
 
-	public Collection<User> getUsersToSendMessageTo(String rolesNamesAggr, ProcessInstance pi) {
-		Collection<User> allUsers = new ArrayList<User>();
+	public List<User> getUsersToSendMessageTo(String rolesNamesAggr, ProcessInstance pi) {
+		List<User> allUsers = new ArrayList<User>();
 		if (rolesNamesAggr == null) {
 			getLogger().warning("Roles expression is not provided");
 			return allUsers;
