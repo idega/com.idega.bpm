@@ -1,5 +1,6 @@
 package com.idega.bpm.process.messages;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -9,6 +10,7 @@ import java.util.logging.Logger;
 
 import com.idega.idegaweb.IWBundle;
 import com.idega.util.CoreConstants;
+import com.idega.util.datastructures.map.MapUtil;
 
 
 /**
@@ -35,6 +37,33 @@ public class LocalizedMessages {
 
 	private Map<Locale, String> inlineSubjects;
 	private Map<Locale, String> inlineMessages;
+
+	public LocalizedMessages() {
+		super();
+	}
+
+	public LocalizedMessages(LocalizedMessages msgs) {
+		this();
+
+		this.from = msgs.from;
+		this.sendToRoles = msgs.sendToRoles;
+		this.recipientUserId = msgs.recipientUserId;
+		this.sendToEmails = msgs.sendToEmails == null ? null : new ArrayList<>(msgs.sendToEmails);
+		this.attachFiles = msgs.attachFiles == null ? null : new ArrayList<>(msgs.attachFiles);
+		this.sendCcEmails = msgs.sendCcEmails == null ? null : new ArrayList<>(msgs.sendCcEmails);
+		this.subjectValuesExp = msgs.subjectValuesExp;
+		this.messageValuesExp = msgs.messageValuesExp;
+		this.subjectTransformator = msgs.subjectTransformator;
+		this.messageTransformator = msgs.messageTransformator;
+
+		this.iwb = msgs.iwb;
+
+		this.subjectKey = msgs.subjectKey;
+		this.msgKey = msgs.msgKey;
+
+		this.inlineSubjects = msgs.inlineSubjects == null ? null : MapUtil.deepCopy(msgs.inlineSubjects);
+		this.inlineMessages = msgs.inlineMessages == null ? null : MapUtil.deepCopy(msgs.inlineMessages);
+	}
 
 	public void setSubjectKey(String subjectKey) {
 		this.subjectKey = subjectKey;
@@ -172,6 +201,10 @@ public class LocalizedMessages {
 
 	public void setSendCcEmails(List<String> sendCcEmails) {
 		this.sendCcEmails = sendCcEmails;
+	}
+
+	public Map<Locale, String> getInlineMessages() {
+		return inlineMessages;
 	}
 
 	@Override
