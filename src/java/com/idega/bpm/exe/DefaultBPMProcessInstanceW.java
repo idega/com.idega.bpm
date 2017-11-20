@@ -862,9 +862,17 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 		try {
 			String procDefName = getProcessDefinitionW().getProcessDefinition().getName();
-			@SuppressWarnings("unchecked")
-			Map<String, Object> variables = getProcessInstance().getContextInstance().getVariables();
-			usersConnectedToProcess = getBpmFactory().getBPMDAO().getUsersConnectedToProcess(getProcessInstanceId(), procDefName, variables);
+			usersConnectedToProcess = getBpmContext().execute(new JbpmCallback<List<User>>() {
+
+				@Override
+				public List<User> doInJbpm(JbpmContext context) throws JbpmException {
+					ProcessInstance pi = context.getProcessInstance(getProcessInstanceId());
+					@SuppressWarnings("unchecked")
+					Map<String, Object> variables = pi.getContextInstance().getVariables();
+					return getBpmFactory().getBPMDAO().getUsersConnectedToProcess(getProcessInstanceId(), procDefName, variables);
+				}
+
+			});
 		} catch (Exception e) {}
 		if (usersConnectedToProcess != null) {
 			return usersConnectedToProcess;
@@ -873,8 +881,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		final Collection<User> users;
 		try {
 			Long processInstanceId = getProcessInstanceId();
-			BPMTypedPermission perm = (BPMTypedPermission) getBpmFactory().getPermissionsFactory()
-					.getRoleAccessPermission(processInstanceId, null, false);
+			BPMTypedPermission perm = (BPMTypedPermission) getBpmFactory().getPermissionsFactory().getRoleAccessPermission(processInstanceId, null, false);
 			users = getBpmFactory().getRolesManager().getAllUsersForRoles(null, processInstanceId, perm);
 		} catch (Exception e) {
 			getLogger().log(Level.SEVERE, "Exception while resolving all process instance users", e);
