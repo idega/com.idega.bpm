@@ -489,4 +489,9 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 		return null;
 	}
 
+	@Override
+	public String getProcessDefinitionName() {
+		return getProcessDefinition().getName();
+	}
+
 }
