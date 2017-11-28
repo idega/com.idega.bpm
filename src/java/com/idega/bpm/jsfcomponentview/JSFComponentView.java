@@ -23,7 +23,7 @@ public class JSFComponentView implements View, Serializable {
 	public static final String VIEW_TYPE = "jsf";
 
 	private String viewId;
-	private Long taskInstanceId;
+	private Serializable taskInstanceId;
 	private boolean submitable = true, submitted;
 	private Map<String, Object> variables;
 	private Map<String, String> parameters;
@@ -63,8 +63,10 @@ public class JSFComponentView implements View, Serializable {
 	}
 
 	@Override
-	public Long getTaskInstanceId() {
-		return taskInstanceId;
+	public <T> T getTaskInstanceId() {
+		@SuppressWarnings("unchecked")
+		T id = (T) taskInstanceId;
+		return id;
 	}
 
 	@Override
@@ -140,8 +142,8 @@ public class JSFComponentView implements View, Serializable {
 	}
 
 	@Override
-	public void setTaskInstanceId(Long taskInstanceId) {
-		this.taskInstanceId = taskInstanceId;
+	public <T> void setTaskInstanceId(T taskInstanceId) {
+		this.taskInstanceId = (Serializable) taskInstanceId;
 	}
 
 	@Override

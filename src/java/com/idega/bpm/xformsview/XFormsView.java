@@ -1,5 +1,6 @@
 package com.idega.bpm.xformsview;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class XFormsView implements View {
 	public static final String FORM_TYPE = "bpm";
 
 	private String viewId;
-	private Long taskInstanceId;
+	private Serializable taskInstanceId;
 	private boolean submitable = true, submitted;
 	private DocumentManagerFactory documentManagerFactory;
 	private Document form;
@@ -289,13 +290,15 @@ public class XFormsView implements View {
 	}
 
 	@Override
-	public Long getTaskInstanceId() {
-		return taskInstanceId;
+	public <T> T getTaskInstanceId() {
+		@SuppressWarnings("unchecked")
+		T id = (T) taskInstanceId;
+		return id;
 	}
 
 	@Override
-	public void setTaskInstanceId(Long taskInstanceId) {
-		this.taskInstanceId = taskInstanceId;
+	public <T> void setTaskInstanceId(T taskInstanceId) {
+		this.taskInstanceId = (Serializable) taskInstanceId;
 	}
 
 	@Override
