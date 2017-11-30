@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import org.jbpm.JbpmContext;
 import org.jbpm.JbpmException;
 import org.jbpm.context.def.VariableAccess;
+import org.jbpm.db.GraphSession;
 import org.jbpm.graph.def.ProcessDefinition;
 import org.jbpm.graph.def.Transition;
 import org.jbpm.graph.exe.ProcessInstance;
@@ -420,7 +421,15 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 	@Override
 	@Transactional(readOnly = false)
 	public ProcessDefinition getProcessDefinition(JbpmContext context) {
-		processDefinition = context.getGraphSession().getProcessDefinition(getProcessDefinitionId());
+		GraphSession jBPMSession = context.getGraphSession();
+		if (jBPMSession != null) {
+			try {
+				processDefinition = jBPMSession.getProcessDefinition(getProcessDefinitionId());
+			} catch (Exception e) {
+				getLogger().log(Level.WARNING, "No process definition found in JBPM context, probably it is BPMN 2 process...", e);
+			}
+		}
+
 		return processDefinition;
 	}
 
