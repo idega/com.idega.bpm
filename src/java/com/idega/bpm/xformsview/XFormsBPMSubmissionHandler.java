@@ -76,7 +76,7 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 
 				piW = tiW.getProcessInstanceW();
 				piId = piW.getProcessInstanceId();
-				procDefName = piW.getProcessDefinitionW().getProcessDefinition().getName();
+				procDefName = piW.getProcessDefinitionW().getProcessDefinitionName();
 
 				tiW.submit(xformsViewSubmission);
 				variables = xformsViewSubmission.resolveVariables();

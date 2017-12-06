@@ -116,7 +116,7 @@ public class BPMTaskPDFViewer extends IWBaseComponent implements BPMCapableJSFCo
 
 		try {
 			TaskInstanceW taskInstance = getBPMFactory().getTaskInstanceW(taskInstanceId);
-			String systemName = taskInstance.getTaskInstance().getName();
+			String systemName = taskInstance.getTaskInstanceName();
 			String localizationKey = StringHandler.stripNonRomanCharacters(systemName);
 			return iwrb.getLocalizedString("pdf_task." + localizationKey, systemName);
 		} catch (Exception e) {

@@ -408,14 +408,16 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 	}
 
 	@Override
-	public ProcessDefinition getProcessDefinition() {
+	public <T> T getProcessDefinition() {
 		processDefinition = getBpmContext().execute(new JbpmCallback<ProcessDefinition>() {
 			@Override
 			public ProcessDefinition doInJbpm(JbpmContext context) throws JbpmException {
 				return getProcessDefinition(context);
 			}
 		});
-		return processDefinition;
+		@SuppressWarnings("unchecked")
+		T definition = (T) processDefinition;
+		return definition;
 	}
 
 	@Override
@@ -435,7 +437,8 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 	@Override
 	public String getProcessName(Locale locale) {
-		return getProcessDefinition().getName();
+		ProcessDefinition processDefinition = getProcessDefinition();
+		return processDefinition == null ? null : processDefinition.getName();
 	}
 
 	@Override
@@ -455,7 +458,8 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 			return false;
 		}
 
-		String procDefName = getProcessDefinition().getName();
+		ProcessDefinition processDefinition = getProcessDefinition();
+		String procDefName = processDefinition == null ? null : processDefinition.getName();
 		Collection<VariableInstanceInfo> vars = getVariableInstanceQuerier().getVariablesByProcessDefAndVariableName(
 				procDefName,
 				BPMConstants.VAR_MANAGER_ROLE
@@ -500,7 +504,8 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 	@Override
 	public String getProcessDefinitionName() {
-		return getProcessDefinition().getName();
+		ProcessDefinition processDefinition = getProcessDefinition();
+		return processDefinition == null ? null : processDefinition.getName();
 	}
 
 }

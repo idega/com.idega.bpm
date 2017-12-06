@@ -1,5 +1,6 @@
 package com.idega.bpm.exe;
 
+import java.io.Serializable;
 import java.security.AccessControlException;
 import java.security.Permission;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import javax.annotation.Resource;
 import org.jbpm.JbpmContext;
 import org.jbpm.JbpmException;
 import org.jbpm.context.exe.ContextInstance;
+import org.jbpm.graph.def.ProcessDefinition;
 import org.jbpm.graph.exe.ProcessInstance;
 import org.jbpm.graph.exe.Token;
 import org.jbpm.taskmgmt.exe.TaskInstance;
@@ -81,7 +83,7 @@ import com.idega.util.expression.ELUtil;
 @Service("defaultPIW")
 public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements ProcessInstanceW {
 
-	private Long processInstanceId;
+	private Serializable processInstanceId;
 	private ProcessInstance processInstance;
 
 	@Autowired
@@ -363,7 +365,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 					//	Checking custom business logic
 					if (!MapUtil.isEmpty(tasksManagers)) {
 						Boolean visible = true;
-						String procDefName = tiw.getProcessInstanceW().getProcessDefinitionW().getProcessDefinition().getName();
+						String procDefName = tiw.getProcessInstanceW().getProcessDefinitionW().getProcessDefinitionName();
 						for (Iterator<TaskPermissionManager> tasksManagersIter = tasksManagers.values().iterator(); (visible && tasksManagersIter.hasNext());) {
 							visible = tasksManagersIter.next().isTaskVisible(tiw, procDefName);
 						}
@@ -766,12 +768,14 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	public Long getProcessInstanceId() {
-		return processInstanceId;
+	public <T extends Serializable> T getProcessInstanceId() {
+		@SuppressWarnings("unchecked")
+		T id = (T) processInstanceId;
+		return id;
 	}
 
 	@Override
-	public void setProcessInstanceId(Long processInstanceId) {
+	public <T extends Serializable> void setProcessInstanceId(T processInstanceId) {
 		this.processInstanceId = processInstanceId;
 	}
 
@@ -795,22 +799,26 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	@Transactional(readOnly = true)
-	public ProcessInstance getProcessInstance() {
+	public <T> T getProcessInstance() {
 		processInstance = getBpmContext().execute(new JbpmCallback<ProcessInstance>() {
 			@Override
 			public ProcessInstance doInJbpm(JbpmContext context) throws JbpmException {
 				return getProcessInstance(context);
 			}
 		});
-
-		return processInstance;
+		@SuppressWarnings("unchecked")
+		T instance = (T) processInstance;
+		return instance;
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public ProcessInstance getProcessInstance(JbpmContext context) {
-		processInstance = context.getProcessInstance(getProcessInstanceId());
-		return processInstance;
+	public <T> T getProcessInstance(JbpmContext context) {
+		Serializable id = getProcessInstanceId();
+		processInstance = id instanceof Number ? context.getProcessInstance(((Number) id).longValue()) : null;
+		@SuppressWarnings("unchecked")
+		T instance = (T) processInstance;
+		return instance;
 	}
 
 	@Override
@@ -842,7 +850,12 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	@Transactional(readOnly = true)
 	public ProcessDefinitionW getProcessDefinitionW(JbpmContext context) {
-		Long pdId = getProcessInstance(context).getProcessDefinition().getId();
+		ProcessInstance pi = getProcessInstance(context);
+		ProcessDefinition pd = pi == null ? null : pi.getProcessDefinition();
+		if (pd == null) {
+			return null;
+		}
+		Long pdId = pd.getId();
 		return getProcessManager().getProcessDefinition(pdId);
 	}
 
@@ -861,7 +874,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		}
 
 		try {
-			String procDefName = getProcessDefinitionW().getProcessDefinition().getName();
+			String procDefName = getProcessDefinitionW().getProcessDefinitionName();
 			usersConnectedToProcess = getBpmContext().execute(new JbpmCallback<List<User>>() {
 
 				@Override
@@ -1071,7 +1084,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	public Long getIdOfStartTaskInstance() {
+	public <T extends Serializable> T getIdOfStartTaskInstance() {
 		return getBpmFactory().getIdOfStartTaskInstance(getProcessInstanceId());
 	}
 
@@ -1088,7 +1101,8 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	@Transactional(readOnly = true)
 	public boolean hasEnded() {
-		return getProcessInstance().hasEnded();
+		ProcessInstance pi = getProcessInstance();
+		return pi == null ? false : pi.hasEnded();
 	}
 
 	public VariablesHandler getVariablesHandler() {
@@ -1107,8 +1121,10 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	public Object getVariableLocally(final String variableName, Token token) {
-		if (token == null)
-			token = getProcessInstance().getRootToken();
+		if (token == null) {
+			ProcessInstance pi = getProcessInstance();
+			token = pi == null ? null : pi.getRootToken();
+		}
 
 		ContextInstance contextInstnace = token.getProcessInstance().getContextInstance();
 
@@ -1196,7 +1212,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 			return viewTIW;
 		} catch (Exception e) {
-			getLogger().log(Level.WARNING, "Error submiting task '" + task.getTaskInstance().getName() + "' for process instance: " + getProcessInstanceId(), e);
+			getLogger().log(Level.WARNING, "Error submiting task '" + task.getTaskInstanceName() + "' for process instance: " + getProcessInstanceId(), e);
 		}
 
 		return null;
@@ -1226,7 +1242,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		}
 
 		for (TaskInstanceW task: tasks) {
-			if (taskName.equals(task.getTaskInstance().getName())) {
+			if (taskName.equals(task.getTaskInstanceName())) {
 				return task;
 			}
 		}
@@ -1309,7 +1325,8 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	public List<ProcessInstance> getSubProcesses() {
-		return getAllSubprocesses(getProcessInstanceId());
+		Long procInstId = getProcessInstanceId();
+		return getAllSubprocesses(procInstId);
 	}
 
 }

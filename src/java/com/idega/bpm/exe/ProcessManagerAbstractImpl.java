@@ -61,14 +61,12 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 	}
 
 	@Override
-	public ProcessInstanceW getProcessInstance(long piId) {
-
+	public <T extends Serializable> ProcessInstanceW getProcessInstance(T piId) {
 		return createProcessInstance(piId);
 	}
 
 	@Override
-	public TaskInstanceW getTaskInstance(long tiId) {
-
+	public <T extends Serializable> TaskInstanceW getTaskInstance(T tiId) {
 		return createTaskInstance(tiId);
 	}
 
@@ -100,7 +98,7 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 	 */
 	protected abstract ProcessInstanceW createPIW();
 
-	public synchronized ProcessInstanceW createProcessInstance(long piId) {
+	public synchronized <T extends Serializable> ProcessInstanceW createProcessInstance(T piId) {
 		ProcessInstanceW piw = createPIW();
 		piw.setProcessInstanceId(piId);
 		return piw;
@@ -113,7 +111,7 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 	 */
 	protected abstract TaskInstanceW createTIW();
 
-	public synchronized TaskInstanceW createTaskInstance(long tiId) {
+	public synchronized <T extends Serializable> TaskInstanceW createTaskInstance(T tiId) {
 		TaskInstanceW tiw = createTIW();
 		tiw.setTaskInstanceId(tiId);
 		tiw.setProcessManager(this);

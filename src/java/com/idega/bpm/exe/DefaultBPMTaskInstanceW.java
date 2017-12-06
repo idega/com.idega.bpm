@@ -125,7 +125,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	@TmpFileResolverType("defaultResolver")
 	private TmpFileResolver uploadedResourceResolver;
 
-	private Long taskInstanceId;
+	private Serializable taskInstanceId;
 	private TaskInstance taskInstance;
 
 	@Autowired
@@ -144,7 +144,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 	@Override
 	@Transactional(readOnly = true)
-	public TaskInstance getTaskInstance(JbpmContext context) {
+	public <T> T getTaskInstance(JbpmContext context) {
 		Long tiId = getTaskInstanceId();
 		if (tiId == null) {
 			LOGGER.warning("ID of task instance is unknown!");
@@ -160,19 +160,23 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 			LOGGER.warning("Failed to resolve task instance by ID: " + tiId);
 		}
 
-		return taskInstance;
+		@SuppressWarnings("unchecked")
+		T task = (T) taskInstance;
+		return task;
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public TaskInstance getTaskInstance() {
+	public <T> T getTaskInstance() {
 		taskInstance = getBpmContext().execute(new JbpmCallback<TaskInstance>() {
 			@Override
 			public TaskInstance doInJbpm(JbpmContext context) throws JbpmException {
 				return getTaskInstance(context);
 			}
 		});
-		return taskInstance;
+		@SuppressWarnings("unchecked")
+		T task = (T) taskInstance;
+		return task;
 	}
 
 	@Override
@@ -570,12 +574,18 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	}
 
 	@Override
-	public Long getTaskInstanceId() {
-		return taskInstanceId;
+	public <T extends Serializable> T getTaskInstanceId() {
+		if (taskInstanceId == null) {
+			TaskInstance ti = getTaskInstance();
+			taskInstanceId = ti == null ? null : ti.getId();
+		}
+		@SuppressWarnings("unchecked")
+		T id = (T) taskInstanceId;
+		return id;
 	}
 
 	@Override
-	public void setTaskInstanceId(Long taskInstanceId) {
+	public <T extends Serializable> void setTaskInstanceId(T taskInstanceId) {
 		this.taskInstanceId = taskInstanceId;
 	}
 
@@ -780,7 +790,9 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 	@Override
 	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is) {
-		return addAttachment(variable, fileName, description, is, getTaskInstanceId() + System.currentTimeMillis() + CoreConstants.SLASH);
+		Serializable id = getTaskInstanceId();
+		String filesFolder = id.toString() + System.currentTimeMillis() + CoreConstants.SLASH;
+		return addAttachment(variable, fileName, description, is, filesFolder);
 	}
 	@Override
 	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is, String filesFolder) {
@@ -955,7 +967,10 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 		if (submitted != null)
 			return submitted;
 
-		submitted = getTaskInstance().getEnd() == null ? Boolean.FALSE : Boolean.TRUE;
+		TaskInstance ti = getTaskInstance();
+		submitted = ti == null ?
+				Boolean.FALSE :
+				ti.getEnd() == null ? Boolean.FALSE : Boolean.TRUE;
 
 		return submitted;
 	}
@@ -1020,7 +1035,10 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 	@Override
 	public void hide() {
-		getTaskInstance().setPriority(PRIORITY_HIDDEN);
+		TaskInstance ti = getTaskInstance();
+		if (ti != null) {
+			ti.setPriority(PRIORITY_HIDDEN);
+		}
 	}
 
 	@Override
@@ -1278,6 +1296,18 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 		hasViewForDisplayCache.put(result.getId(), String.valueOf(hasView));
 		return hasView;
+	}
+
+	@Override
+	public String getTaskInstanceName() {
+		TaskInstance ti = getTaskInstance();
+		return ti == null ? null : ti.getName();
+	}
+
+	@Override
+	public Date getCreate() {
+		TaskInstance ti = getTaskInstance();
+		return ti == null ? null : ti.getCreate();
 	}
 
 }
