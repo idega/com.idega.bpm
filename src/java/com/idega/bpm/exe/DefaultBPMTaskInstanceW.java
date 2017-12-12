@@ -145,13 +145,13 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	@Override
 	@Transactional(readOnly = true)
 	public <T> T getTaskInstance(JbpmContext context) {
-		Long tiId = getTaskInstanceId();
-		if (tiId == null) {
+		Serializable tiId = getTaskInstanceId();
+		if (!(tiId instanceof Number)) {
 			LOGGER.warning("ID of task instance is unknown!");
 			return null;
 		}
 
-		taskInstance = context.getTaskInstance(tiId);
+		taskInstance = context.getTaskInstance(((Number) tiId).longValue());
 		if (taskInstance == null) {
 			LOGGER.warning("Error getting task instance by ID: " + tiId + " from context, will try to load directly from DB");
 			taskInstance = getBpmFactory().getBPMDAO().getSingleResultByInlineQuery("from " + TaskInstance.class.getName() + " t where t.id = :id", TaskInstance.class, new Param("id", tiId));
