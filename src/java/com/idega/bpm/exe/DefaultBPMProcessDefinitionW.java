@@ -327,9 +327,9 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 	@Transactional(readOnly = true)
 	public String getStartTaskName() {
 		Locale locale = getCurrentLocale();
-		if (locale == null)
+		if (locale == null) {
 			locale = ICLocaleBusiness.getLocaleFromLocaleString("is_IS");
-
+		}
 		final Locale l = locale;
 		return getBpmContext().execute(new JbpmCallback<String>() {
 
@@ -338,7 +338,11 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 				List<String> preferred = new ArrayList<String>(1);
 				preferred.add(XFormsView.VIEW_TYPE);
 
-				Long taskId = getProcessDefinition(context).getTaskMgmtDefinition().getStartTask().getId();
+				ProcessDefinition pd = getProcessDefinition(context);
+				if (pd == null) {
+					return null;
+				}
+				Long taskId = pd.getTaskMgmtDefinition().getStartTask().getId();
 
 				View view = getBpmFactory().getViewByTask(taskId, false, preferred);
 
@@ -410,11 +414,18 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 	@Override
 	public <T> T getProcessDefinition() {
 		processDefinition = getBpmContext().execute(new JbpmCallback<ProcessDefinition>() {
+
 			@Override
 			public ProcessDefinition doInJbpm(JbpmContext context) throws JbpmException {
 				return getProcessDefinition(context);
 			}
+
 		});
+
+		if (processDefinition == null) {
+			return null;
+		}
+
 		@SuppressWarnings("unchecked")
 		T definition = (T) processDefinition;
 		return definition;
@@ -422,17 +433,24 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 	@Override
 	@Transactional(readOnly = false)
-	public ProcessDefinition getProcessDefinition(JbpmContext context) {
+	public <T> T getProcessDefinition(JbpmContext context) {
+		Serializable id = getProcessDefinitionId();
+		if (!(id instanceof Number)) {
+			return null;
+		}
+
 		GraphSession jBPMSession = context.getGraphSession();
 		if (jBPMSession != null) {
 			try {
-				processDefinition = jBPMSession.getProcessDefinition(getProcessDefinitionId());
+				processDefinition = jBPMSession.getProcessDefinition(((Number) id).longValue());
 			} catch (Exception e) {
 				getLogger().log(Level.WARNING, "No process definition found in JBPM context, probably it is BPMN 2 process...", e);
 			}
 		}
 
-		return processDefinition;
+		@SuppressWarnings("unchecked")
+		T definition = (T) processDefinition;
+		return definition;
 	}
 
 	@Override
