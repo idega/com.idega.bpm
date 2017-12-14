@@ -1305,6 +1305,12 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	}
 
 	@Override
+	public Date getEnd() {
+		TaskInstance ti = getTaskInstance();
+		return ti == null ? null : ti.getEnd();
+	}
+
+	@Override
 	public Date getCreate() {
 		TaskInstance ti = getTaskInstance();
 		return ti == null ? null : ti.getCreate();
