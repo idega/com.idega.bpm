@@ -879,10 +879,11 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 				@Override
 				public List<User> doInJbpm(JbpmContext context) throws JbpmException {
-					ProcessInstance pi = context.getProcessInstance(getProcessInstanceId());
+					Long piId = getProcessInstanceId();
+					ProcessInstance pi = context.getProcessInstance(piId);
 					@SuppressWarnings("unchecked")
 					Map<String, Object> variables = pi.getContextInstance().getVariables();
-					return getBpmFactory().getBPMDAO().getUsersConnectedToProcess(getProcessInstanceId(), procDefName, variables);
+					return getBpmFactory().getBPMDAO().getUsersConnectedToProcess(piId, procDefName, variables);
 				}
 
 			});
