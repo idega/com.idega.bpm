@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.jbpm.JbpmContext;
 import org.jbpm.JbpmException;
@@ -63,8 +62,6 @@ import com.idega.util.expression.ELUtil;
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
 public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements ProcessDefinitionW {
 
-	private static Logger LOGGER;
-
 	private Long processDefinitionId;
 	private ProcessDefinition processDefinition;
 
@@ -76,14 +73,6 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 	private VariablesHandler variablesHandler;
 	@Autowired
 	private VariableInstanceQuerier querier;
-
-	@Override
-	protected Logger getLogger() {
-		if (LOGGER == null) {
-			LOGGER = Logger.getLogger(this.getClass().getName());
-		}
-		return LOGGER;
-	}
 
 	protected void notifyAboutNewProcess(String procDefName, Long procInstId, Map<String, Object> variables) {
 		ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, procInstId, variables));
