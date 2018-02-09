@@ -19,6 +19,7 @@ import com.idega.jbpm.exe.ProcessInstanceW;
 import com.idega.jbpm.exe.ProcessManager;
 import com.idega.jbpm.exe.TaskInstanceW;
 import com.idega.util.ListUtil;
+import com.idega.util.StringHandler;
 
 /**
  * abstract implementation of ProcessManager. Default behavior is that bean container (e.g. spring)
@@ -38,8 +39,8 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 
 	@Override
 	public ProcessDefinitionW getProcessDefinition(Serializable pdId) {
-		if (pdId instanceof Number) {
-			return createProcessDefinition(((Number) pdId).longValue());
+		if (pdId instanceof Number || (pdId != null && StringHandler.isNumeric(pdId.toString()))) {
+			return createProcessDefinition(Long.valueOf(pdId.toString()));
 		}
 		return null;
 	}
@@ -52,22 +53,32 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 			public ProcessDefinitionW doInJbpm(JbpmContext context) throws JbpmException {
 				ProcessDefinition pd = context.getGraphSession().findLatestProcessDefinition(processName);
 
-				if (pd == null)
+				if (pd == null) {
 					throw new IllegalStateException("Process definition not deployed by the process name = " + processName);
+				}
 
 				return getProcessDefinition(pd.getId());
 			}
 		});
 	}
 
+	private <T extends Serializable> T getId(T id) {
+		if (id instanceof Number || (id != null && StringHandler.isNumeric(id.toString()))) {
+			@SuppressWarnings("unchecked")
+			T result = (T) Long.valueOf(id.toString());
+			return result;
+		}
+		return id;
+	}
+
 	@Override
 	public <T extends Serializable> ProcessInstanceW getProcessInstance(T piId) {
-		return createProcessInstance(piId);
+		return createProcessInstance(getId(piId));
 	}
 
 	@Override
 	public <T extends Serializable> TaskInstanceW getTaskInstance(T tiId) {
-		return createTaskInstance(tiId);
+		return createTaskInstance(getId(tiId));
 	}
 
 	@Override
@@ -100,7 +111,7 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 
 	public synchronized <T extends Serializable> ProcessInstanceW createProcessInstance(T piId) {
 		ProcessInstanceW piw = createPIW();
-		piw.setProcessInstanceId(piId);
+		piw.setProcessInstanceId(getId(piId));
 		return piw;
 	}
 
@@ -113,7 +124,7 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 
 	public synchronized <T extends Serializable> TaskInstanceW createTaskInstance(T tiId) {
 		TaskInstanceW tiw = createTIW();
-		tiw.setTaskInstanceId(tiId);
+		tiw.setTaskInstanceId(getId(tiId));
 		tiw.setProcessManager(this);
 		return tiw;
 	}
@@ -135,19 +146,16 @@ public abstract class ProcessManagerAbstractImpl implements ProcessManager {
 		this.caseManagersProvider = caseManagersProvider;
 	}
 
-	// FIXME: wrong place for this, refactor
 	@Override
 	public List<ProcessDefinitionW> getAllProcesses() {
-		List<CasesRetrievalManager> caseManagers = getCaseManagersProvider()
-		        .getCaseManagers();
+		List<CasesRetrievalManager> caseManagers = getCaseManagersProvider().getCaseManagers();
 		if (ListUtil.isEmpty(caseManagers)) {
 			return null;
 		}
 
 		List<ProcessDefinitionW> allProcesses = new ArrayList<ProcessDefinitionW>();
 		for (CasesRetrievalManager caseManager : caseManagers) {
-			List<Long> caseProcesses = caseManager
-			        .getAllCaseProcessDefinitions();
+			List<Long> caseProcesses = caseManager.getAllCaseProcessDefinitions();
 
 			if (!ListUtil.isEmpty(caseProcesses)) {
 				for (Long id : caseProcesses) {
