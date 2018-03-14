@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import com.idega.block.email.business.EmailSenderHelper;
 import com.idega.block.process.business.CaseBusiness;
 import com.idega.block.process.data.Case;
+import com.idega.bpm.BPMConstants;
 import com.idega.builder.bean.AdvancedProperty;
 import com.idega.business.IBOLookup;
 import com.idega.core.accesscontrol.business.AccessController;
@@ -116,7 +117,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 
 		String sendToRoles = msgs.getSendToRoles();
 		if (sendToRoles != null && sendToRoles.indexOf("owner") != -1) {
-			String ownerEmail = (String) pi.getContextInstance().getVariable("string_ownerEmailAddress");
+			String ownerEmail = (String) pi.getContextInstance().getVariable(BPMConstants.VAR_OWNER_EMAIL);
 			if (com.idega.util.EmailValidator.getInstance().isValid(ownerEmail) && !emailAddresses.contains(ownerEmail)) {
 				getLogger().info("Resolved owner's email ('" + ownerEmail + "') from application, it was not among receivers: " + emailAddresses + ". Proc. inst. ID: " + pi.getId());
 				emailAddresses.add(ownerEmail);
@@ -346,12 +347,14 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	}
 
 	protected File getAttachedFile(List<String> filesToAttach, ProcessInstanceW piw, ExecutionContext ectx) {
-		if (ectx == null || ListUtil.isEmpty(filesToAttach))
+		if (ectx == null || ListUtil.isEmpty(filesToAttach)) {
 			return null;
+		}
 
 		List<BinaryVariable> attachments = piw.getAttachments();
-		if (ListUtil.isEmpty(attachments))
+		if (ListUtil.isEmpty(attachments)) {
 			return null;
+		}
 
 		List<String> filesInRepository = new ArrayList<String>();
 		for (BinaryVariable bv: attachments) {

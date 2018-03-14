@@ -23,5 +23,8 @@ public class BPMConstants {
 								VAR_SUBJECT = "string_subject",
 								VAR_FROM_ADDRESS = "string_fromAddress",
 
-								VAR_MANAGER_ROLE = ProcessDefinitionW.VARIABLE_MANAGER_ROLE_NAME;
+								VAR_MANAGER_ROLE = ProcessDefinitionW.VARIABLE_MANAGER_ROLE_NAME,
+
+								VAR_OWNER_EMAIL = "string_ownerEmailAddress";
+
 }
