@@ -3,6 +3,7 @@ package com.idega.bpm.exe;
 import java.io.Serializable;
 import java.security.AccessControlException;
 import java.security.Permission;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,6 +71,7 @@ import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.user.util.UserComparator;
 import com.idega.util.CoreConstants;
+import com.idega.util.IWTimestamp;
 import com.idega.util.ListUtil;
 import com.idega.util.StringUtil;
 import com.idega.util.datastructures.map.MapUtil;
@@ -115,8 +117,9 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	public static final String add_attachement_process_name = "addAttachments";
 
 	public VariableInstanceQuerier getVariableInstanceQuerier() {
-		if (querier == null)
+		if (querier == null) {
 			ELUtil.getInstance().autowire(this);
+		}
 		return querier;
 	}
 
@@ -158,8 +161,9 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 					if (ListUtil.isEmpty(tasks)) {
 						taskInstances = new ArrayList<TaskInstance>();
 						getLogger().warning("Where are no tasks for process instance " + processInstance.getId());
-					} else
+					} else {
 						taskInstances = new ArrayList<TaskInstance>(tasks);
+					}
 				}
 
 				taskInstances.addAll(getSubprocessesTaskInstances(context, processInstance, excludedSubProcessesNames, includedOnlySubProcessesNames));
@@ -230,12 +234,14 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 					@SuppressWarnings("unchecked")
 					Collection<TaskInstance> subTaskInstances = subProcessInstance.getTaskMgmtInstance().getTaskInstances();
 
-					if (subTaskInstances != null)
+					if (subTaskInstances != null) {
 						taskInstances.addAll(subTaskInstances);
+					}
 				}
 			}
-		} else
+		} else {
 			taskInstances = Collections.emptyList();
+		}
 
 		return taskInstances;
 	}
@@ -263,9 +269,10 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 					if (ti == null) {
 						getLogger().warning("Task instance is null in a collection of task instances: " + taskInstances);
 						iterator.remove();
-					} else if (!ti.hasEnded() || prioritiesToFilterList.contains(ti.getPriority()))
+					} else if (!ti.hasEnded() || prioritiesToFilterList.contains(ti.getPriority())) {
 						// simply filtering out the not ended task instances
 						iterator.remove();
+					}
 				} catch (Exception e) {
 					getLogger().log(Level.WARNING, "Error while getting submitted tasks for processes: " + excludedSubProcessesNames, e);
 					iterator.remove();
@@ -696,8 +703,9 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 					if (ti.hasEnded()
 							|| prioritiesToFilterList.contains(ti.getPriority())
 					        || (pi == null || pi.hasEnded())
-					        || (filterByTaskName && !taskName.equals(context.getTaskInstance(id).getTask().getName())))
+					        || (filterByTaskName && !taskName.equals(context.getTaskInstance(id).getTask().getName()))) {
 						iterator.remove();
+					}
 				}
 			} catch (Exception e) {
 				getLogger().log(Level.WARNING, "Error while getting unfinished tasks for the task (name=" + taskName + "). Unable to resolve if a task (id=" + id +
@@ -913,9 +921,10 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			User user = iterator.next();
 			String hideInContacts = user.getMetaData(BPMUser.HIDE_IN_CONTACTS);
 
-			if (hideInContacts != null)
+			if (hideInContacts != null) {
 				// excluding ones, that should be hidden in contacts list
 				iterator.remove();
+			}
 		}
 
 		try {
@@ -1093,8 +1102,9 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Transactional(readOnly = true)
 	public TaskInstanceW getStartTaskInstance() {
 		Long id = getIdOfStartTaskInstance();
-		if (id == null)
+		if (id == null) {
 			return null;
+		}
 
 		return getBpmFactory().getTaskInstanceW(id);
 	}
@@ -1130,6 +1140,11 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		ContextInstance contextInstnace = token.getProcessInstance().getContextInstance();
 
 		Object val = contextInstnace.getVariableLocally(variableName, token);
+
+		if (val instanceof Date) {
+			IWTimestamp temp = new IWTimestamp((Date) val);
+			val = temp.getLocaleDateAndTime(getCurrentLocale(), DateFormat.SHORT, DateFormat.SHORT);
+		}
 		return val;
 	}
 
