@@ -41,6 +41,7 @@ import com.idega.bpm.security.TaskPermissionManager;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
+import com.idega.jbpm.data.Variable;
 import com.idega.jbpm.data.VariableInstanceQuerier;
 import com.idega.jbpm.data.dao.BPMDAO;
 import com.idega.jbpm.exe.BPMDocument;
@@ -1130,6 +1131,25 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return roles;
 	}
 
+	private Object getVariableValue(String variableName, Long piId) {
+		try {
+			List<Variable> variables = getBpmDAO().getVariablesByNameAndProcessInstance(variableName, piId);
+			Object value = null;
+			for (Iterator<Variable> variablesIter = variables.iterator(); (variablesIter.hasNext() && value == null);) {
+				Variable variable = variablesIter.next();
+				if (variable == null) {
+					continue;
+				}
+
+				value = variable.getValue();
+			}
+			return value;
+		} catch (Exception e) {
+			getLogger().log(Level.WARNING, "Error getting variable " + variableName + " for proc. instance " + piId, e);
+		}
+		return null;
+	}
+
 	@Override
 	public Object getVariableLocally(final String variableName, Token token) {
 		if (token == null) {
@@ -1137,14 +1157,26 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			token = pi == null ? null : pi.getRootToken();
 		}
 
-		ContextInstance contextInstnace = token.getProcessInstance().getContextInstance();
+		ProcessInstance pi = token.getProcessInstance();
+		ContextInstance contextInstnace = pi.getContextInstance();
 
 		Object val = contextInstnace.getVariableLocally(variableName, token);
 
-		if (val instanceof Date) {
+		if (val == null || StringUtil.isEmpty(val.toString())) {
+			getLogger().warning("Failed to find variable '" + variableName + "' from context instance " + contextInstnace + ", will load from proc. instance " + pi);
+			val = getVariableValue(variableName, pi.getId());
+			if (val == null) {
+				getLogger().warning("Failed to find variable '" + variableName + "' for proc. inst.: " + pi.getId());
+			} else {
+				getLogger().info("Found value " + val + " for variable " + variableName + " and proc. inst.: " + pi.getId());
+			}
+		}
+
+		if (val instanceof Date && getSettings().getBoolean("bpm.format_local_data_var", false)) {
 			IWTimestamp temp = new IWTimestamp((Date) val);
 			val = temp.getLocaleDateAndTime(getCurrentLocale(), DateFormat.SHORT, DateFormat.SHORT);
 		}
+
 		return val;
 	}
 

@@ -129,12 +129,13 @@ public class SendMessagesHandler extends DefaultSpringBean implements ActionHand
 	}
 
 	protected Locale getLocale(String key, Map<String, Locale> knownLocales) {
-		if (knownLocales.containsKey(key))
-    		return knownLocales.get(key);
+		if (knownLocales.containsKey(key)) {
+			return knownLocales.get(key);
+		}
 
-    	Locale locale = ICLocaleBusiness.getLocaleFromLocaleString(key);
-    	knownLocales.put(key, locale);
-    	return locale;
+	    	Locale locale = ICLocaleBusiness.getLocaleFromLocaleString(key);
+	    	knownLocales.put(key, locale);
+	    	return locale;
 	}
 
 	protected LocalizedMessages getLocalizedMessages() {
@@ -174,8 +175,8 @@ public class SendMessagesHandler extends DefaultSpringBean implements ActionHand
 			if (getInlineSubject() != null && !getInlineSubject().isEmpty()) {
 				Map<Locale, String> subjects = new HashMap<Locale, String>(getInlineSubject().size());
 				for (Entry<String, String> entry: getInlineSubject().entrySet()) {
-			    	Locale subjectLocale = getLocale(entry.getKey(), resolvedLocales);
-			    	subjects.put(subjectLocale, entry.getValue());
+					Locale subjectLocale = getLocale(entry.getKey(), resolvedLocales);
+					subjects.put(subjectLocale, entry.getValue());
 				}
 
 				msgs.setInlineSubjects(subjects);

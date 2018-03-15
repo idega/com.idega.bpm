@@ -441,7 +441,7 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 	}
 
 	public String getFormattedMessage(String unformattedMessage, String messageValues, Token tkn, MessageValueContext mvCtx) {
-		return getMessageValueHandler().getFormattedMessage(unformattedMessage,	messageValues, tkn, mvCtx);
+		return getMessageValueHandler().getFormattedMessage(unformattedMessage, messageValues, tkn, mvCtx);
 	}
 
 	private List<User> getAllUsersByRoles(String[] roles, ProcessInstance pi) {
