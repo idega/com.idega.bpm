@@ -630,6 +630,23 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
+	public List<TaskInstanceW> getUnfinishedTaskInstances(User user) {
+		List<TaskInstanceW> allUnfinishedTasks = getAllUnfinishedTaskInstances();
+		if (ListUtil.isEmpty(allUnfinishedTasks) || user == null) {
+			return allUnfinishedTasks;
+		}
+
+		List<TaskInstanceW> unfinishedTaskInstancesForUser = new ArrayList<>();
+		for (TaskInstanceW tiW: allUnfinishedTasks) {
+			User assignedTo = tiW.getAssignedTo();
+			if (assignedTo != null && assignedTo.getId().equals(user.getId())) {
+				unfinishedTaskInstancesForUser.add(tiW);
+			}
+		}
+		return unfinishedTaskInstancesForUser;
+	}
+
+	@Override
 	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getUnfinishedTaskInstancesForTask(final String taskName) {
 		return getBpmContext().execute(new JbpmCallback<List<TaskInstanceW>>() {
