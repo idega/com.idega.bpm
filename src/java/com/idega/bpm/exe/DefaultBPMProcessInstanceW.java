@@ -1394,4 +1394,17 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return getAllSubprocesses(procInstId);
 	}
 
+	@Override
+	public void end() {
+		getBpmContext().execute(new JbpmCallback<Boolean>() {
+
+			@Override
+			public Boolean doInJbpm(JbpmContext context) throws JbpmException {
+				ProcessInstance processInstance = getProcessInstance(context);
+				processInstance.end();
+				return Boolean.TRUE;
+			}
+		});
+	}
+
 }
