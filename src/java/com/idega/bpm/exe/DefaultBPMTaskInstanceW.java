@@ -147,7 +147,6 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	public <T> T getTaskInstance(JbpmContext context) {
 		Serializable tiId = getTaskInstanceId();
 		if (!(tiId instanceof Number)) {
-			LOGGER.warning("ID of task instance is unknown!");
 			return null;
 		}
 
@@ -190,10 +189,11 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 		Object pk = usr.getPrimaryKey();
 		Integer userId;
 
-		if (pk instanceof Integer)
+		if (pk instanceof Integer) {
 			userId = (Integer) pk;
-		else
+		} else {
 			userId = new Integer(pk.toString());
+		}
 
 		assign(userId);
 	}
@@ -241,8 +241,9 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 							LOGGER.log(Level.SEVERE, "Exception while resolving assigned user name for actor id: " + actorId, e);
 							usr = null;
 						}
-					} else
+					} else {
 						usr = null;
+					}
 
 					return usr;
 				}
@@ -395,8 +396,9 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 				for (Iterator<Transition> transIter = availableTransitions.iterator(); (transIter.hasNext() && !takeTransitionAction);) {
 					Transition trans = transIter.next();
 
-					if (actionTaken.equals(trans.getName()))
+					if (actionTaken.equals(trans.getName())) {
 						takeTransitionAction = true;
+					}
 				}
 			}
 
@@ -435,8 +437,9 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 		BPMUser bpmUser = getBpmFactory().getBpmUserFactory().getCurrentBPMUser();
 		if (bpmUser != null) {
 			Integer usrId = bpmUser.getIdToUse();
-			if (usrId != null)
+			if (usrId != null) {
 				ti.setActorId(usrId.toString());
+			}
 		}
 	}
 
@@ -832,7 +835,9 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 			Map<String, Object> metadata = new HashMap<String, Object>();
 			metadata.put(JBPMConstants.OVERWRITE, Boolean.FALSE);
 			metadata.put(JBPMConstants.PATH_IN_REPOSITORY, filesFolder + fileName);
-			if (source != null) metadata.put(JBPMConstants.SOURCE, source);
+			if (source != null) {
+				metadata.put(JBPMConstants.SOURCE, source);
+			}
 			binVar.setMetadata(metadata);
 			binVar.setPersistedToRepository(true);
 		}
@@ -857,8 +862,9 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 			String path = folder + name;
 			if (!repository.getExistence(path)) {
-				if (!repository.uploadFile(folder, name, null, stream))
+				if (!repository.uploadFile(folder, name, null, stream)) {
 					return null;
+				}
 			}
 
 			URI uri = new URI(repository.getURI(path));
@@ -875,14 +881,16 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 				getURIsFromTmpLocation(folder, name, is) :
 				getURIsFromRepository(folder, name, is);
 
-		if (ListUtil.isEmpty(uris) && !overwrite)
+		if (ListUtil.isEmpty(uris) && !overwrite) {
 			uris = getURIsFromTmpLocation(folder, name, is);
+		}
 
 		if (ListUtil.isEmpty(uris)) {
 			String fixedName = StringHandler.removeWhiteSpace(name);
 			fixedName = StringHandler.stripNonRomanCharacters(fixedName, new char[] {'.', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'});
-			if (fixedName.equals(name))
+			if (fixedName.equals(name)) {
 				return null;
+			}
 
 			return getLinksToVariables(is, folder, fixedName, overwrite);
 		}
@@ -964,8 +972,9 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 	@Override
 	public boolean isSubmitted() {
-		if (submitted != null)
+		if (submitted != null) {
 			return submitted;
+		}
 
 		TaskInstance ti = getTaskInstance();
 		submitted = ti == null ?
@@ -1014,14 +1023,15 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 	@Override
 	public Collection<Role> getRolesPermissions() {
-		Collection<Role> roles = getBpmFactory().getRolesManager() .getRolesPermissionsForTaskInstance(getTaskInstanceId(), null);
+		Collection<Role> roles = getBpmFactory().getRolesManager().getRolesPermissionsForTaskInstance(getTaskInstanceId(), null);
 		return roles;
 	}
 
 	@Override
 	public Collection<Role> getAttachmentRolesPermissions(String attachmentHashValue) {
-		if (StringUtil.isEmpty(attachmentHashValue))
+		if (StringUtil.isEmpty(attachmentHashValue)) {
 			throw new IllegalArgumentException("Attachment hash value not provided");
+		}
 
 		Collection<Role> roles = getBpmFactory().getRolesManager().getRolesPermissionsForTaskInstance(getTaskInstanceId(), attachmentHashValue);
 
@@ -1064,11 +1074,13 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 			});
 
 			try {
-				if (ListUtil.isEmpty(viewTaskBinds))
+				if (ListUtil.isEmpty(viewTaskBinds)) {
 					return order;
+				}
 
-				for (ViewTaskBind bind: viewTaskBinds)
+				for (ViewTaskBind bind: viewTaskBinds) {
 					order = bind.getViewOrder();
+				}
 			} finally {
 				orderLoaded = Boolean.TRUE;
 			}
@@ -1084,22 +1096,26 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 	@Override
 	public boolean hasAttachment(String identifier, String variableName) {
-		if (StringUtil.isEmpty(identifier) || StringUtil.isEmpty(variableName))
+		if (StringUtil.isEmpty(identifier) || StringUtil.isEmpty(variableName)) {
 			return false;
+		}
 
 		List<BinaryVariable> variables = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId());
-		if (ListUtil.isEmpty(variables))
+		if (ListUtil.isEmpty(variables)) {
 			return false;
+		}
 
 		String filesVarPrefix = VariableInstanceType.BYTE_ARRAY.getPrefix();
-		if (variableName.startsWith(filesVarPrefix))
+		if (variableName.startsWith(filesVarPrefix)) {
 			variableName = variableName.substring(variableName.indexOf(filesVarPrefix) + filesVarPrefix.length());
+		}
 
 		for (BinaryVariable variable: variables) {
 			String varIdentifier = variable.getIdentifier();
 			String varName = variable.getVariable().getName();
-			if (identifier.equals(varIdentifier) && variableName.equals(varName))
+			if (identifier.equals(varIdentifier) && variableName.equals(varName)) {
 				return true;
+			}
 		}
 
 		return false;
