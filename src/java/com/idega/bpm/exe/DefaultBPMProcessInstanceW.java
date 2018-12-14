@@ -37,10 +37,12 @@ import com.idega.block.process.business.CaseManagersProvider;
 import com.idega.block.process.business.CasesRetrievalManager;
 import com.idega.block.process.business.ExternalEntityInterface;
 import com.idega.bpm.BPMConstants;
+import com.idega.bpm.model.VariableInstance;
 import com.idega.bpm.security.TaskPermissionManager;
 import com.idega.core.business.DefaultSpringBean;
 import com.idega.jbpm.BPMContext;
 import com.idega.jbpm.JbpmCallback;
+import com.idega.jbpm.bean.VariableInstanceInfo;
 import com.idega.jbpm.data.Variable;
 import com.idega.jbpm.data.VariableInstanceQuerier;
 import com.idega.jbpm.data.dao.BPMDAO;
@@ -1330,7 +1332,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		}
 
 		Map<String, Object> values = getLatestValues(submittedTiWs, Arrays.asList(variable), submittedTiWs.size() - 1, null);
-		return MapUtil.isEmpty(values) ? null : values.get(values);
+		return MapUtil.isEmpty(values) ? null : values.get(variable);
 	}
 
 	@Override
@@ -1340,7 +1342,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		}
 
 		Map<String, Object> values = getLatestValues(submittedTiWs, Arrays.asList(variable), submittedTiWs.size() - 1, null);
-		return MapUtil.isEmpty(values) ? null : values.get(values);
+		return MapUtil.isEmpty(values) ? null : values.get(variable);
 	}
 
 	@Override
@@ -1405,6 +1407,30 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 				return Boolean.TRUE;
 			}
 		});
+	}
+
+	@Override
+	public <T extends VariableInstance> Collection<T> getVariables(List<String> names) {
+		if (ListUtil.isEmpty(names)) {
+			return null;
+		}
+
+		Long procInstId = null;
+		try {
+			procInstId = getProcessInstanceId();
+			Collection<VariableInstanceInfo> vars = getVariableInstanceQuerier().getVariablesByProcessInstanceIdAndVariablesNames(Arrays.asList(procInstId), names);
+			if (ListUtil.isEmpty(vars)) {
+				return null;
+			}
+
+			@SuppressWarnings("unchecked")
+			Collection<T> results = (Collection<T>) vars;
+			return results;
+		} catch (Exception e) {
+			getLogger().log(Level.WARNING, "Error getting variables by names " + names + " for proc. inst. " + procInstId, e);
+		}
+
+		return null;
 	}
 
 }
