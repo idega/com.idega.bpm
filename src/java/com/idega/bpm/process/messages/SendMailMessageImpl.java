@@ -351,7 +351,8 @@ public class SendMailMessageImpl extends DefaultSpringBean implements SendMessag
 			return null;
 		}
 
-		List<BinaryVariable> attachments = piw.getAttachments();
+		IWContext iwc = CoreUtil.getIWContext();
+		List<BinaryVariable> attachments = piw.getAttachments(iwc);
 		if (ListUtil.isEmpty(attachments)) {
 			return null;
 		}

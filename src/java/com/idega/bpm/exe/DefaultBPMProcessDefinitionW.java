@@ -88,8 +88,9 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 				Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
 				TaskController tiController = task.getTaskController();
 
-				if (tiController == null)
+				if (tiController == null) {
 					return null;
+				}
 
 				@SuppressWarnings("unchecked")
 				List<VariableAccess> variableAccesses = tiController.getVariableAccesses();
@@ -115,8 +116,9 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 				Task task = pdef.getTaskMgmtDefinition().getTask(taskName);
 				TaskController tiController = task.getTaskController();
 
-				if (tiController == null)
+				if (tiController == null) {
 					return null;
+				}
 
 				@SuppressWarnings("unchecked")
 				List<VariableAccess> variableAccesses = tiController.getVariableAccesses();
@@ -134,11 +136,12 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 	@Override
 	@Transactional(readOnly = false)
-	public <T extends Serializable> T startProcess(final ViewSubmission viewSubmission) {
+	public <T extends Serializable> T startProcess(IWContext iwc, final ViewSubmission viewSubmission) {
 		Long processDefinitionId = viewSubmission.getProcessDefinitionId();
 
-		if (!processDefinitionId.equals(getProcessDefinitionId()))
+		if (!processDefinitionId.equals(getProcessDefinitionId())) {
 			throw new IllegalArgumentException("View submission was for different process definition id than tried to submit to");
+		}
 
 		getLogger().info("Starting process for process definition id = " + processDefinitionId);
 
@@ -190,8 +193,9 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 			T result = (T) piId;
 			return result;
 		} finally {
-			if (procDefName != null)
+			if (procDefName != null) {
 				notifyAboutNewProcess(procDefName, piId, variables);
+			}
 		}
 	}
 
@@ -257,17 +261,19 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 		Integer usrId = null;
 		try {
 			BPMUser bpmUser = getBpmFactory().getBpmUserFactory().getCurrentBPMUser();
-			if (bpmUser != null)
+			if (bpmUser != null) {
 				usrId = bpmUser.getIdToUse();
-			else {
-				if (variables.containsKey(BPMConstants.USER_ID))
+			} else {
+				if (variables.containsKey(BPMConstants.USER_ID)) {
 					usrId = Integer.valueOf(variables.get(BPMConstants.USER_ID).toString());
+				}
 			}
 		} catch (Exception e) {
 			getLogger().log(Level.WARNING, "Error getting ID of a current user", e);
 		}
-		if (usrId != null)
+		if (usrId != null) {
 			ti.setActorId(usrId.toString());
+		}
 
 		getVariablesHandler().submitVariables(context, variables, ti.getId(), true);
 		context.getSession().flush();	//	if we are not flushing here, BPM data will be missing for the other nodes
@@ -307,8 +313,9 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 	}
 
 	private VariableInstanceQuerier getVariableInstanceQuerier() {
-		if (querier == null)
+		if (querier == null) {
 			ELUtil.getInstance().autowire(this);
+		}
 		return querier;
 	}
 
@@ -355,9 +362,10 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 					@SuppressWarnings("unchecked")
 					Map<String, Transition> leavingTransitions = taskNode.getLeavingTransitionsMap();
 					return leavingTransitions != null ? leavingTransitions.keySet() : null;
-				} else
+				} else {
 					// task node is null, when task in start node
 					return null;
+				}
 			}
 		});
 	}

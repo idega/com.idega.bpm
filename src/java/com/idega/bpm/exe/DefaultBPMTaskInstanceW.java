@@ -609,7 +609,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	}
 
 	@Override
-	public String getName(Locale locale) {
+	public String getName(IWContext iwc, Locale locale) {
 		IWMainApplication iwma = getIWMA();
 		Map<Long, Map<Locale, String>> cachedTaskNames = IWCacheManager2.getInstance(iwma).getCache(CACHED_TASK_NAMES);
 		Map<Locale, String> names = null;
@@ -908,7 +908,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<BinaryVariable> getAttachments() {
+	public List<BinaryVariable> getAttachments(IWContext iwc) {
 		List<BinaryVariable> variableList = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId());
 		List<BinaryVariable> returnList = new ArrayList<BinaryVariable>();
 		if (ListUtil.isEmpty(variableList)) {
@@ -937,7 +937,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	@Override
 	@Transactional(readOnly = true)
 	public List<BinaryVariable> getAttachments(Variable variable) {
-		List<BinaryVariable> allAttachments = getAttachments();
+		List<BinaryVariable> allAttachments = getAttachments(CoreUtil.getIWContext());
 		List<BinaryVariable> attachmentsForVariable = new ArrayList<BinaryVariable>(allAttachments.size());
 
 		for (BinaryVariable binaryVariable: allAttachments) {
@@ -1139,7 +1139,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	}
 
 	@Override
-	public Map<String, Object> getVariables(Token token) {
+	public Map<String, Object> getVariables(IWContext iwc, Token token) {
 		List<Long> tokensIds = getTokensIds(token, null);
 		List<com.idega.jbpm.data.Variable> vars = getBpmFactory().getBPMDAO().getVariablesByTokens(tokensIds);
 		if (ListUtil.isEmpty(vars)) {
@@ -1167,7 +1167,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	public String getPDFName(Locale locale) {
 		String taskName = null;
 		try {
-			taskName = getName(locale);
+			taskName = getName(CoreUtil.getIWContext(), locale);
 			if (StringUtil.isEmpty(taskName)) {
 				return null;
 			}

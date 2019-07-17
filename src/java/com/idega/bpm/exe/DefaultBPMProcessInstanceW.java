@@ -70,10 +70,12 @@ import com.idega.jbpm.variables.BinaryVariable;
 import com.idega.jbpm.variables.VariablesHandler;
 import com.idega.jbpm.view.View;
 import com.idega.jbpm.view.ViewSubmission;
+import com.idega.presentation.IWContext;
 import com.idega.user.business.UserBusiness;
 import com.idega.user.data.User;
 import com.idega.user.util.UserComparator;
 import com.idega.util.CoreConstants;
+import com.idega.util.CoreUtil;
 import com.idega.util.IWTimestamp;
 import com.idega.util.ListUtil;
 import com.idega.util.StringUtil;
@@ -128,7 +130,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<TaskInstanceW> getAllTaskInstances() {
+	public List<TaskInstanceW> getAllTaskInstances(IWContext iwc) {
 		// TODO: hide tasks of ended subprocesses
 		return wrapTaskInstances(getUnfilteredProcessTaskInstances());
 	}
@@ -292,17 +294,17 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<TaskInstanceW> getSubmittedTaskInstances() {
+	public List<TaskInstanceW> getSubmittedTaskInstances(IWContext iwc) {
 		return getSubmittedTaskInstances(new ArrayList<String>(0));
 	}
 
 	@Override
-	public List<TaskInstanceW> getSubmittedTaskInstances(String taskInstanceName) {
+	public List<TaskInstanceW> getSubmittedTaskInstances(IWContext iwc, String taskInstanceName) {
 		if (StringUtil.isEmpty(taskInstanceName)) {
 			return null;
 		}
 
-		List<TaskInstanceW> allSubmittedTaskInstances = getSubmittedTaskInstances();
+		List<TaskInstanceW> allSubmittedTaskInstances = getSubmittedTaskInstances(iwc);
 		if (ListUtil.isEmpty(allSubmittedTaskInstances)) {
 			return null;
 		}
@@ -330,7 +332,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	public TaskInstanceW getLastSubmittedTaskInstance(String taskInstanceName) {
-		List<TaskInstanceW> submittedTaskInstances = getSubmittedTaskInstances(taskInstanceName);
+		List<TaskInstanceW> submittedTaskInstances = getSubmittedTaskInstances(CoreUtil.getIWContext(), taskInstanceName);
 		if (ListUtil.isEmpty(submittedTaskInstances)) {
 			return null;
 		}
@@ -339,13 +341,13 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	public List<BPMDocument> getTaskDocumentsForUser(User user, Locale locale, boolean doShowExternalEntity) {
-		return getTaskDocumentsForUser(user, locale, doShowExternalEntity, null);
+	public List<BPMDocument> getTaskDocumentsForUser(IWContext iwc, User user, Locale locale, boolean doShowExternalEntity) {
+		return getTaskDocumentsForUser(iwc, user, locale, doShowExternalEntity, null);
 	}
 	@Override
 	@Transactional(readOnly = true)
-	public List<BPMDocument> getTaskDocumentsForUser(User user, Locale locale, boolean doShowExternalEntity, List<String> tasksNamesToReturn) {
-		List<TaskInstanceW> unfinishedTaskInstances = getAllUnfinishedTaskInstances();
+	public List<BPMDocument> getTaskDocumentsForUser(IWContext iwc, User user, Locale locale, boolean doShowExternalEntity, List<String> tasksNamesToReturn) {
+		List<TaskInstanceW> unfinishedTaskInstances = getAllUnfinishedTaskInstances(iwc);
 
 		unfinishedTaskInstances = filterTasksByUserPermission(user, unfinishedTaskInstances);
 
@@ -440,16 +442,16 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	public List<BPMDocument> getSubmittedDocumentsForUser(User user, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable) {
-		return getSubmittedDocumentsForUser(user, locale, doShowExternalEntity, checkIfSignable, null);
+	public List<BPMDocument> getSubmittedDocumentsForUser(IWContext iwc, User user, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable) {
+		return getSubmittedDocumentsForUser(iwc, user, locale, doShowExternalEntity, checkIfSignable, null);
 	}
 	@Override
-	public List<BPMDocument> getSubmittedDocumentsForUser(User user, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable, List<String> tasksNamesToReturn) {
+	public List<BPMDocument> getSubmittedDocumentsForUser(IWContext iwc, User user, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable, List<String> tasksNamesToReturn) {
 		return getSubmittedTasksForUser(user, locale, doShowExternalEntity, checkIfSignable, tasksNamesToReturn, BPMDocument.class);
 	}
 
 	@Override
-	public List<TaskInstanceW> getSubmittedTasksForUser(User user, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable, List<String> tasksNamesToReturn) {
+	public List<TaskInstanceW> getSubmittedTasksForUser(IWContext iwc, User user, Locale locale, boolean doShowExternalEntity, boolean checkIfSignable, List<String> tasksNamesToReturn) {
 		return getSubmittedTasksForUser(user, locale, doShowExternalEntity, checkIfSignable, tasksNamesToReturn, TaskInstanceW.class);
 	}
 
@@ -487,6 +489,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			boolean taskInstance = resultType.getName().equals(TaskInstanceW.class.getName());
 
 			UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
+			IWContext iwc = CoreUtil.getIWContext();
 
 			getBpmContext().execute(new JbpmCallback<Void>() {
 
@@ -501,7 +504,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 							canAdd = tasksNamesToReturn.contains(taskName);
 						}
 
-						String name = tiw.getName(locale);
+						String name = tiw.getName(iwc, locale);
 						if (StringUtil.isEmpty(name)) {
 							canAdd = false;
 						}
@@ -608,7 +611,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<TaskInstanceW> getAllUnfinishedTaskInstances() {
+	public List<TaskInstanceW> getAllUnfinishedTaskInstances(IWContext iwc) {
 		boolean measure = JBPMUtil.isPerformanceMeasurementOn();
 		long start = measure ? System.currentTimeMillis() : 0;
 		try {
@@ -632,8 +635,8 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	public List<TaskInstanceW> getUnfinishedTaskInstances(User user) {
-		List<TaskInstanceW> allUnfinishedTasks = getAllUnfinishedTaskInstances();
+	public List<TaskInstanceW> getUnfinishedTaskInstances(IWContext iwc, User user) {
+		List<TaskInstanceW> allUnfinishedTasks = getAllUnfinishedTaskInstances(iwc);
 		if (ListUtil.isEmpty(allUnfinishedTasks) || user == null) {
 			return allUnfinishedTasks;
 		}
@@ -1102,26 +1105,26 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public List<BinaryVariable> getAttachments() {
-		List<TaskInstanceW> taskInstances = getAllTaskInstances();
+	public List<BinaryVariable> getAttachments(IWContext iwc) {
+		List<TaskInstanceW> taskInstances = getAllTaskInstances(iwc);
 		List<BinaryVariable> attachments = new ArrayList<BinaryVariable>();
 
 		for (Iterator<TaskInstanceW> iterator = taskInstances.iterator(); iterator.hasNext();) {
-			attachments.addAll(iterator.next().getAttachments());
+			attachments.addAll(iterator.next().getAttachments(iwc));
 		}
 
 		return attachments;
 	}
 
 	@Override
-	public <T extends Serializable> T getIdOfStartTaskInstance() {
-		return getBpmFactory().getIdOfStartTaskInstance(getProcessInstanceId());
+	public <T extends Serializable> T getIdOfStartTaskInstance(IWContext iwc) {
+		return getBpmFactory().getIdOfStartTaskInstance(getProcessInstanceId(), iwc);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public TaskInstanceW getStartTaskInstance() {
-		Long id = getIdOfStartTaskInstance();
+	public TaskInstanceW getStartTaskInstance(IWContext iwc) {
+		Long id = getIdOfStartTaskInstance(iwc);
 		if (id == null) {
 			return null;
 		}
@@ -1131,7 +1134,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	@Transactional(readOnly = true)
-	public boolean hasEnded() {
+	public boolean hasEnded(IWContext iwc) {
 		ProcessInstance pi = getProcessInstance();
 		return pi == null ? false : pi.hasEnded();
 	}
@@ -1228,13 +1231,13 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	public boolean doSubmitTask(String taskName, Map<String, Object> variables) {
-		TaskInstanceW tiW = getSubmittedTaskInstance(taskName, variables);
+	public boolean doSubmitTask(IWContext iwc, String taskName, Map<String, Object> variables) {
+		TaskInstanceW tiW = getSubmittedTaskInstance(iwc, taskName, variables);
 		return tiW == null ? Boolean.FALSE : Boolean.TRUE;
 	}
 
 	@Override
-	public TaskInstanceW getSubmittedTaskInstance(String taskName, Map<String, Object> variables) {
+	public TaskInstanceW getSubmittedTaskInstance(IWContext iwc, String taskName, Map<String, Object> variables) {
 		if (StringUtil.isEmpty(taskName)) {
 			getLogger().warning("Task name is not provided");
 			return null;
@@ -1246,12 +1249,12 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			return null;
 		}
 
-		return getSubmitedTask(taskInstanceW, null, variables);
+		return getSubmitedTask(iwc, taskInstanceW, null, variables);
 	}
 
 	@Override
 	@Transactional(readOnly = false)
-	public TaskInstanceW getSubmitedTask(TaskInstanceW task, ViewSubmission viewSubmission, Map<String, Object> variables) {
+	public TaskInstanceW getSubmitedTask(IWContext iwc, TaskInstanceW task, ViewSubmission viewSubmission, Map<String, Object> variables) {
 		if (task == null) {
 			getLogger().warning("Task instance is not provided");
 			return null;
@@ -1286,13 +1289,13 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	public List<BPMDocument> getSubmittedDocumentsForUser(User user, Locale locale) {
-		return getSubmittedDocumentsForUser(user, locale, false, false);
+	public List<BPMDocument> getSubmittedDocumentsForUser(IWContext iwc, User user, Locale locale) {
+		return getSubmittedDocumentsForUser(iwc, user, locale, false, false);
 	}
 
 	@Override
-	public List<BPMDocument> getTaskDocumentsForUser(User user, Locale locale) {
-		return getTaskDocumentsForUser(user, locale, false);
+	public List<BPMDocument> getTaskDocumentsForUser(IWContext iwc, User user, Locale locale) {
+		return getTaskDocumentsForUser(iwc, user, locale, false);
 	}
 
 	@Override
@@ -1302,7 +1305,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			return null;
 		}
 
-		List<TaskInstanceW> tasks = getAllTaskInstances();
+		List<TaskInstanceW> tasks = getAllTaskInstances(CoreUtil.getIWContext());
 		if (ListUtil.isEmpty(tasks)) {
 			getLogger().warning("Proc. ins. " + getProcessInstanceId() + " does not have any tasks");
 			return null;
@@ -1325,7 +1328,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	public Object getValueForTaskInstance(String taskInstanceName, String variable) {
-		List<TaskInstanceW> submittedTiWs = getSubmittedTaskInstances(taskInstanceName);
+		List<TaskInstanceW> submittedTiWs = getSubmittedTaskInstances(CoreUtil.getIWContext(), taskInstanceName);
 		if (ListUtil.isEmpty(submittedTiWs)) {
 			getLogger().info("Task with name " + taskInstanceName + " was not submitted yet. Can not get value for " + variable);
 			return null;
@@ -1347,7 +1350,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	public <T> Map<String, T> getValuesForTaskInstance(String taskInstanceName, List<String> variables) {
-		List<TaskInstanceW> submittedTiWs = getSubmittedTaskInstances(taskInstanceName);
+		List<TaskInstanceW> submittedTiWs = getSubmittedTaskInstances(CoreUtil.getIWContext(), taskInstanceName);
 		if (ListUtil.isEmpty(submittedTiWs)) {
 			getLogger().info("Task with name " + taskInstanceName + " was not submitted yet. Can not get values for " + variables);
 			return null;

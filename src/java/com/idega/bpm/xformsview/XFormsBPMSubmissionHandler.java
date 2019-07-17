@@ -41,11 +41,13 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 	@Transactional(readOnly = false)
 	public Map<String, Object> submit(Submission submission, Node submissionInstance) throws XFormsException {
 		// method - post, replace - none
-		if (!submission.getReplace().equalsIgnoreCase("none"))
+		if (!submission.getReplace().equalsIgnoreCase("none")) {
 			throw new XFormsException("Submission mode '" + submission.getReplace() + "' not supported");
+		}
 
-		if (!submission.getMethod().equalsIgnoreCase("put") && !submission.getMethod().equalsIgnoreCase("post"))
+		if (!submission.getMethod().equalsIgnoreCase("put") && !submission.getMethod().equalsIgnoreCase("post")) {
 			throw new XFormsException("Submission method '" + submission.getMethod() + "' not supported");
+		}
 
 		if (submission.getMethod().equalsIgnoreCase("put")) {
 			// update (put) currently unsupported
@@ -96,7 +98,7 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 					ProcessDefinitionW pdW = bpmFactory.getProcessManager(processDefinitionId).getProcessDefinition(processDefinitionId);
 					procDefName = getBpmFactory().getBPMDAO().getProcessDefinitionNameByProcessDefinitionId(processDefinitionId);
 
-					piId = pdW.startProcess(xformsViewSubmission);
+					piId = pdW.startProcess(CoreUtil.getIWContext(), xformsViewSubmission);
 					variables = xformsViewSubmission.resolveVariables();
 				} else {
 					Logger.getLogger(getClass().getName()).severe("Couldn't handle submission. No action associated with the submission " +
