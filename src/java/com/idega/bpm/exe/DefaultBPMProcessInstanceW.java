@@ -91,6 +91,9 @@ import com.idega.util.expression.ELUtil;
 public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements ProcessInstanceW {
 
 	private Serializable processInstanceId;
+	
+	private Serializable processDefinitionId;
+
 	private ProcessInstance processInstance;
 
 	@Autowired
@@ -1436,4 +1439,21 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return null;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see com.idega.jbpm.exe.ProcessInstanceW#setProcessDefinitionId(java.io.Serializable)
+	 */
+	@Override
+	public <T extends Serializable> void setProcessDefinitionId(T id) {
+		this.processDefinitionId = id;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see com.idega.jbpm.exe.ProcessInstanceW#getProcessDefinitionId()
+	 */
+	@Override
+	public <T extends Serializable> T getProcessDefinitionId() {
+		return (T) this.processDefinitionId;
+	}
 }
