@@ -312,7 +312,8 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 		}
 
 		boolean success = true;
-		Long piId = null, tiId = null;
+		Long pdId = null, piId = null, tiId = null;
+		String procDefName = null;
 		Map<String, Object> variables = null;
 		try {
 			tiId = taskInstance.getId();
@@ -353,7 +354,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 			context.save(taskInstance);
 		} finally {
 			if (success) {
-				ELUtil.getInstance().publishEvent(new TaskInstanceSubmitted(this, piId, tiId, variables));
+				ELUtil.getInstance().publishEvent(new TaskInstanceSubmitted(this, piId, tiId, pdId, procDefName, variables));
 			}
 		}
 	}

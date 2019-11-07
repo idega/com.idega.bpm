@@ -74,8 +74,8 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 	@Autowired
 	private VariableInstanceQuerier querier;
 
-	protected void notifyAboutNewProcess(String procDefName, Long procInstId, Map<String, Object> variables) {
-		ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, procInstId, variables));
+	protected void notifyAboutNewProcess(String procDefName, Long procDefId, Long procInstId, Map<String, Object> variables) {
+		ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, procDefId, procInstId, variables));
 	}
 
 	@Override
@@ -194,7 +194,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 			return result;
 		} finally {
 			if (procDefName != null) {
-				notifyAboutNewProcess(procDefName, piId, variables);
+				notifyAboutNewProcess(procDefName, processDefinitionId, piId, variables);
 			}
 		}
 	}
