@@ -91,7 +91,7 @@ import com.idega.util.expression.ELUtil;
 public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements ProcessInstanceW {
 
 	private Serializable processInstanceId;
-	
+
 	private Serializable processDefinitionId;
 
 	private ProcessInstance processInstance;
@@ -134,6 +134,11 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	@Transactional(readOnly = true)
 	public List<TaskInstanceW> getAllTaskInstances(IWContext iwc) {
+		return getAllTaskInstances(iwc, iwc == null || !iwc.isLoggedOn() ? getLegacyUser(getCurrentUser()) : iwc.getCurrentUser());
+	}
+
+	@Override
+	public List<TaskInstanceW> getAllTaskInstances(IWContext iwc, User user) {
 		// TODO: hide tasks of ended subprocesses
 		return wrapTaskInstances(getUnfilteredProcessTaskInstances());
 	}
@@ -1454,6 +1459,9 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	 */
 	@Override
 	public <T extends Serializable> T getProcessDefinitionId() {
-		return (T) this.processDefinitionId;
+		@SuppressWarnings("unchecked")
+		T result = (T) this.processDefinitionId;
+		return result;
 	}
+
 }
