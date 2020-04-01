@@ -362,6 +362,11 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return getBPMDocuments(unfinishedTaskInstances, locale, doShowExternalEntity, false, tasksNamesToReturn, BPMDocument.class);
 	}
 
+	@Override
+	public List<BPMDocument> getTaskDocumentsForUser(IWContext iwc, User user, Locale locale, List<TaskInstanceW> tasks) {
+		return getBPMDocuments(tasks, locale, false, false, null, BPMDocument.class);
+	}
+
 	//	TODO: improve performance!
 	@Transactional(readOnly = true)
 	private List<TaskInstanceW> filterTasksByUserPermission(User user, final List<TaskInstanceW> unfinishedTaskInstances) {
@@ -469,6 +474,11 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 		submittedTaskInstances = filterDocumentsByUserPermission(user, submittedTaskInstances);
 		return getBPMDocuments(submittedTaskInstances, locale, doShowExternalEntity, checkIfSignable, tasksNamesToReturn, resultType);
+	}
+
+	@Override
+	public List<BPMDocument> getSubmittedDocumentsForUser(IWContext iwc, User user, Locale locale, List<TaskInstanceW> documents) {
+		return getBPMDocuments(documents, locale, false, false, null, BPMDocument.class);
 	}
 
 	@Autowired(required=false)
