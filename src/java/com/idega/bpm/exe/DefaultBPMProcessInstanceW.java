@@ -681,6 +681,11 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		});
 	}
 
+	@Override
+	public List<TaskInstanceW> getUnfinishedTaskInstancesForTask(IWContext iwc, User user, String taskName) {
+		return getUnfinishedTaskInstancesForTask(taskName);
+	}
+
 	List<TaskInstanceW> getUnfinishedTaskInstancesForTask(JbpmContext context, String taskName, Integer... prioritiesToFilter) {
 		/*String query = "select ti.name, ti.id from " + TaskInstance.class.getName() + " ti where ti.processInstance.id = :piId and ti.end is null and ti.processInstance.end is null";
 		List<Param> params = new ArrayList<Param>();
