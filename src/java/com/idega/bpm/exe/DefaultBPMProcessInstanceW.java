@@ -1479,4 +1479,10 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return result;
 	}
 
+	@Override
+	public boolean doInsertVariable(String name, String value) {
+		getLogger().warning("Not implemented - can not insert variable " + name + " with value " + value + " for proc. instance with ID " + getProcessInstanceId());
+		return false;
+	}
+
 }
