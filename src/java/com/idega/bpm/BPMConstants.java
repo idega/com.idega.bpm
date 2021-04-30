@@ -26,6 +26,8 @@ public class BPMConstants {
 
 								VAR_MANAGER_ROLE = ProcessDefinitionW.VARIABLE_MANAGER_ROLE_NAME,
 
-								VAR_OWNER_EMAIL = ProcessConstants.OWNER_EMAIL_ADDRESS;
+								VAR_OWNER_EMAIL = ProcessConstants.OWNER_EMAIL_ADDRESS,
+
+								BPMN_VARIABLE_PREFIX = "bpmn.";
 
 }
