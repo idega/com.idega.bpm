@@ -30,6 +30,6 @@ public class BPMConstants {
 
 								BPMN_VARIABLE_PREFIX = "bpmn.",
 
-								GROUP_LOC_NAME_PREFIX = "organisation.group.name.";
+								GROUP_LOC_NAME_PREFIX = CoreConstants.GROUP_LOC_NAME_PREFIX;
 
 }
