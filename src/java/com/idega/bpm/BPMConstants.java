@@ -28,6 +28,8 @@ public class BPMConstants {
 
 								VAR_OWNER_EMAIL = ProcessConstants.OWNER_EMAIL_ADDRESS,
 
-								BPMN_VARIABLE_PREFIX = "bpmn.";
+								BPMN_VARIABLE_PREFIX = "bpmn.",
+
+								GROUP_LOC_NAME_PREFIX = "organisation.group.name.";
 
 }
