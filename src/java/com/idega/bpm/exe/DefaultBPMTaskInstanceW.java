@@ -486,7 +486,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 					Long taskInstanceId = getTaskInstanceId();
 					TaskInstance taskInstance = getTaskInstance(context);
 
-					List<String> preferred = new ArrayList<String>(1);
+					List<String> preferred = new ArrayList<>(1);
 					preferred.add(XFormsView.VIEW_TYPE);
 
 					View view = null;
@@ -511,7 +511,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 						}
 					}
 					if (loadForDisplay) {
-						Map<String, String> parameters = new HashMap<String, String>(1);
+						Map<String, String> parameters = new HashMap<>(1);
 						parameters.put(ProcessConstants.TASK_INSTANCE_ID, String.valueOf(taskInstanceId));
 						view.populateParameters(parameters);
 
@@ -619,7 +619,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 		if (cachedTaskNames.containsKey(taskInstanceId)) {
 			names = cachedTaskNames.get(getTaskInstanceId());
 		} else {
-			names = new HashMap<Locale, String>(5);
+			names = new HashMap<>(5);
 			cachedTaskNames.put(taskInstanceId, names);
 		}
 
@@ -821,10 +821,10 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 		List<BinaryVariable> binVars = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId(), variable);
 
 		if (binVars == null) {
-			binVars = new ArrayList<BinaryVariable>(1);
+			binVars = new ArrayList<>(1);
 		}
 
-		Map<String, Object> vars = new HashMap<String, Object>(1);
+		Map<String, Object> vars = new HashMap<>(1);
 		String variableName = variable.getDefaultStringRepresentation();
 
 		final BinaryVariableImpl binVar = new BinaryVariableImpl();
@@ -833,7 +833,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 		String mimeType = MimeTypeUtil.resolveMimeTypeFromFileName(fileName);
 		binVar.setMimeType(mimeType);
 		if (!overwrite) {
-			Map<String, Object> metadata = new HashMap<String, Object>();
+			Map<String, Object> metadata = new HashMap<>();
 			metadata.put(JBPMConstants.OVERWRITE, Boolean.FALSE);
 			metadata.put(JBPMConstants.PATH_IN_REPOSITORY, filesFolder + fileName);
 			if (source != null) {
@@ -911,7 +911,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	@Transactional(readOnly = true)
 	public List<BinaryVariable> getAttachments(IWContext iwc) {
 		List<BinaryVariable> variableList = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId());
-		List<BinaryVariable> returnList = new ArrayList<BinaryVariable>();
+		List<BinaryVariable> returnList = new ArrayList<>();
 		if (ListUtil.isEmpty(variableList)) {
 			return returnList;
 		}
@@ -920,14 +920,23 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 		for (BinaryVariable variable: variableList) {
 			try {
+				Integer hash = variable == null ? null : variable.getHash();
+				if (hash == null) {
+					getLogger().warning("Variable (" + variable + ") or hash unknown - skipping");
+					continue;
+				}
+
 				Permission permission = getPermissionsFactory().getTaskInstanceVariableViewPermission(
 						true,
 						getTaskInstance(),
-						variable.getHash().toString()
+						hash.toString()
 				);
 				rolesManager.checkPermission(permission);
 				returnList.add(variable);
 			} catch (BPMAccessControlException e) {
+				continue;
+			} catch (Exception e) {
+				getLogger().log(Level.WARNING, "Error getting attachments by variable " + variable, e);
 				continue;
 			}
 		}
@@ -939,7 +948,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	@Transactional(readOnly = true)
 	public List<BinaryVariable> getAttachments(Variable variable) {
 		List<BinaryVariable> allAttachments = getAttachments(CoreUtil.getIWContext());
-		List<BinaryVariable> attachmentsForVariable = new ArrayList<BinaryVariable>(allAttachments.size());
+		List<BinaryVariable> attachmentsForVariable = new ArrayList<>(allAttachments.size());
 
 		for (BinaryVariable binaryVariable: allAttachments) {
 			if (binaryVariable.getVariable().equals(variable)) {
@@ -1054,7 +1063,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 	@Override
 	public boolean addVariable(Variable variable, Object value) {
-		Map<String, Object> variables = new HashMap<String, Object>(1);
+		Map<String, Object> variables = new HashMap<>(1);
 		variables.put(variable.getName(), value);
 		Map<String, Object> taskVariables = getVariablesHandler().submitVariablesExplicitly(variables, getTaskInstanceId());
 		return !MapUtil.isEmpty(taskVariables) && taskVariables.containsKey(variable.getName());
@@ -1124,7 +1133,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 	private List<Long> getTokensIds(Token token, List<Long> ids) {
 		if (ids == null) {
-			ids = new ArrayList<Long>();
+			ids = new ArrayList<>();
 		}
 
 		if (token == null) {
@@ -1147,7 +1156,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 			return Collections.emptyMap();
 		}
 
-		Map<String, Object> variables = new HashMap<String, Object>();
+		Map<String, Object> variables = new HashMap<>();
 		for (com.idega.jbpm.data.Variable var: vars) {
 			if (var == null) {
 				continue;
