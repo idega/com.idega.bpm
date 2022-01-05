@@ -78,6 +78,7 @@ import com.idega.util.CoreConstants;
 import com.idega.util.CoreUtil;
 import com.idega.util.IWTimestamp;
 import com.idega.util.ListUtil;
+import com.idega.util.StringHandler;
 import com.idega.util.StringUtil;
 import com.idega.util.datastructures.map.MapUtil;
 import com.idega.util.expression.ELUtil;
@@ -167,15 +168,15 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 				final List<TaskInstance> taskInstances;
 				if (includedOnlySubProcessesNames != null) {
 					// only inserting task instances from subprocesses
-					taskInstances = new ArrayList<TaskInstance>();
+					taskInstances = new ArrayList<>();
 				} else {
 					@SuppressWarnings("unchecked")
 					Collection<TaskInstance> tasks = processInstance.getTaskMgmtInstance().getTaskInstances();
 					if (ListUtil.isEmpty(tasks)) {
-						taskInstances = new ArrayList<TaskInstance>();
+						taskInstances = new ArrayList<>();
 						getLogger().warning("Where are no tasks for process instance " + processInstance.getId());
 					} else {
-						taskInstances = new ArrayList<TaskInstance>(tasks);
+						taskInstances = new ArrayList<>(tasks);
 					}
 				}
 
@@ -201,7 +202,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			return null;
 		}
 
-		List<Long> ids = new ArrayList<Long>();
+		List<Long> ids = new ArrayList<>();
 		for (ProcessInstance subProcess: subProcesses) {
 			ids.add(subProcess.getId());
 		}
@@ -221,7 +222,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		if(ListUtil.isEmpty(subProcessInstances)) {
 			return Collections.emptyList();
 		}
-		List<ProcessInstance> childSubProcessInstances = new ArrayList<ProcessInstance>(subProcessInstances);
+		List<ProcessInstance> childSubProcessInstances = new ArrayList<>(subProcessInstances);
 		for (ProcessInstance subProcess: subProcessInstances) {
 			childSubProcessInstances.addAll(getAllSubprocesses(subProcess));
 		}
@@ -237,7 +238,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		List<ProcessInstance> subProcessInstances = getAllSubprocesses(processInstance);
 		List<TaskInstance> taskInstances;
 		if (!ListUtil.isEmpty(subProcessInstances)) {
-			taskInstances = new ArrayList<TaskInstance>();
+			taskInstances = new ArrayList<>();
 			for (ProcessInstance subProcessInstance: subProcessInstances) {
 				subProcessInstance = context.getProcessInstance(subProcessInstance.getId());
 
@@ -317,7 +318,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			return null;
 		}
 
-		Map<Date, TaskInstanceW> tasksByName = new HashMap<Date, TaskInstanceW>();
+		Map<Date, TaskInstanceW> tasksByName = new HashMap<>();
 		for (TaskInstanceW tiW: allSubmittedTaskInstances) {
 			TaskInstance ti = tiW.getTaskInstance();
 			if (taskInstanceName.equals(ti.getName())) {
@@ -329,8 +330,8 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			return null;
 		}
 
-		List<TaskInstanceW> tasks = new ArrayList<TaskInstanceW>();
-		List<Date> dates = new ArrayList<Date>(tasksByName.keySet());
+		List<TaskInstanceW> tasks = new ArrayList<>();
+		List<Date> dates = new ArrayList<>(tasksByName.keySet());
 		Collections.sort(dates);
 		for (Date date: dates) {
 			tasks.add(tasksByName.get(date));
@@ -728,7 +729,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			return wrapTaskInstances(taskInstances);
 		}
 
-		Map<String, Long> taskInstancesIds = new HashMap<String, Long>();
+		Map<String, Long> taskInstancesIds = new HashMap<>();
 
 		List<Integer> prioritiesToFilterList = Arrays.asList(prioritiesToFilter);
 		boolean filterByTaskName = !StringUtil.isEmpty(taskName);
@@ -800,7 +801,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			return Collections.emptyList();
 		}
 
-		List<Long> ids = new ArrayList<Long>(taskInstances.size());
+		List<Long> ids = new ArrayList<>(taskInstances.size());
 		for (TaskInstance instance : taskInstances) {
 			ids.add(instance.getId());
 		}
@@ -813,7 +814,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			return Collections.emptyList();
 		}
 
-		List<TaskInstanceW> instances = new ArrayList<TaskInstanceW>(taskInstancesIds.size());
+		List<TaskInstanceW> instances = new ArrayList<>(taskInstancesIds.size());
 		for (Long id: taskInstancesIds) {
 			TaskInstanceW tiw = getProcessManager().getTaskInstance(id);
 			instances.add(tiw);
@@ -929,18 +930,36 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 		try {
 			String procDefName = getProcessDefinitionW().getProcessDefinitionName();
-			usersConnectedToProcess = getBpmContext().execute(new JbpmCallback<List<User>>() {
 
-				@Override
-				public List<User> doInJbpm(JbpmContext context) throws JbpmException {
-					Long piId = getProcessInstanceId();
-					ProcessInstance pi = context.getProcessInstance(piId);
-					@SuppressWarnings("unchecked")
-					Map<String, Object> variables = pi.getContextInstance().getVariables();
-					return getBpmFactory().getBPMDAO().getUsersConnectedToProcess(piId, procDefName, variables);
+			List<String> usersIds = StringUtil.getValuesFromString(getApplicationProperty(procDefName + "_users"), CoreConstants.COMMA);
+			if (ListUtil.isEmpty(usersIds)) {
+				usersConnectedToProcess = getBpmContext().execute(new JbpmCallback<List<User>>() {
+
+					@Override
+					public List<User> doInJbpm(JbpmContext context) throws JbpmException {
+						Long piId = getProcessInstanceId();
+						ProcessInstance pi = context.getProcessInstance(piId);
+						@SuppressWarnings("unchecked")
+						Map<String, Object> variables = pi.getContextInstance().getVariables();
+						return getBpmFactory().getBPMDAO().getUsersConnectedToProcess(piId, procDefName, variables);
+					}
+
+				});
+			} else {
+				usersConnectedToProcess = new ArrayList<>();
+				UserBusiness userBusiness = getServiceInstance(UserBusiness.class);
+				for (String userId: usersIds) {
+					if (StringHandler.isNumeric(userId)) {
+						User user = null;
+						try {
+							user = userBusiness.getUser(Integer.valueOf(userId));
+						} catch (Exception e) {}
+						if (user != null) {
+							usersConnectedToProcess.add(user);
+						}
+					}
 				}
-
-			});
+			}
 		} catch (Exception e) {}
 		if (usersConnectedToProcess != null) {
 			return usersConnectedToProcess;
@@ -957,12 +976,12 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		}
 
 		if (ListUtil.isEmpty(users)) {
-			usersConnectedToProcess = new ArrayList<User>();
+			usersConnectedToProcess = new ArrayList<>();
 			return usersConnectedToProcess;
 		}
 
 		// using separate list, as the resolved one could be cashed (shared) and so
-		usersConnectedToProcess = new ArrayList<User>(users);
+		usersConnectedToProcess = new ArrayList<>(users);
 		for (Iterator<User> iterator = usersConnectedToProcess.iterator(); iterator.hasNext();) {
 			User user = iterator.next();
 			String hideInContacts = user.getMetaData(BPMUser.HIDE_IN_CONTACTS);
@@ -1062,13 +1081,13 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	@Transactional(readOnly = true)
 	public List<BPMEmailDocument> getAttachedEmails(User user, boolean fetchMessage) {
-		List<String> included = new ArrayList<String>(1);
+		List<String> included = new ArrayList<>(1);
 		included.add(email_fetch_process_name);
 		List<TaskInstance> emailsTaskInstances = getProcessTaskInstances(null, included);
 
 		emailsTaskInstances = filterEmailsTaskInstances(emailsTaskInstances);
 
-		List<BPMEmailDocument> bpmEmailDocs = new ArrayList<BPMEmailDocument>(emailsTaskInstances.size());
+		List<BPMEmailDocument> bpmEmailDocs = new ArrayList<>(emailsTaskInstances.size());
 		for (TaskInstance emailTaskInstance: emailsTaskInstances) {
 			Map<String, Object> vars = getVariablesHandler().populateVariables(emailTaskInstance.getId());
 
@@ -1130,7 +1149,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Transactional(readOnly = true)
 	public List<BinaryVariable> getAttachments(IWContext iwc) {
 		List<TaskInstanceW> taskInstances = getAllTaskInstances(iwc);
-		List<BinaryVariable> attachments = new ArrayList<BinaryVariable>();
+		List<BinaryVariable> attachments = new ArrayList<>();
 
 		for (Iterator<TaskInstanceW> iterator = taskInstances.iterator(); iterator.hasNext();) {
 			attachments.addAll(iterator.next().getAttachments(iwc));
@@ -1388,10 +1407,10 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		}
 
 		if (results == null) {
-			results = new HashMap<String, T>();
+			results = new HashMap<>();
 		}
 
-		List<String> loaded = new ArrayList<String>();
+		List<String> loaded = new ArrayList<>();
 		TaskInstanceW tiW = submittedTiWs.get(index);
 		for (String variable: variables) {
 			Object value = tiW.getVariable(variable);
@@ -1403,7 +1422,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			}
 		}
 		if (!ListUtil.isEmpty(loaded)) {
-			variables = new ArrayList<String>(variables);
+			variables = new ArrayList<>(variables);
 			variables.removeAll(loaded);
 		}
 
