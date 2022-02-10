@@ -909,7 +909,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<BinaryVariable> getAttachments(IWContext iwc) {
+	public List<BinaryVariable> getAttachments() {
 		List<BinaryVariable> variableList = getVariablesHandler().resolveBinaryVariables(getTaskInstanceId());
 		List<BinaryVariable> returnList = new ArrayList<>();
 		if (ListUtil.isEmpty(variableList)) {
@@ -947,7 +947,7 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	@Override
 	@Transactional(readOnly = true)
 	public List<BinaryVariable> getAttachments(Variable variable) {
-		List<BinaryVariable> allAttachments = getAttachments(CoreUtil.getIWContext());
+		List<BinaryVariable> allAttachments = getAttachments();
 		List<BinaryVariable> attachmentsForVariable = new ArrayList<>(allAttachments.size());
 
 		for (BinaryVariable binaryVariable: allAttachments) {

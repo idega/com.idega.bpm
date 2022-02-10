@@ -74,8 +74,8 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 	@Autowired
 	private VariableInstanceQuerier querier;
 
-	protected void notifyAboutNewProcess(String procDefName, Long procDefId, Long procInstId, Map<String, Object> variables) {
-		ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, procDefId, procInstId, variables));
+	protected void notifyAboutNewProcess(String procDefName, Long procInstId, Map<String, Object> variables) {
+		ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, procInstId, variables));
 	}
 
 	@Override
@@ -94,7 +94,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 				@SuppressWarnings("unchecked")
 				List<VariableAccess> variableAccesses = tiController.getVariableAccesses();
-				ArrayList<Variable> variables = new ArrayList<Variable>(variableAccesses.size());
+				ArrayList<Variable> variables = new ArrayList<>(variableAccesses.size());
 
 				for (VariableAccess variableAccess : variableAccesses) {
 					Variable variable = Variable.parseDefaultStringRepresentation(variableAccess.getVariableName());
@@ -122,7 +122,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 				@SuppressWarnings("unchecked")
 				List<VariableAccess> variableAccesses = tiController.getVariableAccesses();
-				ArrayList<Variable> variables = new ArrayList<Variable>(variableAccesses.size());
+				ArrayList<Variable> variables = new ArrayList<>(variableAccesses.size());
 
 				for (VariableAccess variableAccess : variableAccesses) {
 					Variable variable = Variable.parseDefaultStringRepresentationWithAccess(variableAccess.getVariableName(), variableAccess.getAccess().toString());
@@ -136,7 +136,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 	@Override
 	@Transactional(readOnly = false)
-	public <T extends Serializable> T startProcess(IWContext iwc, final ViewSubmission viewSubmission) {
+	public <T extends Serializable> T startProcess(final ViewSubmission viewSubmission) {
 		Long processDefinitionId = viewSubmission.getProcessDefinitionId();
 
 		if (!processDefinitionId.equals(getProcessDefinitionId())) {
@@ -148,7 +148,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 		Map<String, String> parameters = viewSubmission.resolveParameters();
 		getLogger().info("Params " + parameters);
 
-		final Map<String, Object> variables = new HashMap<String, Object>();
+		final Map<String, Object> variables = new HashMap<>();
 
 		Long piId = null;
 		try {
@@ -194,7 +194,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 			return result;
 		} finally {
 			if (procDefName != null) {
-				notifyAboutNewProcess(procDefName, processDefinitionId, piId, variables);
+				notifyAboutNewProcess(procDefName, piId, variables);
 			}
 		}
 	}
@@ -216,12 +216,12 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 					Long startTaskId = pd.getTaskMgmtDefinition().getStartTask().getId();
 
-					List<String> preferred = new ArrayList<String>();
+					List<String> preferred = new ArrayList<>();
 					preferred.add(XFormsView.VIEW_TYPE);
 					View view = getBpmFactory().getViewByTask(startTaskId, true, preferred);
 					view.takeView();
 
-					Map<String, String> parameters = new HashMap<String, String>();
+					Map<String, String> parameters = new HashMap<>();
 					parameters.put(ProcessConstants.START_PROCESS, ProcessConstants.START_PROCESS);
 					parameters.put(ProcessConstants.PROCESS_DEFINITION_ID, String.valueOf(processDefinitionId));
 					parameters.put(ProcessConstants.VIEW_ID, view.getViewId());
@@ -331,7 +331,7 @@ public class DefaultBPMProcessDefinitionW extends DefaultSpringBean implements P
 
 			@Override
 			public String doInJbpm(JbpmContext context) throws JbpmException {
-				List<String> preferred = new ArrayList<String>(1);
+				List<String> preferred = new ArrayList<>(1);
 				preferred.add(XFormsView.VIEW_TYPE);
 
 				ProcessDefinition pd = getProcessDefinition(context);

@@ -64,7 +64,7 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 
 		Long taskInstanceId = xformsViewSubmission.getTaskInstanceId();
 
-		Long pdId = null, piId = null;
+		Long piId = null;
 		String procDefName = null;
 		boolean error = false;
 		Map<String, Object> variables = null;
@@ -80,7 +80,6 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 				piId = piW.getProcessInstanceId();
 				ProcessDefinitionW pdW = piW.getProcessDefinitionW();
 				procDefName = pdW == null ? null : pdW.getProcessDefinitionName();
-				pdId = pdW == null ? null : pdW.getProcessDefinitionId();
 
 				tiW.submit(xformsViewSubmission);
 				variables = xformsViewSubmission.resolveVariables();
@@ -100,7 +99,7 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 					ProcessDefinitionW pdW = bpmFactory.getProcessManager(processDefinitionId).getProcessDefinition(processDefinitionId);
 					procDefName = getBpmFactory().getBPMDAO().getProcessDefinitionNameByProcessDefinitionId(processDefinitionId);
 
-					piId = pdW.startProcess(CoreUtil.getIWContext(), xformsViewSubmission);
+					piId = pdW.startProcess(xformsViewSubmission);
 					variables = xformsViewSubmission.resolveVariables();
 				} else {
 					Logger.getLogger(getClass().getName()).severe("Couldn't handle submission. No action associated with the submission " +
@@ -117,7 +116,7 @@ public class XFormsBPMSubmissionHandler extends AbstractConnector implements Sub
 			CoreUtil.sendExceptionNotification(message, e);
 		} finally {
 			if (!error && procDefName != null && piId != null) {
-				ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, pdId, piId, variables));
+				ELUtil.getInstance().publishEvent(new ProcessInstanceCreatedEvent(procDefName, piId, variables));
 			}
 		}
 

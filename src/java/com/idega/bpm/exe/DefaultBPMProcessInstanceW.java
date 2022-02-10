@@ -1152,21 +1152,21 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		List<BinaryVariable> attachments = new ArrayList<>();
 
 		for (Iterator<TaskInstanceW> iterator = taskInstances.iterator(); iterator.hasNext();) {
-			attachments.addAll(iterator.next().getAttachments(iwc));
+			attachments.addAll(iterator.next().getAttachments());
 		}
 
 		return attachments;
 	}
 
 	@Override
-	public <T extends Serializable> T getIdOfStartTaskInstance(IWContext iwc) {
-		return getBpmFactory().getIdOfStartTaskInstance(getProcessInstanceId(), iwc);
+	public <T extends Serializable> T getIdOfStartTaskInstance() {
+		return getBpmFactory().getIdOfStartTaskInstance(getProcessInstanceId());
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public TaskInstanceW getStartTaskInstance(IWContext iwc) {
-		Long id = getIdOfStartTaskInstance(iwc);
+	public TaskInstanceW getStartTaskInstance() {
+		Long id = getIdOfStartTaskInstance();
 		if (id == null) {
 			return null;
 		}
@@ -1273,13 +1273,13 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	}
 
 	@Override
-	public boolean doSubmitTask(IWContext iwc, String taskName, Map<String, Object> variables) {
-		TaskInstanceW tiW = getSubmittedTaskInstance(iwc, taskName, variables);
+	public boolean doSubmitTask(String taskName, Map<String, Object> variables) {
+		TaskInstanceW tiW = getSubmittedTaskInstance(taskName, variables);
 		return tiW == null ? Boolean.FALSE : Boolean.TRUE;
 	}
 
 	@Override
-	public TaskInstanceW getSubmittedTaskInstance(IWContext iwc, String taskName, Map<String, Object> variables) {
+	public TaskInstanceW getSubmittedTaskInstance(String taskName, Map<String, Object> variables) {
 		if (StringUtil.isEmpty(taskName)) {
 			getLogger().warning("Task name is not provided");
 			return null;
@@ -1291,12 +1291,12 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			return null;
 		}
 
-		return getSubmitedTask(iwc, taskInstanceW, null, variables);
+		return getSubmitedTask(taskInstanceW, null, variables);
 	}
 
 	@Override
 	@Transactional(readOnly = false)
-	public TaskInstanceW getSubmitedTask(IWContext iwc, TaskInstanceW task, ViewSubmission viewSubmission, Map<String, Object> variables) {
+	public TaskInstanceW getSubmitedTask(TaskInstanceW task, ViewSubmission viewSubmission, Map<String, Object> variables) {
 		if (task == null) {
 			getLogger().warning("Task instance is not provided");
 			return null;
