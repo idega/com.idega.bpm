@@ -134,12 +134,12 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<TaskInstanceW> getAllTaskInstances(IWContext iwc) {
-		return getAllTaskInstances(iwc, iwc == null || !iwc.isLoggedOn() ? getLegacyUser(getCurrentUser()) : iwc.getCurrentUser());
+	public List<TaskInstanceW> getAllTaskInstances() {
+		return getAllTaskInstances(getLegacyUser(getCurrentUser()));
 	}
 
 	@Override
-	public List<TaskInstanceW> getAllTaskInstances(IWContext iwc, User user) {
+	public List<TaskInstanceW> getAllTaskInstances(User user) {
 		// TODO: hide tasks of ended subprocesses
 		return wrapTaskInstances(getUnfilteredProcessTaskInstances());
 	}
@@ -1148,7 +1148,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 	@Override
 	@Transactional(readOnly = true)
 	public List<BinaryVariable> getAttachments(IWContext iwc) {
-		List<TaskInstanceW> taskInstances = getAllTaskInstances(iwc);
+		List<TaskInstanceW> taskInstances = getAllTaskInstances();
 		List<BinaryVariable> attachments = new ArrayList<>();
 
 		for (Iterator<TaskInstanceW> iterator = taskInstances.iterator(); iterator.hasNext();) {
@@ -1347,7 +1347,7 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 			return null;
 		}
 
-		List<TaskInstanceW> tasks = getAllTaskInstances(CoreUtil.getIWContext());
+		List<TaskInstanceW> tasks = getAllTaskInstances();
 		if (ListUtil.isEmpty(tasks)) {
 			getLogger().warning("Proc. ins. " + getProcessInstanceId() + " does not have any tasks");
 			return null;
