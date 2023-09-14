@@ -10,6 +10,7 @@ public class BPMConstants {
 
 								PDF_OF_XFORMS_PATH_IN_REPOSITORY = CoreConstants.CONTENT_PATH + "/xforms/pdf/",
 								TEMP_PDF_OF_XFORMS_PATH_IN_REPOSITORY = CoreConstants.PUBLIC_PATH + "/xforms/pdf/temp/",
+								ATTACHMENTS_PATH_IN_REPOSITORY = "/files/bpm/attachments/",
 
 								TASK_CUSTOM_NAME_META_DATA = "BPM_TASK_CUSTOM_NAME",
 								TASK_CUSTOM_NAME_SEPARATOR = "@BPM_TASK_CUSTOM_NAME@",
