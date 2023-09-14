@@ -23,7 +23,7 @@ public class BPMConstants {
 								VAR_FROM = "string_fromPersonal",
 								VAR_SUBJECT = "string_subject",
 								VAR_FROM_ADDRESS = "string_fromAddress",
-
+								VAR_ATTACHMENTS = "files_ownerAttachments",
 								VAR_MANAGER_ROLE = ProcessDefinitionW.VARIABLE_MANAGER_ROLE_NAME,
 
 								VAR_OWNER_EMAIL = ProcessConstants.OWNER_EMAIL_ADDRESS,
