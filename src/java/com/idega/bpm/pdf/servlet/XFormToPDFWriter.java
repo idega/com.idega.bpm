@@ -165,7 +165,7 @@ public class XFormToPDFWriter extends DownloadWriter implements MediaWritable {
 	}
 
 	@Override
-	public void writeTo(OutputStream streamOut) throws IOException {
+	public void writeTo(IWContext iwc, OutputStream streamOut) throws IOException {
 		if (resourceInPDF == null) {
 			LOGGER.warning("Unable to get PDF");
 			return;

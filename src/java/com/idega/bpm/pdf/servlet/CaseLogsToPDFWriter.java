@@ -8,7 +8,9 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,11 +22,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.idega.block.process.business.CaseBusiness;
 import com.idega.block.process.business.CaseCodeManager;
 import com.idega.block.process.data.Case;
+import com.idega.block.process.data.CaseHome;
 import com.idega.block.process.data.CaseLog;
 import com.idega.bpm.BPMConstants;
 import com.idega.business.IBOLookup;
 import com.idega.business.IBORuntimeException;
 import com.idega.core.file.util.MimeTypeUtil;
+import com.idega.data.IDOLookup;
 import com.idega.graphics.generator.business.PDFGenerator;
 import com.idega.idegaweb.IWBundle;
 import com.idega.idegaweb.IWResourceBundle;
@@ -70,18 +74,88 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 		return MimeTypeUtil.MIME_TYPE_PDF_1;
 	}
 
+	private boolean hasAccess(String userId, Collection<User> users) {
+		if (StringUtil.isEmpty(userId) || ListUtil.isEmpty(users)) {
+			return false;
+		}
+
+		for (User user: users) {
+			if (userId.equals(user.getId())) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	@Override
 	public void init(HttpServletRequest req, IWContext iwc) {
 		try {
 			ELUtil.getInstance().autowire(this);
 
-			String caseId = iwc.getParameter(CASE_ID_PARAMETER);
+			String caseUniqueId = iwc.getParameter(CASE_ID_PARAMETER);
 
-			if (StringUtil.isEmpty(caseId)) {
+			if (StringUtil.isEmpty(caseUniqueId)) {
 				LOGGER.log(Level.SEVERE, "Do not know what to download: caseId is null");
 				return;
 			}
-			theCase = getCaseBusiness(iwc).getCase(new Integer(caseId));
+
+			if (iwc == null || !iwc.isLoggedOn()) {
+				return;
+			}
+
+			CaseHome caseHome = (CaseHome) IDOLookup.getHome(Case.class);
+			theCase = caseHome.findCaseByUniqueId(caseUniqueId);
+			if (theCase == null) {
+				return;
+			}
+
+			boolean canAccess = iwc.isSuperAdmin();
+			com.idega.user.data.bean.User user = null;
+			if (!canAccess) {
+				user = iwc.getLoggedInUser();
+				String userId = user.getId().toString();
+
+				//	Owner or creator
+				Collection<User> users = new ArrayList<>();
+				User caseOwner = theCase.getOwner();
+				if (caseOwner != null) {
+					users.add(caseOwner);
+				}
+				User caseCreator = theCase.getCreator();
+				if (caseCreator != null) {
+					users.add(caseCreator);
+				}
+				canAccess = hasAccess(userId, users);
+
+				//	Subscribers
+				if (!canAccess) {
+					canAccess = hasAccess(userId, theCase.getSubscribers());
+				}
+
+				//	Admins, managers and handlers
+				if (!canAccess) {
+					Set<String> userRoles = iwc.getAccessController().getAllRolesForUser(user);
+					if (!ListUtil.isEmpty(userRoles)) {
+						for (Iterator<String> iter = userRoles.iterator(); (!canAccess && iter.hasNext());) {
+							String role = iter.next();
+							if (StringUtil.isEmpty(role)) {
+								continue;
+							}
+
+							role = role.toLowerCase();
+							if (role.indexOf("admin") != -1 || role.indexOf("manager") != -1 || role.indexOf("handler") != -1) {
+								canAccess = true;
+							}
+						}
+					}
+				}
+			}
+			if (!canAccess) {
+				LOGGER.warning(user + " has no access to case " + theCase);
+				return;
+			}
+
 			CaseBusiness caseBusiness = CaseCodeManager.getInstance().getCaseBusinessOrDefault(theCase.getCaseCode(), iwc);
 
 			IWBundle bundle = iwc.getIWMainApplication().getBundle(BPMConstants.IW_BUNDLE_STARTER);
@@ -114,7 +188,7 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 
 			group = table.createBodyRowGroup();
 
-			List<CaseLog> logs = new ArrayList<CaseLog>(this.getLogs(iwc));
+			List<CaseLog> logs = new ArrayList<>(this.getLogs(iwc));
 			if(ListUtil.isEmpty(logs)){
 				container.add(iwrb.getLocalizedString("no_logs_found", "There are no logs"));
 			} else {
@@ -174,17 +248,8 @@ public class CaseLogsToPDFWriter extends DownloadWriter {
 		return Collections.emptyList();
 	}
 
-	private CaseBusiness getCaseBusiness(IWContext iwc) {
-		try {
-			return IBOLookup.getServiceInstance(iwc, CaseBusiness.class);
-		}
-		catch (RemoteException re) {
-			throw new IBORuntimeException(re);
-		}
-	}
-
 	@Override
-	public void writeTo(OutputStream out) throws IOException {
+	public void writeTo(IWContext iwc, OutputStream out) throws IOException {
 		InputStream streamIn = new ByteArrayInputStream(pdfBytes);
 		FileUtil.streamToOutputStream(streamIn, out);
 
