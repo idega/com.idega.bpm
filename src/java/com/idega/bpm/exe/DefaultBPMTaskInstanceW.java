@@ -1342,4 +1342,9 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 		return ti == null ? null : ti.getCreate();
 	}
 
+	@Override
+	public boolean removeAttachment(BinaryVariable variable) {
+		return false;
+	}
+
 }
