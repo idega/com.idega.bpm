@@ -809,8 +809,13 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	}
 
 	@Override
-	@Transactional(readOnly = false)
 	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is, String filesFolder, boolean overwrite, String source) {
+		return addAttachment(variable, fileName, description, is, filesFolder, overwrite, source, null);
+	}
+
+	@Override
+	@Transactional(readOnly = false)
+	public BinaryVariable addAttachment(Variable variable, String fileName, String description, InputStream is, String filesFolder, boolean overwrite, String source, Boolean forTaskInstance) {
 		Collection<URI> uris = getLinksToVariables(is, filesFolder, fileName, overwrite);
 		if (ListUtil.isEmpty(uris)) {
 			return null;
@@ -1050,6 +1055,11 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 
 	@Override
 	public Object getVariable(String variableName) {
+		return getVariable(variableName, null);
+	}
+
+	@Override
+	public Object getVariable(String variableName, Boolean forTaskInstance) {
 		return getVariablesHandler().populateVariables(getTaskInstanceId()).get(variableName);
 	}
 
@@ -1346,5 +1356,6 @@ public class DefaultBPMTaskInstanceW extends DefaultSpringBean implements TaskIn
 	public boolean removeAttachment(BinaryVariable variable) {
 		return false;
 	}
+
 
 }

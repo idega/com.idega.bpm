@@ -1504,4 +1504,10 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 		return false;
 	}
 
+	@Override
+	public TaskInstanceW doSubmitTask(IWContext iwc, String taskName, Map<String, Object> variables, com.idega.user.data.bean.User user) {
+		TaskInstanceW tiW = getSubmittedTaskInstance(iwc, taskName, variables);
+		return tiW;
+	}
+
 }
