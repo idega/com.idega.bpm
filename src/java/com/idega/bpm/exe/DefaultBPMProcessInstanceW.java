@@ -684,6 +684,11 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	public List<TaskInstanceW> getUnfinishedTaskInstancesForTask(IWContext iwc, User user, String taskName) {
+		return getUnfinishedTaskInstancesForTask(iwc, user, taskName, true);
+	}
+
+	@Override
+	public List<TaskInstanceW> getUnfinishedTaskInstancesForTask(IWContext iwc, User user, String taskName, boolean checkIfFinished) {
 		return getUnfinishedTaskInstancesForTask(taskName);
 	}
 
@@ -1274,6 +1279,11 @@ public class DefaultBPMProcessInstanceW extends DefaultSpringBean implements Pro
 
 	@Override
 	public boolean doSubmitTask(IWContext iwc, String taskName, Map<String, Object> variables) {
+		return doSubmitTask(iwc, taskName, variables, true);
+	}
+
+	@Override
+	public boolean doSubmitTask(IWContext iwc, String taskName, Map<String, Object> variables, boolean checkIfFinished) {
 		TaskInstanceW tiW = getSubmittedTaskInstance(iwc, taskName, variables);
 		return tiW == null ? Boolean.FALSE : Boolean.TRUE;
 	}
